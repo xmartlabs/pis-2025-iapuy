@@ -25,3 +25,17 @@ docker-compose up postgres -d
 ```shell
 cd my-app && npm run dev
 ```
+
+### Archivo .env de ejemplo, se coloca en el root del proyecto
+
+```shell
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=[username]
+DB_PASS=[password]
+DB_NAME=[name for db]
+
+JWT_SECRET=ba1b46dcbd266376.......
+
+ENVIROMENT=dev
+```
