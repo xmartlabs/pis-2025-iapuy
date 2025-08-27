@@ -6,19 +6,19 @@
 | ------ | ------ | ---------- | ---------- | --------- | --------- |
 | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/node_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/next_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/typescript.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/postgresql.png"> | <img height="60" src="https://sequelize.org/img/logo.svg"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/docker.png"> |
 
-## Ambientes
+## Enviroments
 
-### Produccion
+### Production
 
-La idea es que en producción se levante la infra completa
+On production we will be setting up the whole infrastructure with Docker containers, using the command:
 
 ```shell
 npx next build && docker-compose up --build
 ```
-### Desarrollo local
+### Local development
 
-Para desarrollo local se levanta la db con Docker, pero la Next se corre localmente para poder usar las facilidades del framework como cambios en tiempo real.
-
+For local development we will setup the DB on Docker but run locally the Next application in order to take advantage of tools like hot reload to see changes on the code be reflected on real-time.
+Before pushing to the repo all changes should be testes dockerizing the whole application.
 ```shell
 docker-compose up postgres -d
 ```
@@ -26,7 +26,7 @@ docker-compose up postgres -d
 cd my-app && npm run dev
 ```
 
-### Archivo .env de ejemplo, se coloca en el root del proyecto
+### Example .env file
 
 ```shell
 DB_HOST=localhost
