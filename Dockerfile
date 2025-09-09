@@ -1,7 +1,7 @@
 FROM node:latest
 
 # Set working directory
-WORKDIR /app
+WORKDIR /
 
 # Install dependencies first (only package*.json to leverage caching)
 COPY package*.json ./
