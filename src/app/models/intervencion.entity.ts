@@ -33,13 +33,13 @@ export class Intervencion extends Model {
       isIn: [["educativa", "recreativa", "terapeutica"]],
     },
   })
-  tipo!: TipoIntervencion;
+  declare tipo: TipoIntervencion;
 
   @Column
   declare post_evaluacion?: string;
 
   @Column({ type: DataType.ARRAY(DataType.STRING) })
-  fotosUrls!: string[];
+  declare fotosUrls: string[];
 
   @ForeignKey(() => User)
   @Column

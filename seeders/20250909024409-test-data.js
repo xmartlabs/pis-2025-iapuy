@@ -3,7 +3,6 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
-    const Op = Sequelize.Op;
 
     // USERS
     const users = [
