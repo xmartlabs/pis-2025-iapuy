@@ -3,6 +3,7 @@ import { UserService } from "../service/user.service";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { UpdateUserDto } from "../dtos/update-user.dto";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { jwtVerify } from "jose";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
@@ -40,6 +41,35 @@ export class UserController {
 
   async createUser(request: NextRequest) {
     try {
+      /*const authHdr = request.headers.get("authorization");
+
+      if(!authHdr || !authHdr.startsWith("Bearer ")){
+        return NextResponse.json(
+          { error: "No hay autorización" },
+          { status: 401 }
+        );
+      }
+
+      const tkn = authHdr.slice("Bearer ".length);
+      try{
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+        const { payload, protectedHeader } = await jwtVerify(tkn, secret,{});
+      } catch (e: any){
+          const msg =
+            e.code === "ERR_JWT_EXPIRED" ? "Su sesión expiró" :
+            e.code === "ERR_JWT_CLAIM_INVALID" ? "Claim inválida" : 
+            "Token inválido";
+          return NextResponse.json(
+            {
+              error: msg,
+              status: 401
+            });
+      }
+
+      if(payload.role !== "admin"){
+        return NextResponse.json({ error: "No está autorizado" }, { status: 403 });
+      }*/
+
       const body: CreateUserDto = await request.json();
 
       if (!body.ci || !body.password) {
@@ -58,7 +88,7 @@ export class UserController {
           { status: 409 }
         );
       }
-
+      console.log(error);
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }

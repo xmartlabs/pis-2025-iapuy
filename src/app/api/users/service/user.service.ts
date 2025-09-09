@@ -4,6 +4,7 @@ import { Intervencion } from "../../../models/intervencion.entity";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
+import { Hashing } from "@/lib/crypto/hash";
 import { Op } from "sequelize";
 
 export class UserService {
@@ -30,6 +31,7 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    createUserDto.password = await Hashing.hashPassword(createUserDto.password);
     return await User.create({ ...createUserDto });
   }
 

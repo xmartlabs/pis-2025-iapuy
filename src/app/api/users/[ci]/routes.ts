@@ -4,7 +4,7 @@ import { UserController } from "../controller/user.controller";
 const userController = new UserController();
 
 export async function GET(request: NextRequest) {
-  return userController.getUsers();
+  return userController.getUsers(request);
 }
 
 export async function POST(request: NextRequest) {
