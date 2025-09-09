@@ -16,14 +16,14 @@
 On production we will be setting up the whole infrastructure with Docker containers, using the command:
 
 ```shell
-npx next build && docker-compose up --build
+npx next build && docker compose up --build
 ```
 ### Local development
 
 For local development we will setup the DB on Docker but run locally the Next application in order to take advantage of tools like hot reload to see changes on the code be reflected on real-time.
 Before pushing to the repo all changes should be testes dockerizing the whole application.
 ```shell
-docker-compose up postgres -d
+docker compose up postgres -d
 ```
 ```shell
 npm run dev
