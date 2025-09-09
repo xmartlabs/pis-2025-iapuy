@@ -7,7 +7,7 @@ export default function PantallaInsituciones() {
     <>
       <DetalleInstitucion />
       <ListadoInstitucion />
-      <NuevaInstitucion />
+      <NuevaInstitucion />*
     </>
   );
 }
