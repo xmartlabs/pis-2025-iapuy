@@ -20,23 +20,23 @@ import {
 const items = [
   {
     title: "Perros",
-    url: "/login/admin/perros",
+    url: "/app/admin/perros",
   },
   {
     title: "Personas",
-    url: "/login/admin/personas",
+    url: "/app/admin/personas",
   },
   {
     title: "Instituciones",
-    url: "/login/admin/instituciones",
+    url: "/app/admin/instituciones",
   },
   {
     title: "Intervenciones",
-    url: "/login/admin/intervenciones",
+    url: "/app/admin/intervenciones",
   },
   {
     title: "Gastos",
-    url: "/login/admin/gastos",
+    url: "/app/admin/gastos",
   },
 ]
 
