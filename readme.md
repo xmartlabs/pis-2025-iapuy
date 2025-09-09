@@ -75,3 +75,23 @@ To generate a new migration file:
 ```shell
 npx sequelize-cli migration:generate --name name-of-migration
 ```
+
+### Seeds
+
+To generate hard-coded data into the DB:
+
+```shell
+npx sequelize-cli seed:generate --name seed-name
+```
+```shell
+npx sequelize-cli db:seed:all
+```
+or
+```shell
+npx sequelize-cli db:seed --seed name-of-seed-file
+```
+
+To undo a seed:
+```shell
+npx sequelize-cli db:seed:undo
+```
