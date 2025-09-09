@@ -1,6 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PIS⚙️
 
-## Getting Started
+## Tech Stack
+
+| NodeJs | NextJS | TypeScript | PostgreSQL | Sequelize | Docker |
+| ------ | ------ | ---------- | ---------- | --------- | --------- |
+| <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/node_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/next_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/typescript.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/postgresql.png"> | <img height="60" src="https://sequelize.org/img/logo.svg"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/docker.png"> |
+
+
+# Getting Started
+
+## Enviroments
+
+### Production
+
+On production we will be setting up the whole infrastructure with Docker containers, using the command:
+
+```shell
+npx next build && docker-compose up --build
+```
+### Local development
+
+For local development we will setup the DB on Docker but run locally the Next application in order to take advantage of tools like hot reload to see changes on the code be reflected on real-time.
+Before pushing to the repo all changes should be testes dockerizing the whole application.
+```shell
+docker-compose up postgres -d
+```
+```shell
+cd my-app && npm run dev
+```
+
+
+```
+
+### Example .env file
+
+```shell
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=[username]
+DB_PASS=[password]
+DB_NAME=[name for db]
+
+JWT_SECRET=ba1b46dcbd266376.......
+
+ENVIROMENT=dev
 
 First, run the development server:
 
@@ -16,21 +59,39 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Managment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Migrations
 
-## Learn More
+For running pending migrations: 
+```shell
+npx sequelize-cli db:migrate
+```
+To undo most recent migrations: 
+```shell
+npx sequelize-cli db:migrate:undo
+```
+To generate a new migration file:
+```shell
+npx sequelize-cli migration:generate --name name-of-migration
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Seeds
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To generate hard-coded data into the DB:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```shell
+npx sequelize-cli seed:generate --name seed-name
+```
+```shell
+npx sequelize-cli db:seed:all
+```
+or
+```shell
+npx sequelize-cli db:seed --seed name-of-seed-file
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To undo a seed:
+```shell
+npx sequelize-cli db:seed:undo
+```
