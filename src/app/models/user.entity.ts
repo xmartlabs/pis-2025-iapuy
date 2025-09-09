@@ -40,4 +40,6 @@ export class User extends Model {
 
   @BelongsToMany(() => Intervencion, () => Acompania)
   declare intervenciones: Intervencion[];
+
 }
+

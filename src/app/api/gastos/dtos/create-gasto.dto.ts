@@ -1,1 +1,1 @@
-export class CreateIntervencionDTO {}
+export class CreateGastoDTO {}
