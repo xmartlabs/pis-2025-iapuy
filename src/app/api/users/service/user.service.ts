@@ -1,9 +1,16 @@
-import { User } from "@/app/api/users/models/user.entity";
+import { User } from "@/app/models/user.entity";
 import { CreateUserDto } from "../dtos/create-user.dto";
+import { Intervencion } from "../../../models/intervencion.entity";
 
 export class UserService {
   async findAll(): Promise<User[]> {
-    return await User.findAll();
+    return await User.findAll({
+      include: [
+        {
+          model: Intervencion,
+        },
+      ],
+    });
   }
 
   async findOne(username: string): Promise<User | null> {

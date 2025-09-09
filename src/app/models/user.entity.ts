@@ -1,4 +1,5 @@
 import {
+  BelongsToMany,
   Column,
   CreatedAt,
   DeletedAt,
@@ -7,6 +8,8 @@ import {
   Table,
   UpdatedAt,
 } from "sequelize-typescript";
+import { Intervencion } from "./intervencion.entity";
+import { Acompania } from "./acompania.entity";
 
 @Table({ tableName: "users" })
 export class User extends Model {
@@ -34,4 +37,7 @@ export class User extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  @BelongsToMany(() => Intervencion, () => Acompania)
+  declare intervenciones: Intervencion[];
 }

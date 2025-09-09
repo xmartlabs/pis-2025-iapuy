@@ -1,4 +1,6 @@
-import { User } from "@/app/api/users/models/user.entity";
+import { Acompania } from "@/app/models/acompania.entity";
+import { Intervencion } from "@/app/models/intervencion.entity";
+import { User } from "@/app/models/user.entity";
 import { Sequelize } from "sequelize-typescript";
 
 const sequelize = new Sequelize({
@@ -8,7 +10,7 @@ const sequelize = new Sequelize({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
   dialect: "postgres",
-  models: [User],
+  models: [User, Intervencion, Acompania],
   logging: false,
   define: {
     timestamps: true,
