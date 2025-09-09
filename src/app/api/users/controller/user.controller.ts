@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { UserService } from "../service/user.service";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { UpdateUserDto } from "../dtos/update-user.dto";
+import { PaginationDto } from "@/lib/pagination/pagination.dto";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
 
-  async getUsers() {
+  async getUsers(pagination: PaginationDto) {
     try {
-      const users = await this.userService.findAll();
+      const users = await this.userService.findAll(pagination);
       return NextResponse.json(users);
     } catch (error) {
       console.error(error);

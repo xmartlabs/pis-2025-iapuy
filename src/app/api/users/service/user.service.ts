@@ -1,16 +1,28 @@
 import { User } from "@/app/models/user.entity";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
+import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import { getPaginationResultFromModel } from "@/lib/pagination/transform";
+import { Op } from "sequelize";
 
 export class UserService {
-  async findAll(): Promise<User[]> {
-    return await User.findAll({
+  async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
+    const result = await User.findAndCountAll({
+      where: pagination.query
+        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+        : undefined,
       include: [
         {
           model: Intervencion,
         },
       ],
+      limit: pagination.size,
+      offset: pagination.getOffset(),
+      order: pagination.getOrder(),
     });
+
+    return getPaginationResultFromModel(pagination, result);
   }
 
   async findOne(username: string): Promise<User | null> {

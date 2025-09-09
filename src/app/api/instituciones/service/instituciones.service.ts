@@ -1,17 +1,21 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
-import { User } from "@/app/models/user.entity";
+import { Institucion } from "@/app/models/institucion.entity";
+import { Patologia } from "@/app/models/patologia.entity";
 import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
+import { Op } from "sequelize";
 
-export class IntervencionService {
+export class InstitucionesService {
   async findAll(
     pagination: PaginationDto
-  ): Promise<PaginationResultDto<Intervencion>> {
-    const result = await Intervencion.findAndCountAll({
+  ): Promise<PaginationResultDto<Institucion>> {
+    const result = await Institucion.findAndCountAll({
+      where: pagination.query
+        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+        : undefined,
       include: [
         {
-          model: User,
+          model: Patologia,
         },
       ],
       limit: pagination.size,
