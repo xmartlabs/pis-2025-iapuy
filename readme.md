@@ -26,7 +26,7 @@ Before pushing to the repo all changes should be testes dockerizing the whole ap
 docker-compose up postgres -d
 ```
 ```shell
-cd my-app && npm run dev
+npm run dev
 ```
 
 
