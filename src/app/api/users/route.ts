@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { UserController } from "./controller/user.controller";
 import { initDatabase } from "@/lib/init-database";
 import { extractPagination } from "@/lib/pagination/extraction";
@@ -12,12 +12,12 @@ export async function GET(request: NextRequest) {
     const pagination = await extractPagination(request);
 
     return userController.getUsers(pagination);
-  } catch (error) {
-    console.error(error);
-    return new Response(undefined, { status: 400 });
+  } catch {
+    return new Response(JSON.stringify({ error: "Bad request" }), { status: 400 });
   }
 }
 
 export async function POST(request: NextRequest) {
   return userController.createUser(request);
 }
+

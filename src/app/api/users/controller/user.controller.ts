@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest} from "next/server";
 import { UserService } from "../service/user.service";
-import { CreateUserDto } from "../dtos/create-user.dto";
-import { UpdateUserDto } from "../dtos/update-user.dto";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { CreateUserDto } from "../dtos/create-user.dto";
+import type { UpdateUserDto } from "../dtos/update-user.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
