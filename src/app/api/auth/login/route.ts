@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { User } from "@/app/models/user.entity";
 import { UserService } from "../../users/service/user.service";
 import { initDatabase } from "@/lib/init-database";
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -14,20 +13,25 @@ const userService = new UserService();
 
 export async function POST(req:Request){
     const { ci, password} = await req.json();
-    //Verificar db
+    
+    
     await initDatabase();
+
+    //Se verifican las credenciales del usuario
     const user = await userService.findOne(ci);
-    if(user == undefined){
+    if(user == undefined || user.password != password){
         return NextResponse.json({error:"Credenciales invalidas"}, {status:401});
-    }else if(user.password != password){
-        return NextResponse.json({error:"Mala contrasenia"}, {status:401});
     }
     const nombreUsuario = user.nombre;
-    const tipoUsuario = TipoUsuario.Colaborador;
+    const tipoUsuario = user.esAdmin ? TipoUsuario.Administrador:TipoUsuario.Colaborador;
+
+    //Se crea el access token
     const accessToken = jwt.sign({nombre: nombreUsuario, tipo: tipoUsuario}, JWT_SECRET, {expiresIn:"15m"})
     
+    //Se crea el refresh token
     const refreshToken = jwt.sign({nombre: nombreUsuario, tipo: tipoUsuario}, JWT_SECRET, {expiresIn:"180d"})
 
+    //Se envia el access token y se incluye la cookie con el access token en la respuesta
     const res = NextResponse.json({accessToken});
     res.cookies.set("refreshToken", refreshToken, {
         httpOnly: true,

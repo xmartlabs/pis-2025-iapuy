@@ -5,6 +5,8 @@ import { UserService } from "../../users/service/user.service";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function POST(req:Request){
+
+    //Se obtiene el refresh token de la cookie guardada si la hay
     const cookieHeader = req.headers.get("cookie") ?? "";
     const refreshToken = cookieHeader
     .split(";")
@@ -12,7 +14,7 @@ export async function POST(req:Request){
     ?.split("=")[1];
 
     if( !refreshToken){
-        return NextResponse.json({error:"No refresh token"}, {status:401});
+        return NextResponse.json({error:"No se encontro un token de refresco en la solicitud."}, {status:401});
     }
 
     try{
@@ -22,7 +24,7 @@ export async function POST(req:Request){
         const newAccessToken = jwt.sign({nombre:payload.nombre, tipo: payload.tipo}, JWT_SECRET,{expiresIn: "15m"});
         return NextResponse.json({accessToken:newAccessToken});
     } catch{
-        return NextResponse.json({ error: "Invalid or expired refresh token" }, { status: 403 });
+        return NextResponse.json({ error: "El refresh token es invalido o ha expirado." }, { status: 403 });
     }
 }
 
