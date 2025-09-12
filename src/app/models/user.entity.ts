@@ -21,6 +21,9 @@ export class User extends Model {
   declare nombre: string;
 
   @Column
+  declare apellido: string;
+
+  @Column
   declare celular: string;
 
   @Column
@@ -43,6 +46,4 @@ export class User extends Model {
 
   @BelongsToMany(() => Intervencion, () => Acompania)
   declare intervenciones: Intervencion[];
-
 }
-
