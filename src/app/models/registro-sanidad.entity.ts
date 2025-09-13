@@ -1,10 +1,8 @@
 import {
-  BelongsTo,
   Column,
   CreatedAt,
   DeletedAt,
   ForeignKey,
-  HasMany,
   Model,
   PrimaryKey,
   Table,
@@ -12,9 +10,6 @@ import {
 } from "sequelize-typescript";
 
 import { Perro } from "./perro.entity";
-import { Banio } from "./banio.entity";
-import { Vacuna } from "./vacuna.entity";
-import { Desparasitacion } from "./desparasitacion.entity";
 
 @Table({ tableName: "registro-sanidades" })
 export class RegistroSanidad extends Model {
@@ -34,16 +29,4 @@ export class RegistroSanidad extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
-  @BelongsTo(() => Perro)
-  declare perro: Perro;
-
-  @HasMany(() => Banio)
-  declare banios: Banio[];
-
-  @HasMany(() => Vacuna)
-  declare vacunas: Vacuna[];
-
-  @HasMany(() => Desparasitacion)
-  declare desparasitaciones: Desparasitacion[];
 }

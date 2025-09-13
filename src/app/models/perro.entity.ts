@@ -1,5 +1,4 @@
 import {
-  BelongsTo,
   Column,
   CreatedAt,
   DataType,
@@ -39,7 +38,4 @@ export class Perro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
-  @BelongsTo(() => User)
-  declare duenio: User;
 }
