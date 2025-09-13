@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LoginProvider } from "@/app/context/loginProvider";
 
 export const metadata: Metadata = {
   title: "IAPUy",
@@ -13,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body >
-          {children}        
+        <LoginProvider>
+          {children} 
+        </LoginProvider>       
       </body>
     </html>
   );

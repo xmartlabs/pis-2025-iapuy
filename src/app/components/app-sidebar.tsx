@@ -3,6 +3,9 @@ import { Building,Dog,PersonStanding,CalendarRange,BadgeDollarSign} from "lucide
 import Image from 'next/image'
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useContext } from "react";
+import { LoginContext } from "@/app/context/loginContext";
+import {TipoUsuario} from "@/app/page"
 import {
   Sidebar,
   SidebarContent,
@@ -15,37 +18,43 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// Menu items.
-const items = [
+
+export function AppSidebar() {
+  const pathName=usePathname()
+  const context = useContext(LoginContext);
+  const tipo=context?.tipo_usuario
+  const items = [
   {
     title: "Perros",
     url: "/app/admin/perros",
     icon:Dog,
+    onlyAdmin:true,
   },
   {
     title: "Personas",
     url: "/app/admin/personas",
     icon:PersonStanding,
+    onlyAdmin:true,
   },
   {
     title: "Instituciones",
     url: "/app/admin/instituciones",
     icon:Building,
+    onlyAdmin:true,
   },
   {
     title: "Intervenciones",
-    url: "/app/admin/intervenciones",
+    url: tipo === TipoUsuario.Administrador ? "/app/admin/intervenciones":"/app/colaboradores/intervenciones",
     icon:CalendarRange,
+    onlyAdmin:false
   },
   {
     title: "Gastos",
-    url: "/app/admin/gastos",
+    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos":"/app/colaboradores/gastos",
     icon:BadgeDollarSign,
+    onlyAdmin:false
   },
 ]
-
-export function AppSidebar() {
-  const pathName=usePathname()
   return (
     <Sidebar>
       <SidebarHeader className=" h-[261px]">
@@ -63,19 +72,27 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <div className={`w-[228px] h-[40px] flex items-center justify-start ${pathName === item.url ? "bg-[#DEEBD9]" : ""}`}>
-                       <Link
-                          href={item.url}
-                          className="flex items-center gap-2">
-                          <item.icon className="mr-2"/>
-                          <span className="font-medium text-[14px] leading-5 tracking-normal">{item.title}</span>
+              {items.filter(item => {
+                  if (tipo === TipoUsuario.Administrador) return true; 
+                  return item.onlyAdmin === false; 
+                })
+                .map(item => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <div
+                        className={`w-[228px] h-[40px] flex items-center justify-start ${
+                          pathName === item.url ? "bg-[#DEEBD9]" : ""
+                        }`}
+                      >
+                        <Link href={item.url} className="flex items-center gap-2">
+                          <item.icon className="mr-2" />
+                          <span className="font-medium text-[14px] leading-5 tracking-normal">
+                            {item.title}
+                          </span>
                         </Link>
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
