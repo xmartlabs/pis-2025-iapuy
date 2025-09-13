@@ -1,21 +1,27 @@
-import { NextResponse } from "next/server";
-import { RegistrosSanidadService } from "../service/registro-sanidad.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import {RegistrosSanidadService} from "../service/registro-sanidad.service";
+import type {PaginationDto} from "@/lib/pagination/pagination.dto";
+import {RegistroSanidad} from "@/app/models/registro-sanidad.entity"
+
 
 export class RegistrosSanidadController {
-  constructor(
-    private readonly registrosSanidadService: RegistrosSanidadService = new RegistrosSanidadService()
-  ) {}
-  async getRegistrosSanidad(pagination: PaginationDto) {
-    try {
-      const users = await this.registrosSanidadService.findAll(pagination);
-      return NextResponse.json(users);
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    constructor(
+        private readonly registrosSanidadService: RegistrosSanidadService = new RegistrosSanidadService()
+    ) {
     }
-  }
+
+    async getRegistrosSanidad(pagination: PaginationDto) {
+        try {
+            const attributes = Object.keys(RegistroSanidad.getAttributes());
+            const paginationResult = await this.registrosSanidadService.findAll(pagination);
+
+            return (
+                {
+                    data: paginationResult.data,
+                    attributes,
+                }
+            );
+        } catch {
+            return ({attributes: [], data: []});
+        }
+    }
 }
