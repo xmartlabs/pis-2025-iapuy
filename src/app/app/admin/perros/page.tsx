@@ -1,4 +1,4 @@
-import DetallePerro from "./detalles/DetallePerro";
+import DetallePerro from "./detalles/detalle-perro";
 import ListadoPerros from "./ListadoPerros";
 
 export default function PantallaPerros() {
