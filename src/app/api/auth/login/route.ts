@@ -25,21 +25,20 @@ export async function POST(req: Request) {
     );
   }
   const nombreUsuario = user.nombre;
-  const apellidoUsuario = user.apellido;
   const tipoUsuario = user.esAdmin
     ? TipoUsuario.Administrador
     : TipoUsuario.Colaborador;
 
   //Se crea el access token
   const accessToken = jwt.sign(
-    { nombre: nombreUsuario, apellido: apellidoUsuario, tipo: tipoUsuario },
+    { nombre: nombreUsuario, tipo: tipoUsuario },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
 
   //Se crea el refresh token
   const refreshToken = jwt.sign(
-    { nombre: nombreUsuario, apellido: apellidoUsuario, tipo: tipoUsuario },
+    { nombre: nombreUsuario, tipo: tipoUsuario },
     JWT_SECRET,
     { expiresIn: "180d" }
   );

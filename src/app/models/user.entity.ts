@@ -21,9 +21,6 @@ export class User extends Model {
   declare nombre: string;
 
   @Column
-  declare apellido: string;
-
-  @Column
   declare celular: string;
 
   @Column

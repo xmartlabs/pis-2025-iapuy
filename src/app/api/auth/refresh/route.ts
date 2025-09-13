@@ -26,7 +26,6 @@ export async function POST(req: Request) {
     const newAccessToken = jwt.sign(
       {
         nombre: payload.nombre,
-        apellido: payload.apellido,
         tipo: payload.tipo,
       },
       JWT_SECRET,
