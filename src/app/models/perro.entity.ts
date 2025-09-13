@@ -10,6 +10,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
+import { UsrPerro } from "./usrperro.entity";
 
 @Table({ tableName: "perros" })
 export class Perro extends Model {
@@ -38,4 +39,6 @@ export class Perro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare UsrPerros: UsrPerro[];
 }
