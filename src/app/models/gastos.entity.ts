@@ -1,5 +1,4 @@
 import {
-  BelongsTo,
   Column,
   CreatedAt,
   DataType,
@@ -51,10 +50,4 @@ export class Gasto extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
-  @BelongsTo(() => User)
-  declare usuario: User;
-
-  @BelongsTo(() => Intervencion)
-  declare intervencion: Intervencion;
 }

@@ -1,5 +1,4 @@
 import {
-  BelongsTo,
   Column,
   CreatedAt,
   DeletedAt,
@@ -39,13 +38,4 @@ export class UsrPerro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
-  @BelongsTo(() => User)
-  declare user: User;
-
-  @BelongsTo(() => Intervencion)
-  declare intervencion: Intervencion;
-
-  @BelongsTo(() => Perro)
-  declare perro: Perro;
 }
