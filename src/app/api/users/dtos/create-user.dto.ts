@@ -4,4 +4,5 @@ export class CreateUserDto {
   declare nombre: string;
   declare celular: string;
   declare cuentaBancaria: string;
+  declare perros: Array<String>;
 }

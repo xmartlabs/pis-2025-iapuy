@@ -1,4 +1,5 @@
 import { User } from "@/app/models/user.entity";
+import { Perro } from "@/app/models/perro.entity";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
@@ -6,6 +7,7 @@ import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Hashing } from "@/lib/crypto/hash";
 import { Op } from "sequelize";
+import sequelize from "@/lib/database";
 
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
@@ -30,9 +32,30 @@ export class UserService {
     return await User.findByPk(username);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<String> {
     createUserDto.password = await Hashing.hashPassword(createUserDto.password);
-    return await User.create({ ...createUserDto });
+    const transaction = await sequelize.transaction();
+    
+    try{
+      const usr = await User.create({ ...createUserDto }, { transaction });
+      const perros : Array<String> = createUserDto.perros;
+      await Promise.all(
+      perros.map(async (perro) => {
+          const p = await Perro.findOne({ where: { id: perro } });
+          if (p) {
+            await p.update({ duenioId: createUserDto.ci }, { transaction });
+          }
+        })
+      );
+
+      await transaction.commit();
+
+      return usr.ci;
+    }
+    catch (error){
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async update(
