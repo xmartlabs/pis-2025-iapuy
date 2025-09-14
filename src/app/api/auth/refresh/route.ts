@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import { User } from "@/app/models/user.entity";
-import { UserService } from "../../users/service/user.service";
+import jwt, { JwtPayload } from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function POST(req: Request) {
@@ -20,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const payload = jwt.verify(refreshToken, JWT_SECRET) as any;
+    const payload = jwt.verify(refreshToken, JWT_SECRET) as JwtPayload;
 
     //Se genera un nuevo access token
     const newAccessToken = jwt.sign(
