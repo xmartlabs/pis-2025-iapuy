@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import {
   Table,
@@ -10,79 +10,122 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/app/components/ui/table";
+} from "@/components/ui/table";
 
 type RegistroSanidadApiResponse = {
-  attributes: string[];
   listadoRegistros: Registro[];
   error?: string;
 };
 
 type Registro = { Fecha: string; Actividad: string };
+const attributes: string[] = ["Fecha", "Actividad"];
 
 export default function HistorialSanidad() {
-  const [attributes, setAttributes] = useState<string[]>([]);
   const [registros, setRegistros] = useState<Registro[]>([]);
+  const [isOpenEdit, setIsOpenEdit] = useState(false);
+  const [isOpenError, setIsOpenError] = useState(false);
+
   const searchParams = useSearchParams();
-  const id = searchParams.get("id") ?? "";
+  const id: string = searchParams.get("id") ?? "";
+
   useEffect(() => {
     fetch(`/api/registros-sanidad?id=${encodeURIComponent(id)}`)
       .then((res) => res.json() as Promise<RegistroSanidadApiResponse>)
       .then((data) => {
-        setAttributes(data.attributes);
         let regs: Registro[] = [];
         if (data.listadoRegistros) {
           regs = data.listadoRegistros;
         }
         setRegistros(regs);
-        //console.log(data.error);
       })
-      .catch((err) => {
-        console.error("Failed to fetch users:", err);
+      .catch(() => {
+        setIsOpenError(true);
       });
-  }, []);
+  }, [id]);
+
   return (
     <>
-      <div className="w-[1116px] h-[212px] flex flex-col gap-5 rotate-0 opacity-100">
-        <h2 className="font-serif font-semibold text-xl text-[#1B2F13] w-[233] h-[32] opacity-100">
+      <div className="flex flex-col gap-5 mb-4">
+        <h2 className="font-serif font-semibold text-xl text-[#1B2F13]">
           Historial de sanidad
         </h2>
-        <Table className="w-full rounded border border-gray-300 overflow-hidden">
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              {attributes.map((attr) => (
-                <TableHead
-                  className="px-4 py-2 text-left text-sm font-semibold text-gray-700"
-                  key={attr}
-                >
-                  {attr}
+        <div className="rounded-md border">
+          <Table className="min-w-full table-fixed">
+            <TableHeader className="h-[48px] text-sm font-semibold text-gray-700 pointer-events-none">
+              <TableRow>
+                <TableHead className="w-[200px]" key={attributes[0]}>
+                  {attributes[0]}
                 </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-200">
-            {registros.map((registro, i) => (
-              <TableRow className="px-4 py-2" key={i}>
-                {attributes.map((attr) => (
-                  <TableCell key={attr}>
-                    {String(registro[attr as keyof Registro] ?? "")}
-                  </TableCell>
-                ))}
-                <TableCell key="actions">
-                  <div className="flex space-x-4">
-                    <button className="text-green-500 hover:text-green-700">
-                      <Pencil className="h-6 w-6" />
-                    </button>
-                    <button className="text-green-500 hover:text-green-700">
-                      <Trash className="h-6 w-6" />
-                    </button>
-                  </div>
-                </TableCell>
+                <TableHead key={attributes[1]}>{attributes[1]}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-200">
+              {registros.map((registro, i) => (
+                <TableRow key={i} className="h-[56px]">
+                  {attributes.map((attr) => (
+                    <TableCell key={attr}>
+                      {String(registro[attr as keyof Registro] ?? "")}
+                    </TableCell>
+                  ))}
+                  <TableCell>
+                    <div className="flex flex-row justify-end text-green-500 hover:text-green-700">
+                      <button
+                        className=" w-[3%] mx-6"
+                        onClick={() => {
+                          setIsOpenEdit(true);
+                        }}
+                      >
+                        <Pencil />
+                      </button>
+                      <button className=" w-[3%] mx-6">
+                        <Trash2 />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
+      {isOpenEdit && (
+        <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-xl font-bold mb-4">Editar X</h2>
+            <p>Este es el contenido del modal.</p>
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  setIsOpenEdit(false);
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOpenError && (
+        <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-xl font-bold mb-4">Error</h2>
+            <p>Hubo un problema con el servidor</p>
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  setIsOpenError(false);
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,13 +1,12 @@
 import DetallePerro from "./detalle-perro";
 import HistorialSanidad from "./historial-sanidad";
 import HistorialIntervenciones from "./historial-intervenciones";
-
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
 export default function PantallaPerros() {
   return (
-    <div className="pantalla-perros">
+    <div className="w-[96%] flex flex-col gap-4 pt-[3%] pb-[3%] pl-2">
       <DetallePerro />
       <HistorialIntervenciones />
       <HistorialSanidad />

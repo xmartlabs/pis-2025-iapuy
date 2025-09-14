@@ -18,8 +18,6 @@ export class RegistrosSanidadController {
 
   async getRegistrosSanidad(pagination: PaginationDto & { id: string }) {
     try {
-      //const attributes = Object.keys(RegistroSanidad.getAttributes());
-      const attributes: string[] = ["Fecha", "Actividad"];
       const { id, ...paginationParams } = pagination;
       const pag = paginationParams as PaginationDto;
       const paginationResult = await this.registrosSanidadService.findAll(
@@ -34,7 +32,7 @@ export class RegistrosSanidadController {
         registroSanidad.Vacunas.forEach((vacuna: Vacuna) => {
           listadoRegistros.push({
             Fecha: vacuna.fecha.toLocaleDateString("es-ES"),
-            Actividad: "Vacunación",
+            Actividad: "Vacuna",
           });
         });
       }
@@ -56,11 +54,10 @@ export class RegistrosSanidadController {
       }
 
       return {
-        attributes,
         listadoRegistros,
       };
     } catch (error) {
-      return { attributes: [], registro: [], error };
+      return { listadoRegistros: [], error };
     }
   }
 }
