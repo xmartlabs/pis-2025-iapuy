@@ -2,8 +2,8 @@ const config = {
   dialect: "postgres",
   host: "localhost",
   database: "your_db",
-  username: "root",
-  password: "password",
+  username: "PIS",
+  password: "Pis2025",
   define: {
     timestamps: true,
     underscored: false,
