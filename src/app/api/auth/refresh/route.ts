@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-export async function POST(req: Request) {
+export function POST(req: Request) {
   //Se obtiene el refresh token de la cookie guardada si la hay
+
+  interface PayloadForRefresh extends jwt.JwtPayload {
+    nombre: string;
+    tipo: string;
+  }
   const cookieHeader = req.headers.get("cookie") ?? "";
   const refreshToken = cookieHeader
     .split(";")
@@ -18,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const payload = jwt.verify(refreshToken, JWT_SECRET) as JwtPayload;
+    const payload = jwt.verify(refreshToken, JWT_SECRET) as PayloadForRefresh;
 
     //Se genera un nuevo access token
     const newAccessToken = jwt.sign(

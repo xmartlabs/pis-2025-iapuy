@@ -9,16 +9,21 @@ export enum TipoUsuario {
   Administrador = "Administrador",
 }
 
+interface LoginRequest {
+  ci: string;
+  password: string;
+}
+
 const userService = new UserService();
 
 export async function POST(req: Request) {
-  const { ci, password } = await req.json();
+  const { ci, password } = (await req.json()) as LoginRequest;
 
   await initDatabase();
 
   //Se verifican las credenciales del usuario
   const user = await userService.findOne(ci);
-  if (user == undefined || user.password != password) {
+  if (user === undefined || user === null || user.password !== password) {
     return NextResponse.json(
       { error: "Credenciales invalidas" },
       { status: 401 }
