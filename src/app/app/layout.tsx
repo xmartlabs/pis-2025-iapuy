@@ -2,21 +2,20 @@
 import { SidebarProvider, SidebarTrigger,SidebarInset } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { AppSidebar } from "@/app/components/app-sidebar"
-import { LoginContext } from "@/app/context/loginContext";
+import { LoginContext } from "@/app/context/login-context";
 import { useContext } from "react";
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
   const context = useContext(LoginContext);
-  const nombre_usuario = context?.nombre_usuario ?? '';
-  console.log(nombre_usuario)
-  const data=nombre_usuario?.split(' ')
-  let iniciales: string
-  let nombre:string
-  let apellido:string
+  const nombreUsuario = context?.nombreUsuario ?? '';
+  const data=nombreUsuario?.split(' ')
+  let iniciales: string =''
+  let nombre:string =''
+  let apellido:string =''
   if (data.length>1){
     nombre=data?.[0].charAt(0);
     apellido=data?.[1].charAt(0);
     iniciales = (nombre + apellido).toUpperCase();
-  }else if(data.length==1){
+  }else if(data.length===1){
     nombre=data?.[0].charAt(0);
     iniciales = nombre+nombre
   }

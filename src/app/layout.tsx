@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { LoginProvider } from "@/app/context/loginProvider";
+import { LoginProvider } from "@/app/context/login-provider";
 
 export const metadata: Metadata = {
   title: "IAPUy",

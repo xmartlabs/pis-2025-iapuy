@@ -2,9 +2,9 @@
 import Image from "next/image";
 import Link from "next/link"
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input"
-import { useEffect,useState,useContext } from "react";
-import { LoginContext } from "@/app/context/loginContext";
+//import { Input } from "@/components/ui/input"
+import { useEffect,useState,useContext,useCallback } from "react";
+import { LoginContext } from "@/app/context/login-context";
 import {jwtDecode} from "jwt-decode";
 export enum TipoUsuario{
   Colaborador = "Colaborador",
@@ -23,10 +23,9 @@ export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const handleLoginSuccess = (data: LoginResponse) => {
-    
 
-  const decoded = jwtDecode<JwtPayload>(data.accessToken);
+  const handleLoginSuccess = useCallback((data: LoginResponse) => {
+    const decoded = jwtDecode<JwtPayload>(data.accessToken);
 
     context?.setToken(data.accessToken);
     context?.setTipo(decoded.tipo);
@@ -37,7 +36,7 @@ export default function Home() {
     } else {
       router.push("/app/colaboradores/intervenciones");
     }
-  };
+  }, [context, router]);
     useEffect(() => {
       const renovarToken = async () => {
         try {
@@ -47,18 +46,18 @@ export default function Home() {
           });
 
           if (res.ok) {
-            const data = await res.json();
+            const data = await res.json() as LoginResponse;
             handleLoginSuccess(data)
           }
-        } catch (err) {
-          alert("Error interno: pruebe en unos minutos");
         }
         finally{
           setLoading(false);
         }
       };
-      renovarToken();
-    }, [])   
+      renovarToken().catch(() => {
+        setLoading(false);
+      });
+    }, [handleLoginSuccess])   
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setSubmitting(true);
@@ -72,20 +71,19 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ci, password }),
         });
-        if (!res.ok) {// si es un error
-          const errorData = await res.json();
-          alert(errorData.error);
-          return;
+        if (res.ok) {
+          const data  = await res.json() as LoginResponse;
+          handleLoginSuccess(data)
         }
-        const data: LoginResponse = await res.json();
-        handleLoginSuccess(data)
-      } catch (err) {
-        alert("Error interno: pruebe en unos minutos");
       } finally {
         setSubmitting(false);
       }
     };
-    if (loading || context?.token_jwt) {
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      handleSubmit(e).catch(console.error);
+    };
+    if (loading || context?.tokenJwt) {
       return (
         <div/>
       );
@@ -103,7 +101,7 @@ export default function Home() {
           <h1 className="w-[307px] h-[28px] !mt-[32px] font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle ">Iniciar Sesión</h1>
           
           <form
-            onSubmit={handleSubmit} 
+             onSubmit={handleFormSubmit}
             className="w-[436px] h-[208px] flex flex-col gap-6">
             <label className="flex flex-col gap-2">
               Cédula de identidad
@@ -125,6 +123,7 @@ export default function Home() {
             </label>
             <label className="flex flex-col gap-2">
               Recuperar contraseña
+              <input type="text" />
             </label>
             <button 
               type="submit"

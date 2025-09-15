@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContext } from "react";
-import { LoginContext } from "@/app/context/loginContext";
+import { LoginContext } from "@/app/context/login-context";
 import {TipoUsuario} from "@/app/page"
 import {
   Sidebar,
@@ -12,17 +12,18 @@ import {
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-
 export function AppSidebar() {
   const pathName=usePathname()
   const context = useContext(LoginContext);
-  const tipo=context?.tipo_usuario
+  if (!context?.tipoUsuario) {
+    throw new Error("No se pudo determinar el tipo de usuario");
+  }
+  const tipo:TipoUsuario=context?.tipoUsuario 
   const items = [
   {
     title: "Perros",
