@@ -16,3 +16,7 @@ export async function GET(request: NextRequest) {
     return new Response(undefined, { status: 400 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  return perrosController.createPerro(request);
+}

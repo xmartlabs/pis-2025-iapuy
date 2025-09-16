@@ -23,8 +23,8 @@ export class Perro extends Model {
   @Column
   declare descripcion: string;
 
-  @Column({ type: DataType.ARRAY(DataType.STRING) })
-  declare fortalezas: string[];
+  @Column
+  declare fortalezas: string;
 
   @ForeignKey(() => User)
   @Column

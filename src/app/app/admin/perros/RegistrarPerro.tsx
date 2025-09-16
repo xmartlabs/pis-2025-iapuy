@@ -36,18 +36,19 @@ import {
 } from "@/components/ui/select"
 import { useEffect, useState } from "react"
 
-type Usuario = {
-    nombres: string;
+type UsuarioDTO = {
+    nombre: string;
 }
 
 type UsuariosResponse = {
-    data: Usuario[];
+    data: UsuarioDTO[];
 };
 
 
 export default function RegistrarPerro() {
     const [duenos, setDuenos] = useState<string[]>([]);
     // const [error, setError] = useState<String | unknown>("");
+    
     useEffect(() => {
         const llamadaApi = async () => {
             try {
@@ -64,7 +65,8 @@ export default function RegistrarPerro() {
         };
         llamadaApi();
     }, []);
-    const FormSchema = z.object({
+
+    const createPerroSchema = z.object({
         nombrePerro: z.string().min(2, {
             message: "Este campo es obligatorio.",
         }),
@@ -73,8 +75,8 @@ export default function RegistrarPerro() {
         fuertes: z.string().optional(),
     })
 
-    const form = useForm<z.infer<typeof FormSchema>>({
-        resolver: zodResolver(FormSchema),
+    const form = useForm<z.infer<typeof createPerroSchema>>({
+        resolver: zodResolver(createPerroSchema),
         defaultValues: {
             nombrePerro: "",
             dueno: "",
@@ -82,15 +84,38 @@ export default function RegistrarPerro() {
             fuertes: "",
         },
     })
-    function onSubmit(data: z.infer<typeof FormSchema>) {
-        toast("You submitted the following values", {
-            description: (
-                <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-                    <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-        })
+    
+     async function onSubmit(data: z.infer<typeof createPerroSchema>) {
+        try {
+            const res = await fetch("/api/perros", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            const result = await res.json();
+            
+            if (res.ok) {
+                toast("You submitted the following values", {
+                    description: (
+                        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
+                            <code className="text-white">{JSON.stringify(result, null, 2)}</code>
+                        </pre>
+                    ),
+                }) 
+            }else{
+                toast("Error al crear el perro", {
+                description: result.error || "Ocurrió un error inesperado",
+                });
+            }
+        }catch(error){
+            toast("Error en el servidor", {
+                description: String(error),
+            });
+        }
     }
+
+       
     return (<Dialog>
         <Form {...form}>
 

@@ -4,6 +4,7 @@ import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
+import { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 export class PerrosService {
   async findAll(
@@ -25,4 +26,8 @@ export class PerrosService {
 
     return getPaginationResultFromModel(pagination, result);
   }
+
+  async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
+      return await Perro.create({ ...createPerroDto });
+    }
 }
