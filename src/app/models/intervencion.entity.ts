@@ -1,5 +1,4 @@
 import {
-  BelongsToMany,
   Column,
   CreatedAt,
   DataType,
@@ -11,7 +10,6 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Acompania } from "./acompania.entity";
 
 export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
 
@@ -53,7 +51,4 @@ export class Intervencion extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
-  @BelongsToMany(() => User, () => Acompania)
-  declare acompaniantes: User[];
 }
