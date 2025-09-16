@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import {
   Table,
@@ -28,7 +29,7 @@ export default function ListadoPersonas() {
   const [users, setUsers] = useState<UserRow[]>([]);
 
   useEffect(() => {
-    fetch("/api/users") //to do : entender como manejar la paginacion
+    fetch("/api/users") //to do : entender como manejar la paginacion si hay mas de una pagina
       .then((res) => res.json() as Promise<UsersApiResponse>)
       .then((data) => {
         setAttributes(data.attributes);
@@ -40,25 +41,25 @@ export default function ListadoPersonas() {
   }, []);
   const columnHeader: string[]= ["Nombre","Cedula de identidad","Celular","Banco", "Número de Cuenta", "Perro"];
   return (
-    <div className="w-[1180px] ml-[20px]">
-      <div className="w-[1116px] mb-[20px] pr-[20px]"  >{/* to do : averiguiar cuanto padding bottom */}
-        <h1 className="text-5xl leading-none font-semibold">Personas</h1>
-        <Button variant="outline">+ Agregar Persona</Button>
+    <div className=" w-full"
+    >
+      <div className="max-w-[1116px] mx-auto w-full mb-[20px] pt-[60px] flex justify-between"  >{/* to do : averiguaar cuanto padding bottom */}
+        <h1 className="text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Personas</h1> {/* to do : con el peso en semi bold no se ve como en la ui */}
+        <div className="flex justify-end items-center pt-3">
+          <Button asChild className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white">
+            <Link href="/app/admin/personas/nueva">+ Agregar Persona</Link>
+          </Button>
+        </div>
       </div>
       <div
-        className="border border-gray-300 mt-[20px] overflow-x-auto"
-        style={{
-          width: 'calc(100% - 260px)',
-          paddingRight: '20px',
-          marginRight: '20px',
-        }}
+        className="max-w-[1116px] mx-auto w-full border border-gray-300 mt-[20px] rounded-lg"
       >
       <Table>
         <TableHeader>
           <TableRow>
             {
             columnHeader.map(head => (
-            <TableHead key={head} className="text-sm font-medium font-sans leading-6 medium w-[174px] h-[56px]">{head}</TableHead>
+            <TableHead key={head} className="text-sm font-medium leading-6 medium w-[174px] h-[56px]">{head}</TableHead>
           ))}
         </TableRow>
         </TableHeader>
@@ -77,10 +78,17 @@ export default function ListadoPersonas() {
               })}
             <TableCell key="perros" className="w-[186px] h-[48px]">
               {Array.isArray(user.perros)
-                ? user.perros
-                    .map(p => p?.nombre)
-                    .filter(Boolean)
-                    .join(", ")
+                ? user.perros.map((p, index) => (
+                    p?.nombre ? (
+                      <Link
+                        key={index}
+                        href={`/app/admin/perros/detalle/${p.nombre}`}
+                        className="!underline hover:text-blue-800 mr-2"
+                      >
+                        {p.nombre === null ||p.nombre === undefined ? "No tiene" : p.nombre}
+                      </Link>
+                    ) : null
+                  ))
                 : ""}
             </TableCell>
           </TableRow>

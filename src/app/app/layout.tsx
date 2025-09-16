@@ -5,7 +5,7 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
     <SidebarProvider >
         
       <AppSidebar />
-      <main style={{marginLeft:'32px'}}>
+      <main style={{marginLeft:'32px', marginRight:'32px'}}>
         {children}
       </main>
     </SidebarProvider>

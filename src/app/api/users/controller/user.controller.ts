@@ -10,9 +10,8 @@ export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
 
   async getUsers(pagination: PaginationDto) {
-    try {
-      const attributes = Object.keys(User.getAttributes());
-      const paginationResult: PaginationResultDto<User> = await this.userService.findAll(pagination);
+    const attributes = Object.keys(User.getAttributes());
+    const paginationResult: PaginationResultDto<User> = await this.userService.findAll(pagination);
 
     return {
       attributes,
@@ -21,10 +20,7 @@ export class UserController {
       page: paginationResult.page,
       size: paginationResult.size,
     };
-  } catch {
-    return { attributes: [], users: [], total: 0, page: 1, size: 10 }; // to do: manejar el error adecuadamente
   }
-}
 
   async getUser(request: NextRequest, { username }: { username: string }) {
     try {
