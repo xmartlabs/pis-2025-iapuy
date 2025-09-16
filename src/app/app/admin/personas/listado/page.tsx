@@ -98,7 +98,7 @@ export default function ListadoPersonas() {
           </Button>
         </div>
       </div>
-      <div className="max-w-[1116px] mx-auto w-full border border-gray-300 mt-[20px] rounded-lg">
+      <div className="max-w-[1116px] mx-auto  w-full border border-gray-300 mt-[20px] rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
