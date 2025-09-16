@@ -23,11 +23,7 @@ export class PerrosController {
 
   async createPerro(request: NextRequest) {
       try {
-        console.log(request)
-        console.log("hola crear perro")
         const body : CreatePerroDTO= await request.json();
-        console.log(body)
-        console.log("pasoelbody")
         const dog = await this.perrosService.create(body);
         return NextResponse.json(dog, { status: 201 });
       } catch (error: any) {

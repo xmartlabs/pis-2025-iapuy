@@ -15,16 +15,14 @@ import {
   InferCreationAttributes,
   type CreationOptional
 } from "sequelize"
+
 import { User } from "./user.entity";
 
 @Table({ tableName: "perros" })
-export class Perro extends Model<
-  InferAttributes<Perro>,
-  InferCreationAttributes<Perro>
-> {
+export class Perro extends Model{
   @PrimaryKey
-  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
-  declare id: CreationOptional<string>;
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 }) //! consultar si no conviene nueva migration en vez de manejarlo del modelo
+  declare id: CreationOptional<string>; // este objeto de sequelize permite que no le pasemos el campo y que lo cree solo, los que no lo tienen debemos pasarlos
 
   @Column
   declare nombre: string;
