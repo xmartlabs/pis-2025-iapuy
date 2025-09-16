@@ -9,13 +9,22 @@ import {
   Table,
   UpdatedAt,
 } from "sequelize-typescript";
+
+import {
+  InferAttributes,
+  InferCreationAttributes,
+  type CreationOptional
+} from "sequelize"
 import { User } from "./user.entity";
 
 @Table({ tableName: "perros" })
-export class Perro extends Model {
+export class Perro extends Model<
+  InferAttributes<Perro>,
+  InferCreationAttributes<Perro>
+> {
   @PrimaryKey
-  @Column
-  declare id: string;
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+  declare id: CreationOptional<string>;
 
   @Column
   declare nombre: string;
@@ -31,11 +40,11 @@ export class Perro extends Model {
   declare duenioId: string;
 
   @CreatedAt
-  declare createdAt: Date;
+  declare createdAt: CreationOptional<Date>;
 
   @UpdatedAt
-  declare updatedAt: Date;
+  declare updatedAt: CreationOptional<Date>;
 
   @DeletedAt
-  declare deletedAt: Date;
+  declare deletedAt: CreationOptional<Date>;
 }

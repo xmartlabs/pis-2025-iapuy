@@ -28,6 +28,14 @@ export class PerrosService {
   }
 
   async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
-      return await Perro.create({ ...createPerroDto });
+      console.log(createPerroDto)
+      
+      return await Perro.create(//{ ...createPerroDto }
+      {
+        nombre: createPerroDto.nombre,
+        descripcion: createPerroDto.descripcion,
+        fortalezas: createPerroDto.fortalezas,
+        duenioId: createPerroDto.duenioId,
+      });
     }
 }

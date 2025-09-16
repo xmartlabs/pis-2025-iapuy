@@ -36,28 +36,39 @@ import {
 } from "@/components/ui/select"
 import { useEffect, useState } from "react"
 
-type UsuarioDTO = {
-    nombre: string;
+
+type UserPair = {
+    ci : string, //! chequear seguridad (es correcto manipular el id o solo manipular el JWT) 
+    nombre: string,
 }
 
-type UsuariosResponse = {
-    data: UsuarioDTO[];
+type UsersResponse = {
+    count : number;
+    data : UserPair[],
+    page : number,
+    size : number,
+    totalItems :number,
+    totalPages:number
 };
 
+type dataPerro = {
+    nombre : string,
+    descripcion?: string,
+    fortalezas?: string,
+    duenioId: string
+}
 
 export default function RegistrarPerro() {
-    const [duenos, setDuenos] = useState<string[]>([]);
+    const [duenos, setDuenos] = useState<UserPair[]>([]);
     // const [error, setError] = useState<String | unknown>("");
     
     useEffect(() => {
         const llamadaApi = async () => {
             try {
                 const response = await fetch("/api/users");
-
-                const datos = await response.json() as Promise<UsuariosResponse>;
-
-                const nombresDuenios = await datos.data.map((u) => u.nombre as string);
-                setDuenos(nombresDuenios);
+                const datos = await response.json() as UsersResponse;
+                const duenios = datos.data;
+                setDuenos(duenios);
             } catch (err) {
                 // setError(err);
                 console.error("Failed to fetch users: ", err);
@@ -87,12 +98,23 @@ export default function RegistrarPerro() {
     
      async function onSubmit(data: z.infer<typeof createPerroSchema>) {
         try {
+            
+            const dataFormat : dataPerro = {
+                nombre : data.nombrePerro,
+                descripcion: data.descripcion,
+                fortalezas: data.fuertes,
+                duenioId: data.dueno
+            } 
+
+            //! las desc y fortalezas si se dejan vacíos se estan insertando como ''
+            //! y no como null, chequear para futuras consultas a la DB al no tener campo NULL
+
             const res = await fetch("/api/perros", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify(dataFormat),
             });
-
+            
             const result = await res.json();
             
             if (res.ok) {
@@ -160,9 +182,9 @@ export default function RegistrarPerro() {
                                             <SelectContent>
                                                 <SelectGroup>
                                                     <SelectLabel>Dueños</SelectLabel>
-                                                    {duenos.map((nombre) => (
-                                                        <SelectItem key={nombre} value={nombre}>
-                                                            {nombre}
+                                                    {duenos.map((user) => (
+                                                        <SelectItem key={user.nombre} value={user.ci}>
+                                                            {user.nombre}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectGroup>
