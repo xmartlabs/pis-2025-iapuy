@@ -2,10 +2,32 @@
 import Image from "next/image";
 import Link from "next/link"
 import { useRouter } from "next/navigation";
-//import { Input } from "@/components/ui/input"
 import { useEffect,useState,useContext,useCallback } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import {jwtDecode} from "jwt-decode";
+
+import { Input } from "@/components/ui/input"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+//import { toast } from "sonner"
+import { z } from "zod"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+
+const FormSchema = z.object({
+  ci: z.string()
+    .min(8, { message: "El largo de la cédula no es válido." })
+    .max(8, { message: "El largo de la cédula no es válido." }),
+  contrasenia: z.string()
+  .min(1,{message: "Debe ingresar la contraseña"}),
+});
 export enum TipoUsuario{
   Colaborador = "Colaborador",
   Administrador = "Administrador",
@@ -23,7 +45,11 @@ export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {ci: "",contrasenia:""},
+  })
   const handleLoginSuccess = useCallback((data: LoginResponse) => {
     const decoded = jwtDecode<JwtPayload>(data.accessToken);
 
@@ -57,32 +83,32 @@ export default function Home() {
       renovarToken().catch(() => {
         setLoading(false);
       });
-    }, [handleLoginSuccess])   
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setSubmitting(true);
-      const formData = new FormData(e.currentTarget);
-      const ci = formData.get("ci") as string;
-      const password = formData.get("password") as string;
+    }, [handleLoginSuccess]);
 
+    const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
+      setSubmitting(true);
+      setLoginError(null); 
       try {
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ci, password }),
+          body: JSON.stringify({ ci: data.ci, password: data.contrasenia }),
         });
-        if (res.ok) {
-          const data  = await res.json() as LoginResponse;
-          handleLoginSuccess(data)
+
+        if (!res.ok) {
+          setLoginError("Usuario o contraseña incorrectos");
+          return;
         }
+
+        const response = (await res.json()) as LoginResponse;
+        handleLoginSuccess(response);
+      } catch (error) {
+        console.error("Error de red o excepción:", error);
       } finally {
         setSubmitting(false);
       }
     };
-    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      handleSubmit(e).catch(console.error);
-    };
+
     if (loading || context?.tokenJwt) {
       return (
         <div/>
@@ -90,56 +116,82 @@ export default function Home() {
     }
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#CEE1C6]">
-      <main className="w-[564px] h-[729px] !py-6 bg-white rounded-[8px] border border-[#D4D4D4] shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A] ">
-        <div className="flex flex-col items-start justify-start !m-[32px] gap-8">
+
+      <main className="w-[564px] h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
+        justify-between opacity-100 shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]">
+        <div className="w-[436px] flex flex-col items-start justify-start !mx-[64px] my-[58px] gap-8">
           <Image
             src="/logo.png"
             alt="Logo"
             width={150}
             height={150}
           />
-          <h1 className="w-[307px] h-[28px] !mt-[32px] font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle ">Iniciar Sesión</h1>
-          
-          <form
-             onSubmit={handleFormSubmit}
-            className="w-[436px] h-[208px] flex flex-col gap-6">
-            <label className="flex flex-col gap-2">
-              Cédula de identidad
-              <input 
-                type="text" 
+          <h1 className="w-[307px] h-[48px]  font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">Iniciar Sesión</h1>
+          <Form {...form}>
+            <form 
+              onSubmit={(e) => {form.handleSubmit(handleFormSubmit)(e).catch(console.error);}}
+              className="w-[436px] flex flex-col gap-6">
+              <FormField
+                control={form.control}
                 name="ci"
-                required 
-                className="w-full p-2 border rounded mt-1" />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              Contraseña
-              <input 
-                type="password" 
-                name="password"
-                required 
-                className="w-full p-2 border rounded mt-1"
-                 />
-            </label>
-            <label className="flex flex-col gap-2">
-              Recuperar contraseña
-              <input type="text" />
-            </label>
-            <button 
-              type="submit"
-              disabled={submitting} 
-              className={`w-[436px] h-[40px] min-w-[80px] rounded-md pt-2 pr-3 pb-2 pl-3 bg-[#5B9B40] text-white text-sm font-medium leading-6 tracking-normal hover:bg-[#4F8736] transition-colors flex items-center justify-center gap-[4px]
-               ${submitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#5B9B40] hover:bg-[#4F8736]'}`}>
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
+                    <FormLabel>Cédula de identidad</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        {...field}
+                        className="w-full p-2 border rounded mt-1"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="contrasenia"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
+                    <FormLabel>Contraseña</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        {...field}
+                        className="w-full p-2 border rounded mt-1"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormItem className="flex flex-col">
+                <FormLabel>Recuperar contraseña</FormLabel>
+              </FormItem>
+              {loginError && (
+                <div className="text-red-600 text-sm mb-2">
+                {loginError}
+              </div>)}
+              <Button
+                type="submit"
+                disabled={submitting}
+                className={`w-full h-[40px] rounded-md pt-2 pr-3 pb-2 pl-3 text-white text-sm font-medium leading-6 tracking-normal 
+                            flex items-center justify-center gap-[4px] my-[8px]
+                            ${submitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#5B9B40] hover:bg-[#4F8736] transition-colors'}`}
+              >
               Confirmar
-            </button>
-            <Link
-              href="https://www.iapuy.org/contacto" 
-              className="w-[436px] h-[40px] min-w-[80px] rounded-md pt-2 pr-3 pb-2 pl-3 bg-white border border-[#BDD7B3] text-[#5B9B40] text-sm font-medium leading-6 tracking-normal hover:bg-[#EFF5EC] transition-colors flex items-center justify-center gap-[4px]">
-              Quiero formar parte
-            </Link>
-          </form>
-        </div>
-        
+              </Button>
+              <Link
+                href="https://www.iapuy.org/contacto"
+                className="w-full h-[40px] rounded-md pt-2 pr-3 pb-2 pl-3 bg-white border border-[#BDD7B3] 
+                          text-[#5B9B40] text-sm font-medium leading-6 tracking-normal 
+                          hover:bg-[#EFF5EC] transition-colors flex items-center justify-center gap-[4px]"
+              >
+                Quiero formar parte
+              </Link>
+            </form>
+          </Form>
+        </div>        
       </main>
     </div>
   );
