@@ -148,18 +148,18 @@ export default [
     plugins: {
       "check-file": checkFile,
     },
-    // rules: {
-    //   "check-file/no-index": "off", // we don't want to use this rule for now
-    //   "check-file/filename-naming-convention": [
-    //     "error",
-    //     { "**/*.{jsx,tsx,ts,js}": "KEBAB_CASE" },
-    //     { ignoreMiddleExtensions: true },
-    //   ],
-    //   "check-file/folder-naming-convention": [
-    //     "error",
-    //     { "src/**/": "KEBAB_CASE" },
-    //   ],
-    // },
+    rules: {
+      "check-file/no-index": "off", // we don't want to use this rule for now
+      "check-file/filename-naming-convention": [
+        "error",
+        { "**/*.{jsx,tsx,ts,js}": "KEBAB_CASE" },
+        { ignoreMiddleExtensions: true },
+      ],
+      "check-file/folder-naming-convention": [
+        "error",
+        { "src/**/": "KEBAB_CASE" },
+      ],
+    },
     ignores: ["**/*.css", "**/*.svg"],
   },
 ];
