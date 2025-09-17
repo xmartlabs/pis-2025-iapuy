@@ -32,13 +32,13 @@ import {
     SelectContent,
     SelectGroup,
     SelectItem,
-    SelectLabel,
+    //SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
 import { useEffect, useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Weight } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 
 type UserPair = {
@@ -103,7 +103,7 @@ export default function RegistrarPerro() {
 
     async function onSubmit(data: z.infer<typeof createPerroSchema>) {
         try {
-        
+
             const dataFormat: dataPerro = {
                 nombre: data.nombrePerro,
                 descripcion: data.descripcion,
@@ -113,7 +113,7 @@ export default function RegistrarPerro() {
 
             //! las desc y fortalezas si se dejan vacíos se estan insertando como ''
             //! y no como null, chequear para futuras consultas a la DB al no tener campo NULL
-            
+
             const res = await fetch("/api/perros", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -123,27 +123,27 @@ export default function RegistrarPerro() {
             if (res.ok) {
                 setOpen(false)
                 form.reset()
-                
+
                 toast.success(`¡Guau! Agregaste a "${data.nombrePerro}" al equipo.`, {
-                duration: 5000,
-                icon: null,
-                className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-                style: {
-                background: "#FFFFFF", 
-                border : "1px solid #BDD7B3",
-                color: "#121F0D"
+                    duration: 5000,
+                    icon: null,
+                    className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+                    style: {
+                        background: "#FFFFFF",
+                        border: "1px solid #BDD7B3",
+                        color: "#121F0D"
                     },
                 });
 
             } else {
-                toast.message(`No se pudo agregar a "${data.nombrePerro}" al equipo.`, {
-                duration: 5000,
-                icon: null,
-                className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-                style: {
-                background: "#FFFFFF", 
-                border : "1px solid #ec0909ff",
-                color: "#121F0D"
+                toast.message(`NO se pudo agregar a "${data.nombrePerro}" al equipo.`, {
+                    duration: 5000,
+                    icon: null,
+                    className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+                    style: {
+                        background: "#cfaaaaff",
+                        border: "1px solid #ec0909ff",
+                        color: "#ec0909ff"
                     },
                 });
             }
@@ -159,10 +159,13 @@ export default function RegistrarPerro() {
                 <DialogTrigger asChild>
                     <Button
                         className="
-                    font-sans font-medium text-sm leading-6 tracking-normal flex items-center justify-center gap-1
-                    px-3 py-2 bg-[#5B9B40] text-white hover:bg-[#4b8034]
-                    rounded-md w-[90px] md:w-[139px] h-10
-                    "
+                            !font-sans !font-medium !text-sm !leading-6 !tracking-normal 
+                            !flex !items-center !justify-center !gap-1
+                            !px-3 !md:px-4 !lg:px-6 !py-2
+                            !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]
+                            !rounded-md !h-10
+                            !w-auto
+                        "
                     >
                         <Plus size={16} />
                         Agregar perro
@@ -171,11 +174,11 @@ export default function RegistrarPerro() {
 
                 <DialogContent
                     className="
-                    !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
-                    !h-auto !md:h-[362px] !max-h-[80vh] !overflow-y-auto !overflow-x-hidden
-                    !bg-white !border !border-[#D4D4D4] !rounded-md
-                    !top-[50%] md:!top-[228px] !left-1/2 !-translate-x-1/2
-                        "
+                        !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
+                        !h-auto !md:h-[362px] !max-h-[80vh] !overflow-y-auto !overflow-x-hidden
+                        !bg-white !border !border-[#D4D4D4] !rounded-md
+                        !top-[50%] md:!top-[228px] !left-1/2 !-translate-x-1/2
+                    "
                 >
                     <Form {...form}>
                         <DialogHeader className="!w-full !my-4  !items-center">
@@ -282,11 +285,13 @@ export default function RegistrarPerro() {
 
                                 <DialogFooter className="!w-full !flex flex-col md:flex-row !items-center md:items-center !justify-between gap-3 mt-2 px-0">
                                     <DialogClose asChild>
-                                        <Button onClick={()=>{form.reset()}}
+                                        <Button onClick={() => { form.reset() }}
                                             variant="outline"
-                                            className="w-full md:w-[96px] md:h-[40px] h-10 text-sm px-3 py-2 rounded-md
-                                            border-[#5B9B40] text-[#5B9B40] bg-white
-                                            hover:bg-[#edd4d1] hover:text-[#bd2717] hover:border-[#bd2717] transition-colors"
+                                            className="
+                                                w-full md:w-[96px] md:h-[40px] h-10 text-sm px-3 py-2 rounded-md
+                                                border-[#5B9B40] text-[#5B9B40] bg-white
+                                                hover:bg-[#edd4d1] hover:text-[#bd2717] hover:border-[#bd2717] transition-colors
+                                            "
                                         >
                                             Cancelar
                                         </Button>
@@ -294,7 +299,13 @@ export default function RegistrarPerro() {
 
                                     <Button
                                         type="submit"
-                                        className="w-full md:w-[96px] md:h-[40px] !h-10 !font-sans !font-medium text-sm !leading-6 !tracking-normal !px-3 !py-2 !rounded-md !flex !items-center !justify-center !gap-1 !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]"
+                                        className="
+                                            w-full md:w-[96px] md:h-[40px] !h-10 
+                                            !font-sans !font-medium text-sm !leading-6 
+                                            !tracking-normal !px-3 !py-2 !rounded-md !flex 
+                                            !items-center !justify-center !gap-1 !bg-[#5B9B40] 
+                                            !text-white !hover:bg-[#4b8034]
+                                        "
                                     >
                                         Confirmar
                                     </Button>
