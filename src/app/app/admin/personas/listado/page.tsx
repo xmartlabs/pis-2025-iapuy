@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, ArrowRight, ArrowLeft } from "lucide-react";
-
+import { Button } from "@/components/ui/button";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import {
   Table,
   TableBody,
@@ -11,21 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
-import { Button } from "@/components/ui/button";
 
 type PerroSummary = { nombre?: string };
 type UserRowBase = {
   [key: string]: string | number | boolean | null | undefined;
 };
 type UserRow = UserRowBase & { perros?: PerroSummary[] };
-
-type UsersApiResponse = {
-  attributes: string[];
-  users: UserRow[];
-  total?: number;
-  page?: number;
-  size?: number;
-};
 
 export default function ListadoPersonas() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -36,16 +28,15 @@ export default function ListadoPersonas() {
 
   useEffect(() => {
     fetch(`/api/users?page=${page}&size=${size}`)
-      .then((res) => res.json() as Promise<UsersApiResponse>)
-      .then((data) => {
-        setUsers(data.users);
-        if (data.total && data.size) {
-          setTotalPages(Math.ceil(data.total / data.size));
-        }
+      .then((res) => res.json() as Promise<PaginationResultDto<UserRow>>)
+      .then((paginationResult) => {
+        setUsers(paginationResult.data || []);
+        setTotalPages(paginationResult.totalPages || 1);
         setError(null);
       })
       .catch(() => {
         setError("Error al obtener usuarios.");
+        setUsers([]);
       });
   }, [page, size]);
 
@@ -126,55 +117,65 @@ export default function ListadoPersonas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user, i) => (
-                <TableRow key={i}>
-                  {Object.keys(columnToAttribute).map((column, index) => {
-                    const attribute = columnToAttribute[column];
-                    const value = user[attribute];
-                    return (
-                      <TableCell
-                        key={column}
-                        className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
-                          index >= 3 ? "hidden sm:table-cell" : ""
-                        }`}
-                      >
-                        <div
-                          className="truncate"
-                          title={
-                            value === null || value === undefined
-                              ? ""
-                              : String(value)
-                          }
+              {users && users.length > 0 ? (
+                users.map((user, i) => (
+                  <TableRow key={i}>
+                    {Object.keys(columnToAttribute).map((column, index) => {
+                      const attribute = columnToAttribute[column];
+                      const value = user[attribute];
+                      return (
+                        <TableCell
+                          key={column}
+                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
+                            index >= 3 ? "hidden sm:table-cell" : ""
+                          }`}
                         >
-                          {value === null || value === undefined
-                            ? ""
-                            : String(value)}
-                        </div>
-                      </TableCell>
-                    );
-                  })}
-                  <TableCell
-                    key="perros"
-                    className="h-[48px] px-2 sm:px-4 sm:w-[186px]"
-                  >
-                    <div className="truncate">
-                      {Array.isArray(user.perros) && user.perros.length > 0
-                        ? user.perros.map((p, index) =>
-                            p?.nombre ? (
-                              <Link
-                                key={index}
-                                href={`/app/admin/perros/detalle/${p.nombre}`}
-                                className="!underline hover:text-blue-800 mr-2 text-sm"
-                              >
-                                {p.nombre}
-                              </Link>
-                            ) : null
-                          )
-                        : "No tiene"}
-                    </div>
+                          <div
+                            className="truncate"
+                            title={
+                              value === null || value === undefined
+                                ? ""
+                                : String(value)
+                            }
+                          >
+                            {value === null || value === undefined
+                              ? ""
+                              : String(value)}
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell
+                      key="perros"
+                      className="h-[48px] px-2 sm:px-4 sm:w-[186px]"
+                    >
+                      <div className="truncate">
+                        {Array.isArray(user.perros) && user.perros.length > 0
+                          ? user.perros.map((p, index) =>
+                              p?.nombre ? (
+                                <Link
+                                  key={index}
+                                  href={`/app/admin/perros/detalle/${p.nombre}`}
+                                  className="!underline hover:text-blue-800 mr-2 text-sm"
+                                >
+                                  {p.nombre}
+                                </Link>
+                              ) : null
+                            )
+                          : "No tiene"}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    {error
+                      ? "Error al cargar datos"
+                      : "No hay datos disponibles"}
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

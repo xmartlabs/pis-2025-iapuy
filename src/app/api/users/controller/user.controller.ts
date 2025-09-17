@@ -13,12 +13,7 @@ export class UserController {
     const paginationResult: PaginationResultDto<User> =
       await this.userService.findAll(pagination);
 
-    return {
-      users: paginationResult.data,
-      total: paginationResult.totalItems,
-      page: paginationResult.page,
-      size: paginationResult.size,
-    };
+    return paginationResult;
   }
 
   async getUser(request: NextRequest, { username }: { username: string }) {
