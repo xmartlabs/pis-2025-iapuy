@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+
+
 import {
     Form,
     FormControl,
@@ -36,11 +38,11 @@ import {
 } from "@/components/ui/select"
 import { useEffect, useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus } from 'lucide-react'
+import { Plus, Weight } from 'lucide-react'
 
 
 type UserPair = {
-    ci: string, //! chequear seguridad (es correcto manipular el id o solo manipular el JWT) 
+    ci: string, //! chequear seguridad (es correcto manipular el id o solo manipular el JWT)
     nombre: string,
 }
 
@@ -60,9 +62,11 @@ type dataPerro = {
     duenioId: string
 }
 
+
 export default function RegistrarPerro() {
     const [duenos, setDuenos] = useState<UserPair[]>([]);
-    // const [error, setError] = useState<String | unknown>("");
+    const [open, setOpen] = useState(false);
+
 
     useEffect(() => {
         const llamadaApi = async () => {
@@ -72,7 +76,6 @@ export default function RegistrarPerro() {
                 const duenios = datos.data;
                 setDuenos(duenios);
             } catch (err) {
-                // setError(err);
                 console.error("Failed to fetch users: ", err);
             }
         };
@@ -100,7 +103,7 @@ export default function RegistrarPerro() {
 
     async function onSubmit(data: z.infer<typeof createPerroSchema>) {
         try {
-
+        
             const dataFormat: dataPerro = {
                 nombre: data.nombrePerro,
                 descripcion: data.descripcion,
@@ -110,39 +113,49 @@ export default function RegistrarPerro() {
 
             //! las desc y fortalezas si se dejan vacíos se estan insertando como ''
             //! y no como null, chequear para futuras consultas a la DB al no tener campo NULL
-
+            
             const res = await fetch("/api/perros", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dataFormat),
             });
 
-            const result = await res.json();
-
             if (res.ok) {
-                toast("You submitted the following values", {
-                    description: (
-                        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-                            <code className="text-white">{JSON.stringify(result, null, 2)}</code>
-                        </pre>
-                    ),
-                })
+                setOpen(false)
+                form.reset()
+                
+                toast.success(`¡Guau! Agregaste a "${data.nombrePerro}" al equipo.`, {
+                duration: 5000,
+                icon: null,
+                className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+                style: {
+                background: "#FFFFFF", 
+                border : "1px solid #BDD7B3",
+                color: "#121F0D"
+                    },
+                });
+
             } else {
-                toast("Error al crear el perro", {
-                    description: result.error || "Ocurrió un error inesperado",
+                toast.message(`No se pudo agregar a "${data.nombrePerro}" al equipo.`, {
+                duration: 5000,
+                icon: null,
+                className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+                style: {
+                background: "#FFFFFF", 
+                border : "1px solid #ec0909ff",
+                color: "#121F0D"
+                    },
                 });
             }
         } catch (error) {
-            toast("Error en el servidor", {
-                description: String(error),
-            });
+            console.error(error)
         }
     }
 
 
     return (
         <div className="font-sans">
-            <Dialog>
+            <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                     <Button
                         className="
@@ -173,7 +186,6 @@ export default function RegistrarPerro() {
 
                         <div className="!px-0 !pb-4">
                             <form onSubmit={form.handleSubmit(onSubmit)} className="!flex !flex-col !gap-6">
-                                {/* Grid: 1 columna mobile, 2 columnas md+ */}
                                 <div className="!grid rid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="!w-full">
                                         <FormField
@@ -270,7 +282,7 @@ export default function RegistrarPerro() {
 
                                 <DialogFooter className="!w-full !flex flex-col md:flex-row !items-center md:items-center !justify-between gap-3 mt-2 px-0">
                                     <DialogClose asChild>
-                                        <Button
+                                        <Button onClick={()=>{form.reset()}}
                                             variant="outline"
                                             className="w-full md:w-[96px] md:h-[40px] h-10 text-sm px-3 py-2 rounded-md
                                             border-[#5B9B40] text-[#5B9B40] bg-white
