@@ -32,6 +32,7 @@ export default function ListadoPersonas() {
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/users?page=${page}&size=${size}`)
@@ -41,12 +42,11 @@ export default function ListadoPersonas() {
         if (data.total && data.size) {
           setTotalPages(Math.ceil(data.total / data.size));
         }
+        setError(null);
       })
-      .catch((err) => {
-        console.error("Failed to fetch users:", err);
+      .catch(() => {
+        setError("Error al obtener usuarios.");
       });
-
-    /*to do :manejar error*/
   }, [page, size]);
 
   const handleNextPage = () => {
@@ -77,6 +77,7 @@ export default function ListadoPersonas() {
   ];
   return (
     <div className=" w-full">
+      {error && <p className="text-red-500 text-center">{error}</p>}{" "}
       <div className="max-w-[1116px] mx-auto w-full mb-[20px] pt-[60px] flex justify-between">
         {/* to do : averiguar cuanto padding bottom */}
         <h1
@@ -85,7 +86,7 @@ export default function ListadoPersonas() {
         >
           Personas
         </h1>
-        {/* to do : con el peso en semi bold no se ve como en la ui */}
+        {/* to do : con el peso en semi bold no se ve como en la ui de figma */}
         <div className="flex justify-end items-center pt-3">
           <Button
             asChild
@@ -127,7 +128,7 @@ export default function ListadoPersonas() {
                   );
                 })}
                 <TableCell key="perros" className="w-[186px] h-[48px]">
-                  {Array.isArray(user.perros)
+                  {Array.isArray(user.perros) && user.perros.length > 0
                     ? user.perros.map((p, index) =>
                         p?.nombre ? (
                           <Link
@@ -135,13 +136,11 @@ export default function ListadoPersonas() {
                             href={`/app/admin/perros/detalle/${p.nombre}`}
                             className="!underline hover:text-blue-800 mr-2"
                           >
-                            {p.nombre === null || p.nombre === undefined
-                              ? "No tiene"
-                              : p.nombre}
+                            {p.nombre}
                           </Link>
                         ) : null
                       )
-                    : ""}
+                    : "No tiene"}
                 </TableCell>
               </TableRow>
             ))}
