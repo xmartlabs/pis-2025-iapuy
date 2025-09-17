@@ -70,13 +70,13 @@ export default function Formulario() {
     }
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <FormField
                     control={form.control}
                     name="nombre"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Nombre*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Nombre*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -89,7 +89,7 @@ export default function Formulario() {
                     name="pass"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Contraseña*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Contraseña*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -102,7 +102,7 @@ export default function Formulario() {
                     name="rol"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Rol*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Rol*</FormLabel>
                             <FormControl>
                                 <RadioGroup
                                     onValueChange={field.onChange}
@@ -136,7 +136,7 @@ export default function Formulario() {
                     name="banco"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Banco*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Banco*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -149,7 +149,7 @@ export default function Formulario() {
                     name="cuenta"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Cuenta*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Número de cuenta*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -162,7 +162,7 @@ export default function Formulario() {
                     name="ci"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Cédula de identidad*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Cédula de identidad*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -175,7 +175,7 @@ export default function Formulario() {
                     name="celular"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Celular*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Celular*</FormLabel>
                             <FormControl>
                                 <Input {...field}/>
                             </FormControl>
@@ -191,7 +191,7 @@ export default function Formulario() {
                         field.disabled = noTiene;
                         return (
                             <FormItem>
-                                <FormLabel>Perro</FormLabel>
+                                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Perro</FormLabel>
                                 <FormControl>
                                     <Input {...field}/>
                                 </FormControl>
