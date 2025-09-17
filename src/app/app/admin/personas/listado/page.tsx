@@ -62,101 +62,145 @@ export default function ListadoPersonas() {
   };
   const columnToAttribute: Record<string, string> = {
     Nombre: "nombre",
-    "Cedula de identidad": "ci",
+    "Cédula de identidad": "ci",
     Celular: "celular",
     Banco: "banco",
     "Número de Cuenta": "cuentaBancaria",
   };
   const columnHeader: string[] = [
     "Nombre",
-    "Cedula de identidad",
+    "Cédula de identidad",
     "Celular",
     "Banco",
     "Número de Cuenta",
     "Perro",
   ];
   return (
-    <div className=" w-full">
+    <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
       {error && <p className="text-red-500 text-center">{error}</p>}{" "}
-      <div className="max-w-[1116px] mx-auto w-full mb-[20px] pt-[60px] flex justify-between">
-        {/* to do : averiguar cuanto padding bottom */}
+      <div className="max-w-[1116px] mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
-          className="text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
+          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Personas
         </h1>
-        {/* to do : con el peso en semi bold no se ve como en la ui de figma */}
-        <div className="flex justify-end items-center pt-3">
+        <div className="flex justify-start sm:justify-end items-center">
           <Button
             asChild
-            className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white"
+            className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
           >
-            <span className="flex items-center">
-              <Plus />
+            <span className="flex items-center justify-center sm:justify-start">
+              <Plus className="mr-2" />
               <Link href="/app/admin/personas/nueva">Agregar Persona</Link>
             </span>
           </Button>
         </div>
       </div>
-      <div className="max-w-[1116px] mx-auto  w-full border border-gray-300 mt-[20px] rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columnHeader.map((head) => (
-                <TableHead
-                  key={head}
-                  className="text-sm font-medium leading-6 medium w-[174px] h-[56px]"
-                >
-                  {head}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user, i) => (
-              <TableRow key={i}>
-                {Object.keys(columnToAttribute).map((column) => {
-                  const attribute = columnToAttribute[column];
-                  const value = user[attribute];
-                  return (
-                    <TableCell key={column} className="w-[186px] h-[48px]">
-                      {value === null || value === undefined
-                        ? ""
-                        : String(value)}
-                    </TableCell>
-                  );
-                })}
-                <TableCell key="perros" className="w-[186px] h-[48px]">
-                  {Array.isArray(user.perros) && user.perros.length > 0
-                    ? user.perros.map((p, index) =>
-                        p?.nombre ? (
-                          <Link
-                            key={index}
-                            href={`/app/admin/perros/detalle/${p.nombre}`}
-                            className="!underline hover:text-blue-800 mr-2"
-                          >
-                            {p.nombre}
-                          </Link>
-                        ) : null
-                      )
-                    : "No tiene"}
-                </TableCell>
+      <div className="max-w-[1116px] mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
+        <div className="overflow-x-auto">
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow>
+                {columnHeader.map((head, index) => (
+                  <TableHead
+                    key={head}
+                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${
+                      index >= 3 && head !== "Perro"
+                        ? "hidden sm:table-cell"
+                        : ""
+                    }`}
+                  >
+                    {head === "Cédula de identidad" ? (
+                      <span className="sm:hidden">C.I</span>
+                    ) : (
+                      head
+                    )}
+                    {head === "Cédula de identidad" && (
+                      <span className="hidden sm:inline">
+                        Cédula de Identidad
+                      </span>
+                    )}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {users.map((user, i) => (
+                <TableRow key={i}>
+                  {Object.keys(columnToAttribute).map((column, index) => {
+                    const attribute = columnToAttribute[column];
+                    const value = user[attribute];
+                    return (
+                      <TableCell
+                        key={column}
+                        className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
+                          index >= 3 ? "hidden sm:table-cell" : ""
+                        }`}
+                      >
+                        <div
+                          className="truncate"
+                          title={
+                            value === null || value === undefined
+                              ? ""
+                              : String(value)
+                          }
+                        >
+                          {value === null || value === undefined
+                            ? ""
+                            : String(value)}
+                        </div>
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell
+                    key="perros"
+                    className="h-[48px] px-2 sm:px-4 sm:w-[186px]"
+                  >
+                    <div className="truncate">
+                      {Array.isArray(user.perros) && user.perros.length > 0
+                        ? user.perros.map((p, index) =>
+                            p?.nombre ? (
+                              <Link
+                                key={index}
+                                href={`/app/admin/perros/detalle/${p.nombre}`}
+                                className="!underline hover:text-blue-800 mr-2 text-sm"
+                              >
+                                {p.nombre}
+                              </Link>
+                            ) : null
+                          )
+                        : "No tiene"}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-      <div className="mt-[5px] flex justify-center items-center">
-        <Button onClick={handlePreviousPage} disabled={page === 1}>
-          <ArrowLeft />
+      <div className="mt-4 sm:mt-[5px] flex justify-center items-center gap-2">
+        <Button
+          onClick={handlePreviousPage}
+          disabled={page === 1}
+          size="sm"
+          className="px-3 py-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline ml-1"></span>
         </Button>
-        <Button onClick={handleNextPage} disabled={page === totalPages}>
-          <ArrowRight />
+        <Button
+          onClick={handleNextPage}
+          disabled={page === totalPages}
+          size="sm"
+          className="px-3 py-2"
+        >
+          <span className="hidden sm:inline mr-1"></span>
+          <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
-      <div className="mt-[5px] flex justify-center items-center">
-        <p className="text-sm leading-6 medium">
+      <div className="mt-2 sm:mt-[5px] flex justify-center items-center">
+        <p className="text-xs sm:text-sm leading-6 medium text-center">
           Página {page} de {totalPages}
         </p>
       </div>

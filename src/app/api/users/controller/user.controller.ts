@@ -1,20 +1,19 @@
-import { NextResponse, type NextRequest} from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { UserService } from "../service/user.service";
 import type { CreateUserDto } from "../dtos/create-user.dto";
 import type { UpdateUserDto } from "../dtos/update-user.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { User } from "@/app/models/user.entity";
+import type { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
 
   async getUsers(pagination: PaginationDto) {
-    const attributes = Object.keys(User.getAttributes());
-    const paginationResult: PaginationResultDto<User> = await this.userService.findAll(pagination);
+    const paginationResult: PaginationResultDto<User> =
+      await this.userService.findAll(pagination);
 
     return {
-      attributes,
       users: paginationResult.data,
       total: paginationResult.totalItems,
       page: paginationResult.page,
