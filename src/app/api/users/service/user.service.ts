@@ -1,8 +1,8 @@
 import { User } from "@/app/models/user.entity";
-import { CreateUserDto } from "../dtos/create-user.dto";
+import type { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 
@@ -25,8 +25,8 @@ export class UserService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async findOne(username: string): Promise<User | null> {
-    return await User.findByPk(username);
+  async findOne(ci: string): Promise<User | null> {
+    return await User.findByPk(ci);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
