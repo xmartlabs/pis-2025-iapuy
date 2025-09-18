@@ -27,8 +27,12 @@ export class RegistrosSanidadService {
             ...desparasitaciones.map(d => (new EventoSanidadDto(d.id, d.fecha.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }), 'Desparasitación'))),
         ];
 
+        const start = (pagination.page - 1) * pagination.size;
+        const end = start + pagination.size;
+        const paginatedRows = eventos.slice(start, end);
+
         const result: {rows: EventoSanidadDto[], count: number} = {
-            rows: eventos,
+            rows: paginatedRows,
             count: eventos.length
         }
       return getPaginationResultFromModel(pagination, result);
