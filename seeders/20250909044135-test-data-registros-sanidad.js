@@ -99,7 +99,7 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete("desparasitaciones", null, {});
-    await queryInterface.bulkDelete("aacunas", null, {});
+    await queryInterface.bulkDelete("vacunas", null, {});
     await queryInterface.bulkDelete("banios", null, {});
     await queryInterface.bulkDelete("registro-sanidades", null, {});
   },
