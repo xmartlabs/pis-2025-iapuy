@@ -12,9 +12,12 @@ export async function GET(request: NextRequest) {
     const pagination = await extractPagination(request);
     const data = await userController.getUsers(pagination);
     return NextResponse.json(data);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Hubo un error desconocido" },
       { status: 500 }
     );
   }
