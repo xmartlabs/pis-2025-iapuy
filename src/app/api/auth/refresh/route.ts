@@ -6,6 +6,7 @@ export function POST(req: Request) {
   //Se obtiene el refresh token de la cookie guardada si la hay
 
   interface PayloadForRefresh extends jwt.JwtPayload {
+    ci: string;
     nombre: string;
     tipo: string;
   }
@@ -28,6 +29,7 @@ export function POST(req: Request) {
     //Se genera un nuevo access token
     const newAccessToken = jwt.sign(
       {
+        ci: payload.ci,
         nombre: payload.nombre,
         tipo: payload.tipo,
       },

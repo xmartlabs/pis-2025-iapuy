@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       { status: 401 }
     );
   }
+  const ciUsuario = user.ci;
   const nombreUsuario = user.nombre;
   const tipoUsuario = user.esAdmin
     ? TipoUsuario.Administrador
@@ -42,14 +43,14 @@ export async function POST(req: Request) {
 
   //Se crea el access token
   const accessToken = jwt.sign(
-    { nombre: nombreUsuario, tipo: tipoUsuario },
+    { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
 
   //Se crea el refresh token
   const refreshToken = jwt.sign(
-    { nombre: nombreUsuario, tipo: tipoUsuario },
+    { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
     JWT_SECRET,
     { expiresIn: "180d" }
   );
