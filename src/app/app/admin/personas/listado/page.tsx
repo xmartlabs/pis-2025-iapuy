@@ -184,6 +184,8 @@ export default function ListadoPersonas() {
         <Button
           onClick={handlePreviousPage}
           disabled={page === 1}
+          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
+          aria-label="Página anterior"
           size="sm"
           className="px-3 py-2"
         >
@@ -193,6 +195,8 @@ export default function ListadoPersonas() {
         <Button
           onClick={handleNextPage}
           disabled={page === totalPages}
+          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
+          aria-label="Página siguiente"
           size="sm"
           className="px-3 py-2"
         >
