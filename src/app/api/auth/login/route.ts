@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { UserService } from "../../users/service/user.service";
 import { initDatabase } from "@/lib/init-database";
+import { Hashing } from "@/lib/crypto/hash";
+
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export enum TipoUsuario {
@@ -23,7 +25,11 @@ export async function POST(req: Request) {
 
   //Se verifican las credenciales del usuario
   const user = await userService.findOne(ci);
-  if (user === undefined || user === null || user.password !== password) {
+  if (
+    user === undefined ||
+    user === null ||
+    !(await Hashing.verifyPassword(password, user.password))
+  ) {
     return NextResponse.json(
       { error: "Credenciales invalidas" },
       { status: 401 }
