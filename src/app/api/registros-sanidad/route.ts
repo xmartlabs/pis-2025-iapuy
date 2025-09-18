@@ -15,4 +15,9 @@ export async function GET(request: NextRequest) {
     console.error(error);
     return new Response(undefined, { status: 400 });
   }
+
+}
+
+export async function POST(request: NextRequest) {
+  return registrosSanidadController.createEventoSanidad(request);
 }
