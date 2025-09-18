@@ -44,7 +44,6 @@ export class RegistrosSanidadService {
 
   async create(createRegistroSanidadDto: CreateRegistrosSanidadDTO): Promise<RegistroSanidad> {
   return await sequelize.transaction(async (t) => {
-
     const regSanidad = await RegistroSanidad.create(
       { perroId: createRegistroSanidadDto.perroId },
       { transaction: t }
@@ -53,14 +52,12 @@ export class RegistrosSanidadService {
     const fechaDate = new Date(createRegistroSanidadDto.fecha);
 
     if (createRegistroSanidadDto.tipoSanidad === 'banio') {
-
       await Banio.create({
         fecha: fechaDate,
         registroSanidadId: regSanidad.id
       }, { transaction: t });
 
     } else if (createRegistroSanidadDto.tipoSanidad === 'desparasitacion') {
-
       await Desparasitacion.create({
         fecha: fechaDate,
         medicamento: createRegistroSanidadDto.medicamento,
@@ -77,7 +74,6 @@ export class RegistrosSanidadService {
         carneVacunas: createRegistroSanidadDto.carneVacunas
       }, { transaction: t });
     }
-
     return regSanidad;
   });
 }

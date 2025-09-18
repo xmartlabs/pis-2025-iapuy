@@ -41,56 +41,51 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-type DataVacuna = {
-    fecha: string;
-    marca?: string;
-    carnet: File;
-};
-
-type DataBanio = {
-    fecha: string;
-};
-
-type DataDesparasitacion = {
-    tipo: "interna" | "externa";
-    fecha: string;
-    marca?: string;
-};
-
+type dataRegistroSanidad = {
+    tipoSanidad : string;
+    perroId : string; 
+    fecha : string;
+    vac : string; // marca vacuna
+    carneVacunas : File;
+    medicamento : string; // marca desparasitacion
+    tipoDesparasitacion: 'Externa' | 'Interna'
+}
 
 export default function RegistroSanidad() {
 
+    const [tab, setTab] = React.useState<Tab>("vacuna");
+    const [open, setOpen] = React.useState(false);
+
     const vacunaSchema = z.object({
         fechaInVac: z.string().min(2, { message: "Debes completar la fecha de vacunación" }),
-        marcaInVac: z.string().optional(),
-        carnetInVac: z
-            .any()
-            .refine((file) => file?.length > 0, "Debes adjuntar el carnet de vacuna"),
+        marcaInVac: z.string(),
+        carnetInVac: z.instanceof(File, { message: "Debes adjuntar el carnet de vacuna" })
+
     });
 
     const banioSchema = z.object({
         fechaInBanio: z.string().min(2, { message: "Debes completar la fecha del baño" }),
     });
 
-    const desparacitacionSchema = z.object({
-        desparasitacionTipo: z.enum(["interna", "externa"]).optional(),
-        fechaInDes: z.string().min(2, { message: "Debes completar la fecha de desparacitación." }),
-        marcaInDes: z.string().optional(),
+    const desparasitacionSchema = z.object({
+        desparasitacionTipo: z.enum(["Interna", "Externa"]),
+        fechaInDes: z.string().min(2, { message: "Debes completar la fecha de desparasitación." }),
+        marcaInDes: z.string()
     });
 
     const schemaPorTab = {
         vacuna: vacunaSchema,
         banio: banioSchema,
-        desparasitacion: desparacitacionSchema,
+        desparasitacion: desparasitacionSchema,
     } as const;
-    type Tab = keyof typeof schemaPorTab;
 
-    const [tab, setTab] = React.useState<Tab>("vacuna");
+    type Tab = keyof typeof schemaPorTab;
+    
     const schemaActual = schemaPorTab[tab] as ZodTypeAny;
 
     type FormValuesVacuna = z.infer<typeof vacunaSchema>;
     type FormValuesBanio = z.infer<typeof banioSchema>;
-    type FormValuesDesparasitacion = z.infer<typeof desparacitacionSchema>;
+    type FormValuesDesparasitacion = z.infer<typeof desparasitacionSchema>;
 
     type FormValues = FormValuesVacuna & FormValuesBanio & FormValuesDesparasitacion;
     const form = useForm<FormValues>({
@@ -100,42 +95,67 @@ export default function RegistroSanidad() {
             marcaInVac: "",
             carnetInVac: undefined,
             fechaInBanio: "",
-            desparasitacionTipo: undefined,
+            desparasitacionTipo: "Interna",
             fechaInDes: "",
             marcaInDes: "",
         },
     });
 
-    async function onSubmit(data: z.infer<typeof vacunaSchema> | z.infer<typeof banioSchema> | z.infer<typeof desparacitacionSchema>) {
+    async function submitHandler(data: z.infer<typeof vacunaSchema> | z.infer<typeof banioSchema> | z.infer<typeof desparasitacionSchema>) {
         try {
-            let dataFormat;
+
+            const formData = new FormData();
+            const perroId = "p1111111" //! hardcodeado hasta ver como se obtiene la id del perro
 
             if (tab === "vacuna") {
-                dataFormat = {
-                    fecha: data.fechaInVac,
-                    marca: data.marcaInVac || undefined,
-                    carnet: data.carnetInVac || null,
-                };
-            } else if (tab === "banio") {
-                dataFormat = { fecha: data.fechaInBanio };
-            } else {
-                dataFormat = {
-                    tipo: data.desparasitacionTipo!,
-                    fecha: data.fechaInDes,
-                    marca: data.marcaInDes || undefined,
-                };
+            const d = data as z.infer<typeof vacunaSchema>;
+
+            formData.append("tipoSanidad", "vacuna");
+            formData.append("perroId", perroId);
+            formData.append("fecha", d.fechaInVac);
+            formData.append("vac", d.marcaInVac ?? "");
+            formData.append("medicamento", "");
+            formData.append("tipoDesparasitacion", "Externa");
+            
+            if (d.carnetInVac) {
+            formData.append("carneVacunas", d.carnetInVac); 
             }
 
-            await fetch(`/api/${tab}`, {
+            } else if (tab === "banio") {
+
+            const d = data as z.infer<typeof banioSchema>;
+
+            formData.append("tipoSanidad", "banio");
+            formData.append("perroId", perroId);
+            formData.append("fecha", d.fechaInBanio);
+            formData.append("vac","");
+            formData.append("medicamento","");
+            formData.append("tipoDesparasitacion", "Externa");
+
+            } else {
+
+            const d = data as z.infer<typeof desparasitacionSchema>;
+            formData.append("tipoSanidad", "desparasitacion");
+            formData.append("perroId", perroId);
+            formData.append("fecha", d.fechaInDes);
+            formData.append("vac","");
+            formData.append("medicamento",d.marcaInDes);
+            formData.append("tipoDesparasitacion", d.desparasitacionTipo);
+
+            }
+
+
+            console.log(formData)
+
+            const res = await fetch("/api/registros-sanidad", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dataFormat),
+                body: formData
             });
+            console.log(res.ok)
             if (res.ok) {
                 setOpen(false);
                 form.reset();
-
-                toast.success(`¡Datos de ${schemaActual} guardados correctamente!`, {
+                toast.success(`¡Datos de Sanidad guardados correctamente!`, {
                     duration: 5000,
                     icon: null,
                     className:
@@ -147,7 +167,7 @@ export default function RegistroSanidad() {
                     },
                 });
             } else {
-                toast.error(`No se pudo guardar los datos de ${schemaActual}.`, {
+                toast.error(`No se pudo guardar los datos de Sanidad.`, {
                     duration: 5000,
                     icon: null,
                     className:
@@ -168,7 +188,7 @@ export default function RegistroSanidad() {
 
     return (
         <div className="font-sans">
-            <Dialog>
+            <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                     <Button className="
                             !text-sm !leading-6 !tracking-normal 
@@ -188,8 +208,8 @@ export default function RegistroSanidad() {
                             <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">Registrar Sanidad</DialogTitle>
                         </DialogHeader>
                         <div className="!px-6 !-mt-5">
-                            <form onSubmit={form.handleSubmit(onsubmit)}>
-                                <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={(newTab) => setTab(newTab)}>
+                            <form onSubmit={form.handleSubmit(submitHandler)}>
+                                <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={ (newTab) => {setTab(newTab as Tab)}}>
                                     <TabsList className="bg-[#DEEBD9] !rounded-md !p-1 !radius">
                                         <TabsTrigger value="vacuna"
                                             className="
@@ -211,7 +231,7 @@ export default function RegistroSanidad() {
                                         >
                                             Baño
                                         </TabsTrigger>
-                                        <TabsTrigger value="desparacitacion"
+                                        <TabsTrigger value="desparasitacion"
                                             className="
                                             !px-3 
                                             data-[state=active]:bg-white data-[state=active]:text-black 
@@ -219,7 +239,7 @@ export default function RegistroSanidad() {
                                             !rounded-md
                                             "
                                         >
-                                            Desparacitación
+                                            Desparasitación
                                         </TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="vacuna" className="">
@@ -255,10 +275,16 @@ export default function RegistroSanidad() {
                                                     control={form.control}
                                                     name="carnetInVac"
                                                     render={({ field }) => (
-                                                        <FormItem className="grid gap-2 w-full">
+                                                        <FormItem>
                                                             <FormLabel>Carnet de vacuna*</FormLabel>
                                                             <FormControl>
-                                                                <Input type="file" className="file:ml-2 file:h-full" {...field} />
+                                                                <Input
+                                                                    type="file"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0] || null;
+                                                                        field.onChange(file);
+                                                                    }}
+                                                                />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -286,7 +312,7 @@ export default function RegistroSanidad() {
                                             </CardContent>
                                         </Card>
                                     </TabsContent>
-                                    <TabsContent value="desparacitacion">
+                                    <TabsContent value="desparasitacion">
                                         <Card className="!border-none !shadow-none !pb-6 !pt-4">
                                             <CardContent className="grid !gap-6">
                                                 <FormField
@@ -296,7 +322,7 @@ export default function RegistroSanidad() {
                                                         <FormItem className="flex gap-4">
                                                             <RadioGroup value={field.value} onValueChange={field.onChange} defaultValue="interna" className="flex gap-4">
                                                                 <div className="flex items-center gap-2">
-                                                                    <RadioGroupItem value="interna" id="r1"
+                                                                    <RadioGroupItem value="Interna" id="r1"
                                                                         className="
                                                             !bg-white !border-2 !border-[#5B9B40] !rounded-full
                                                             data-[state=checked]:!border-[#5B9B40]
@@ -308,7 +334,7 @@ export default function RegistroSanidad() {
                                                                     <Label htmlFor="r1">Interna</Label>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <RadioGroupItem value="externa" id="r2"
+                                                                    <RadioGroupItem value="Externa" id="r2"
                                                                         className="
                                                             !bg-white !border-2 !border-[#5B9B40] !rounded-full
                                                             data-[state=checked]:!border-[#5B9B40]
@@ -359,7 +385,8 @@ export default function RegistroSanidad() {
 
                                 <DialogFooter className="!w-full !flex flex-row !items-center !justify-between gap-3 mt-2 !pb-6">
                                     <DialogClose asChild>
-                                        <Button variant="outline"
+                                        <Button  onClick={() => { form.reset() }}
+                                        variant="outline"
                                             className="
                                                 !w-[96px] h-10 text-sm px-3 rounded-md
                                                 border-[#5B9B40] text-[#5B9B40] bg-white

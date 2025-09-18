@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { RegistrosSanidadService } from "../service/registro-sanidad.service";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto"
-import { RegistroSanidad } from '@/app/models/registro-sanidad.entity'
+
 
 
 
@@ -26,7 +26,43 @@ export class RegistrosSanidadController {
 
   async createEventoSanidad(request: NextRequest) {
       try {
-        const body: CreateRegistrosSanidadDTO = await request.json();
+
+        let body : CreateRegistrosSanidadDTO
+
+        //Faltaría implementar para las vacunas guardar el tipo de archivo en binario que se guarda en la bd
+        const formData = await request.formData();
+
+        if(formData.get("tipoSanidad") as string == 'vacuna') {
+
+            const file = formData.get("carneVacunas") as File
+            const arrayBuffer = await file.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            body= {
+            tipoSanidad : formData.get("tipoSanidad") as string,
+            perroId : formData.get("perroId") as string,
+            fecha : formData.get("fecha") as string,
+            vac : formData.get("vac") as string,
+            medicamento : formData.get("medicamento") as string,
+            tipoDesparasitacion : formData.get("tipoDesparasitacion") as 'Externa' | 'Interna',
+            carneVacunas : buffer as Buffer
+            }
+
+        }else{
+            const buffer = Buffer.alloc(0)
+
+            body = {
+            tipoSanidad : formData.get("tipoSanidad") as string,
+            perroId : formData.get("perroId") as string,
+            fecha : formData.get("fecha") as string,
+            vac : formData.get("vac") as string,
+            medicamento : formData.get("medicamento") as string,
+            tipoDesparasitacion : formData.get("tipoDesparasitacion") as 'Externa' | 'Interna',
+            carneVacunas : buffer as Buffer
+            
+          }
+        }
+        
         const regSanidad = await this.registrosSanidadService.create(body);
         return NextResponse.json(regSanidad, { status: 201 });
       } catch (error: any) {
