@@ -72,6 +72,12 @@ describe("UserService", () => {
     // Verifica que el resultado es el esperado.
   });
 
+  it("findOne should return null if user not found", async () => {
+    (User.findByPk as any).mockResolvedValue(null);
+    const result = await service.findOne("notfound");
+    expect(result).toBeNull();
+  });
+
   it("delete should return true if deleted", async () => {
     (User.destroy as any).mockResolvedValue(1);
     // Simula que destroy elimina un usuario (retorna 1).
