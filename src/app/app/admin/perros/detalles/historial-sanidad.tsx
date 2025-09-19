@@ -54,56 +54,50 @@ export default function HistorialSanidad() {
     }
   };
 
-  const columnToAttribute: Record<string, string> = {
-    Fecha: "fecha",
-    Actividad: "actividad",
-  };
   const columnHeader: string[] = ["Fecha", "Actividad"];
 
   return (
     <>
-      <div className="flex flex-col gap-5 mb-4">
-        <h2 className="font-serif font-semibold text-xl text-[#1B2F13]">
+      <div className="flex flex-col gap-5 mb-4 w-full">
+        <h2 className="font-serif font-semibold text-xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif" style={{ fontFamily: "Poppins, sans-serif" }}>
           Historial de sanidad
         </h2>
-        <div className="rounded-md border overflow-x-auto">
-          <Table className="min-w-full table-fixed">
-            <TableHeader className="h-[48px] text-sm font-semibold text-gray-700 pointer-events-none">
+        <div className="rounded-md border  w-full font-normal" style={{ fontFamily: "Archivo, sans-serif" }}>
+          <Table className="w-full table-fixed overflow-x-scroll">
+            <TableHeader className="h-[48px] text-sm text-gray-700 pointer-events-none w-full" >
               <TableRow>
-                <TableHead className="w-[200px]" key={columnHeader[0]}>
+                <TableHead className="w-[110px] min-w-[110px] sm:w-[200px] px-4 font-medium" key={columnHeader[0]}>
                   {columnHeader[0]}
                 </TableHead>
-                <TableHead key={columnHeader[1]}>{columnHeader[1]}</TableHead>
+                <TableHead className="px-4 w-[105px] sm:w-full min-w[105px] font-medium" key={columnHeader[1]}>{columnHeader[1]}</TableHead>
+                <TableHead className="w-[96px] px-2 text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
               {registros && registros.length > 0
                 ? registros.map((registro, i) => (
                     <TableRow key={i}>
-                      {Object.keys(columnToAttribute).map((column, index) => {
-                        const attr: string = columnToAttribute[column];
-                        const value: string =
-                          registro[attr as keyof EventoSanidadDto];
-                        return (
                           <TableCell
-                            key={column}
-                            className={`h-[56px] ${index >= 3 ? "hidden sm:table-cell" : ""}`}
+                            className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
                           >
-                            {String(value)}
+                            {String(registro.fecha)}
                           </TableCell>
-                        );
-                      })}
-                      <TableCell>
-                        <div className="flex flex-row justify-end text-green-500 hover:text-green-700">
+                          <TableCell
+                              className={`h-[56px] px-4 text-sm font-normal`}
+                          >
+                              {String(registro.actividad)}
+                          </TableCell>
+                      <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
+                        <div className="flex items-center justify-end gap-2">
                           <button
-                            className=" w-[3%] mx-6"
+                            className="shrink-0 p-1"
                             onClick={() => {
                               setIsOpenEdit(true);
                             }}
                           >
                             <Pencil />
                           </button>
-                          <button className=" w-[3%] mx-6">
+                          <button className="shrink-0 p-1">
                             <Trash2 />
                           </button>
                         </div>
