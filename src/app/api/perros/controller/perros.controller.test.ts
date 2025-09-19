@@ -15,14 +15,13 @@ describe("PerrosController", () => {
     vi.clearAllMocks();
   });
 
-  it("getPerros debería devolver lista de perros en JSON", async () => {
+  it("getPerros debería devolver lista de perros", async () => {
     service.findAll.mockResolvedValue({ data: [{ id: 1, nombre: "Rex" }] });
 
     const res = await controller.getPerros({} as any);
-    const json = await res.json();
 
     expect(service.findAll).toHaveBeenCalled();
-    expect(json.data[0].nombre).toBe("Rex");
+    expect(res.data[0].nombre).toBe("Rex");
   });
 
   it("createPerro debería devolver perro creado", async () => {
@@ -38,22 +37,23 @@ describe("PerrosController", () => {
     } as unknown as NextRequest;
 
     const res = await controller.createPerro(mockRequest);
-    const json = await res.json();
 
-    expect(service.create).toHaveBeenCalled();
-    expect(json.nombre).toBe("Lassie");
-    expect(res.status).toBe(201);
+    expect(service.create).toHaveBeenCalledWith({
+      nombre: "Lassie",
+      descripcion: "Collie",
+      fortalezas: "Inteligente",
+      duenioId: "321",
+    });
+    expect(res.nombre).toBe("Lassie");
   });
 
-  it("createPerro debería devolver 500 en caso de error", async () => {
+  it("createPerro debería propagar error si el servicio falla", async () => {
     service.create.mockRejectedValue(new Error("DB error"));
 
     const mockRequest = {
       json: vi.fn().mockResolvedValue({ nombre: "ErrorDog" }),
     } as unknown as NextRequest;
 
-    const res = await controller.createPerro(mockRequest);
-
-    expect(res.status).toBe(500);
+    await expect(controller.createPerro(mockRequest)).rejects.toThrow("DB error");
   });
 });
