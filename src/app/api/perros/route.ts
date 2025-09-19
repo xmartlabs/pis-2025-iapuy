@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PerrosController } from "./controller/perros.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
 
@@ -18,5 +18,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return perrosController.createPerro(request);
+        try {
+          const dog = await perrosController.createPerro(request);
+          return NextResponse.json(dog, { status: 201 });
+        } catch (error: any) {
+          return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+          );
+        }
 }

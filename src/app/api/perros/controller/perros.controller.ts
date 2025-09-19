@@ -22,15 +22,7 @@ export class PerrosController {
   }
 
   async createPerro(request: NextRequest) {
-      try {
-        const body : CreatePerroDTO= await request.json();
-        const dog = await this.perrosService.create(body);
-        return NextResponse.json(dog, { status: 201 });
-      } catch (error: any) {
-        return NextResponse.json(
-          { error: "Internal Server Error" },
-          { status: 500 }
-        );
-      }
-    }
+      const body : CreatePerroDTO= await request.json();
+      return await this.perrosService.create(body);
+  }
 }
