@@ -1,10 +1,10 @@
 import { Perro } from "@/app/models/perro.entity";
 import { User } from "@/app/models/user.entity";
-import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
-import { CreatePerroDTO } from "../dtos/create-perro.dto";
+import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 export class PerrosService {
   async findAll(

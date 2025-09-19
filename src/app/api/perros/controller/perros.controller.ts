@@ -1,7 +1,7 @@
 import { NextResponse , NextRequest } from "next/server";
 import { PerrosService } from "../service/perros.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { CreatePerroDTO } from "../dtos/create-perro.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 
 export class PerrosController {

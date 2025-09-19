@@ -24,17 +24,17 @@ export class Perro extends Model{
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 }) //! consultar si no conviene nueva migration en vez de manejarlo del modelo
   declare id: CreationOptional<string>; // este objeto de sequelize permite que no le pasemos el campo y que lo cree solo, los que no lo tienen debemos pasarlos
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare nombre: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare descripcion: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare fortalezas: string;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare duenioId: string;
 
   @CreatedAt
