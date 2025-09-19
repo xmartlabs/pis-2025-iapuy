@@ -138,7 +138,7 @@ export default function Home() {
     >
       {!dialogOpen && (
         <main
-          className="w-[564px] h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
+          className="w-[564px] min-h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
           justify-between opacity-100 shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]"
         >
           <div className="w-[436px] flex flex-col items-start justify-start !mx-[64px] my-[58px] gap-8">
