@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { LoginContext } from "./login-context";
-import type { TipoUsuario } from "@/app/api/auth/login/route";
+import type { TipoUsuario } from "@/app/api/auth/controller/auth.controller";
 
 interface LoginProviderProps {
   children: ReactNode;

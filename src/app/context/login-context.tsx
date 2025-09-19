@@ -1,6 +1,6 @@
 "use client";
 import { createContext } from "react";
-import type { TipoUsuario } from "@/app/api/auth/login/route";
+import type { TipoUsuario } from "@/app/api/auth/controller/auth.controller";
 interface LoginContextType {
   tokenJwt: string | null;
   tipoUsuario: TipoUsuario | null;
