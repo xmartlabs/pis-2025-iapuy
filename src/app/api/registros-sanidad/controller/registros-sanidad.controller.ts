@@ -25,11 +25,8 @@ export class RegistrosSanidadController {
   }
 
   async createEventoSanidad(request: NextRequest) {
-      try {
-
         let body : CreateRegistrosSanidadDTO
 
-        //Faltaría implementar para las vacunas guardar el tipo de archivo en binario que se guarda en la bd
         const formData = await request.formData();
 
         if(formData.get("tipoSanidad") as string == 'vacuna') {
@@ -63,15 +60,7 @@ export class RegistrosSanidadController {
           }
         }
         
-        const regSanidad = await this.registrosSanidadService.create(body);
-        return NextResponse.json(regSanidad, { status: 201 });
-      } catch (error: any) {
-        return NextResponse.json(
-          { error: "Internal Server Error" },
-          { status: 500 }
-        );
+       return await this.registrosSanidadService.create(body);
+       
       }
-    }
-
-
 }

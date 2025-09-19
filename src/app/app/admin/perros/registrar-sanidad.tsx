@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { z, ZodType, ZodTypeAny } from "zod";
+import { z, ZodType} from "zod";
 import {
     Tabs,
     TabsContent,
@@ -41,16 +41,6 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-type dataRegistroSanidad = {
-    tipoSanidad : string;
-    perroId : string; 
-    fecha : string;
-    vac : string; // marca vacuna
-    carneVacunas : File;
-    medicamento : string; // marca desparasitacion
-    tipoDesparasitacion: 'Externa' | 'Interna'
-}
-
 export default function RegistroSanidad() {
 
     const [tab, setTab] = React.useState<Tab>("vacuna");
@@ -81,8 +71,6 @@ export default function RegistroSanidad() {
 
     type Tab = keyof typeof schemaPorTab;
     
-    const schemaActual = schemaPorTab[tab] as ZodTypeAny;
-
     type FormValuesVacuna = z.infer<typeof vacunaSchema>;
     type FormValuesBanio = z.infer<typeof banioSchema>;
     type FormValuesDesparasitacion = z.infer<typeof desparasitacionSchema>;
@@ -144,14 +132,11 @@ export default function RegistroSanidad() {
 
             }
 
-
-            console.log(formData)
-
             const res = await fetch("/api/registros-sanidad", {
                 method: "POST",
                 body: formData
             });
-            console.log(res.ok)
+
             if (res.ok) {
                 setOpen(false);
                 form.reset();
@@ -181,7 +166,6 @@ export default function RegistroSanidad() {
             }
         } catch (error) {
             console.error(error);
-
         }
     }
 
