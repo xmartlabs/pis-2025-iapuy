@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function DetallePersona() {
-  const [user, setUser] = useState<User>(1);
+  const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,14 +24,6 @@ export default function DetallePersona() {
       });
   }, []);
 
-  const columnHeader: string[] = [
-    "Nombre",
-    "Cédula de identidad",
-    "Celular",
-    "Banco",
-    "Número de Cuenta",
-    "Perro",
-  ];
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
       {error && <p className="text-red-500 text-center">{error}</p>}
@@ -45,8 +37,34 @@ export default function DetallePersona() {
       </div>
 
       <div className="grid w-full max-w-sm items-center gap-3">
-        <Label htmlFor="email">Email</Label>
-        <Input type="email" id="email" placeholder="Email" />
+        <Label htmlFor="email">Nombre</Label>
+        <Input disabled type="email" id="nombre" placeholder={user?.nombre} />
+      </div>
+      <div className="grid w-full max-w-sm items-center gap-3">
+        <Label htmlFor="email">Contraseña</Label>
+        <Input
+          disabled
+          type="email"
+          id="contraseña"
+          placeholder={user?.password}
+        />
+      </div>
+      <div className="grid w-full max-w-sm items-center gap-3">
+        <Label htmlFor="email">Banco</Label>
+        <Input disabled type="email" id="banco" placeholder={user?.banco} />
+      </div>
+      <div className="grid w-full max-w-sm items-center gap-3">
+        <Label htmlFor="email">Numero de Cuenta</Label>
+        <Input
+          disabled
+          type="email"
+          id="email"
+          placeholder={user?.cuentaBancaria}
+        />
+      </div>
+      <div className="grid w-full max-w-sm items-center gap-3">
+        <Label htmlFor="email">Celular</Label>
+        <Input disabled type="email" id="celular" placeholder={user?.celular} />
       </div>
 
       <div className="flex justify-start sm:justify-end items-center">

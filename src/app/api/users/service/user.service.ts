@@ -5,6 +5,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
+import { Perro } from "@/app/models/perro.entity";
 
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
@@ -26,7 +27,14 @@ export class UserService {
   }
 
   async findOne(ci: string): Promise<User | null> {
-    return await User.findByPk(ci);
+    return await User.findByPk(ci, {
+      include: [
+        {
+          model: Perro,
+          as: "userPerros",
+        },
+      ],
+    });
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
