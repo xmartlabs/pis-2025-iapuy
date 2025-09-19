@@ -4,8 +4,8 @@ import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
-import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 
@@ -51,7 +51,7 @@ export class PerrosService {
     });
 
     const rowsPlain = result.rows.map((perro) => {
-      const p = perro.get({ plain: true });
+      const p = perro.get({ plain: true }) as Perro;
 
       const usrPerros = p.UsrPerros || [];
       const intervencionCount = usrPerros.length;
@@ -62,7 +62,7 @@ export class PerrosService {
         ...p,
         intervencionCount,
       };
-    });
+    }) as unknown as Perro[];
 
     const processed = {
       count: result.count,
