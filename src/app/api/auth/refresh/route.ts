@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { AuthController } from "../controller/auth.controller";
+const authController = new AuthController();
 
-export function POST(req: Request) {
+export async function POST(req: Request) {
   //Se obtiene el refresh token de la cookie guardada si la hay
-
-  interface PayloadForRefresh extends jwt.JwtPayload {
-    ci: string;
-    nombre: string;
-    tipo: string;
-  }
   const cookieHeader = req.headers.get("cookie") ?? "";
   const refreshToken = cookieHeader
     .split(";")
@@ -24,19 +18,13 @@ export function POST(req: Request) {
   }
 
   try {
-    const payload = jwt.verify(refreshToken, JWT_SECRET) as PayloadForRefresh;
+    const data = await authController.refresh(refreshToken);
 
-    //Se genera un nuevo access token
-    const newAccessToken = jwt.sign(
-      {
-        ci: payload.ci,
-        nombre: payload.nombre,
-        tipo: payload.tipo,
-      },
-      JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-    return NextResponse.json({ accessToken: newAccessToken });
+    if (data.status === 200) {
+      return NextResponse.json({ accessToken: data.accessToken });
+    }
+
+    return NextResponse.json({ error: data.error }, { status: data.status });
   } catch {
     return NextResponse.json(
       { error: "El refresh token es invalido o ha expirado." },

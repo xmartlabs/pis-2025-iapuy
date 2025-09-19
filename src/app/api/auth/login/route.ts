@@ -1,67 +1,28 @@
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import { UserService } from "../../users/service/user.service";
-import { initDatabase } from "@/lib/init-database";
-import { Hashing } from "@/lib/crypto/hash";
+import { type NextRequest, NextResponse } from "next/server";
+import {
+  AuthController,
+  type LoginRequest,
+} from "../controller/auth.controller";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const authController = new AuthController();
 
-export enum TipoUsuario {
-  Colaborador = "Colaborador",
-  Administrador = "Administrador",
-}
+export async function POST(req: NextRequest) {
+  try {
+    const { ci, password }: LoginRequest = (await req.json()) as LoginRequest;
+    const data = await authController.login({ ci, password });
+    if (data.status === 200) {
+      const res = NextResponse.json({ accessToken: data.accessToken });
+      res.cookies.set("refreshToken", String(data.refreshToken), {
+        httpOnly: true,
+        secure: true,
+        path: "/api/auth/refresh",
+        maxAge: 60 * 60 * 24 * 180,
+      });
+      return res;
+    }
 
-interface LoginRequest {
-  ci: string;
-  password: string;
-}
-
-const userService = new UserService();
-
-export async function POST(req: Request) {
-  const { ci, password } = (await req.json()) as LoginRequest;
-
-  await initDatabase();
-
-  //Se verifican las credenciales del usuario
-  const user = await userService.findOne(ci);
-  if (
-    user === undefined ||
-    user === null ||
-    !(await Hashing.verifyPassword(password, user.password))
-  ) {
-    return NextResponse.json(
-      { error: "Credenciales invalidas" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: data.error }, { status: data.status });
+  } catch {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  const ciUsuario = user.ci;
-  const nombreUsuario = user.nombre;
-  const tipoUsuario = user.esAdmin
-    ? TipoUsuario.Administrador
-    : TipoUsuario.Colaborador;
-
-  //Se crea el access token
-  const accessToken = jwt.sign(
-    { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
-    JWT_SECRET,
-    { expiresIn: "15m" }
-  );
-
-  //Se crea el refresh token
-  const refreshToken = jwt.sign(
-    { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
-    JWT_SECRET,
-    { expiresIn: "180d" }
-  );
-
-  //Se envia el access token y se incluye la cookie con el access token en la respuesta
-  const res = NextResponse.json({ accessToken });
-  res.cookies.set("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    path: "/api/auth/refresh",
-    maxAge: 60 * 60 * 24 * 180,
-  });
-  return res;
 }
