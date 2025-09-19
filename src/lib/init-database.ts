@@ -28,7 +28,7 @@ export async function initDatabase() {
     /* 
     =========== User relationships ===============
     */
-    User.hasMany(Perro, { foreignKey: "duenioId" });
+    User.hasMany(Perro, { foreignKey: "duenioId", as: "perros" });
 
     User.belongsToMany(Intervencion, {
       through: Acompania,

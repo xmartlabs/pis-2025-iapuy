@@ -21,6 +21,9 @@ export class User extends Model {
   declare celular: string;
 
   @Column
+  declare banco: string;
+
+  @Column
   declare cuentaBancaria: string;
 
   @Column
