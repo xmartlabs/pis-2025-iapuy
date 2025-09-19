@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useContext, useCallback } from "react";
+import {useEffect,useState, useContext, useCallback } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { jwtDecode } from "jwt-decode";
 import { LoginDialog } from "@/app/components/login-dialog";
@@ -72,7 +72,7 @@ export default function Home() {
       if (decoded.tipo === TipoUsuario.Administrador) {
         router.push("/app/admin/instituciones");
       } else {
-        router.push("/app/colaboradores/intervenciones");
+        router.push("/app/colaboradores/Intervenciones");
       }
     },
     [context, router]
@@ -96,8 +96,9 @@ export default function Home() {
     renovarToken().catch(() => {
       setLoading(false);
     });
+    //setLoading(false);
   }, [handleLoginSuccess]);
-
+  
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     setSubmitting(true);
     setLoginError(null);
