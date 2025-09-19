@@ -6,10 +6,7 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
-  BelongsToMany,
 } from "sequelize-typescript";
-import { Perro } from "./perro.entity";
-import { UsrPerro } from "./usrperro.entity";
 
 @Table({ tableName: "users" })
 export class User extends Model {
@@ -24,17 +21,13 @@ export class User extends Model {
   declare celular: string;
 
   @Column
+  declare banco: string;
+
+  @Column
   declare cuentaBancaria: string;
 
   @Column
   declare password: string;
-
-  @BelongsToMany(() => Perro, {
-    through: () => UsrPerro,
-    foreignKey: 'userId',
-    otherKey: 'perroId',
-  })
-  declare perros: Perro[];
 
   @CreatedAt
   declare createdAt: Date;
@@ -45,4 +38,3 @@ export class User extends Model {
   @DeletedAt
   declare deletedAt: Date;
 }
-
