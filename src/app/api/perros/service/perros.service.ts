@@ -12,7 +12,7 @@ import { Op } from "sequelize";
 
 export class PerrosService {
   async findAll(
-    pagination: PaginationDto
+    pagination: PaginationDto,
   ): Promise<PaginationResultDto<Perro>> {
     const result = await Perro.findAndCountAll({
       where: pagination.query
@@ -85,5 +85,10 @@ export class PerrosService {
     } catch {
       return { error: "Bad Request", status: 404 };
     }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const total = await Perro.destroy({ where: { id } });
+    return total > 0;
   }
 }

@@ -41,7 +41,119 @@ module.exports = {
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
-      },
+      },{
+            id: "b1111111-1111-1111-1111-111111111112",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111113",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111114",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111115",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111116",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111117",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111118",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111119",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111121",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111131",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111141",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111151",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111161",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111171",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111181",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },{
+            id: "b1111111-1111-1111-1111-111111111191",
+            fecha: new Date("2025-08-15"),
+            registroSanidadId: "a1111111-1111-1111-1111-111111111111",
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+        },
       {
         id: "b2222222-2222-2222-2222-222222222222",
         fecha: new Date("2025-08-20"),
@@ -99,7 +211,7 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete("desparasitaciones", null, {});
-    await queryInterface.bulkDelete("aacunas", null, {});
+    await queryInterface.bulkDelete("vacunas", null, {});
     await queryInterface.bulkDelete("banios", null, {});
     await queryInterface.bulkDelete("registro-sanidades", null, {});
   },
