@@ -76,7 +76,14 @@ export class PerrosService {
   async findOne(id: string) {
     try {
       await initDatabase();
-      const perro = await Perro.findByPk(id);
+      const perro = await Perro.findByPk(id, {
+        include: [
+          {
+            model: User,
+            attributes: ["nombre"],
+          },
+        ],
+      });
       if (perro === null) {
         return { error: "Perro no encontrado", status: 404 };
       }
