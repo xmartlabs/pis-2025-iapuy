@@ -150,6 +150,30 @@ it("findAll should pass limit = 0 if pagination size is 0", async () => {
 
   expect(mockFn).toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
 });
+it("findAll should calculate intervencionCount from UsrPerros", async () => {
+  (PerroModel.findAndCountAll as any).mockResolvedValue({
+    count: 1,
+    rows: [
+      {
+        get: () => ({
+          id: 1,
+          nombre: "Firulais",
+          UsrPerros: [{ id: 10 }, { id: 20 }],
+        }),
+      },
+    ],
+  });
+
+  const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
+  const result = await service.findAll(pagination as any);
+
+  
+  const firulais = result.data[0] as any;
+
+  expect(firulais.intervencionCount).toBe(2);
+  expect(firulais.UsrPerros).toBeUndefined();
+});
+
 
 
 });
