@@ -172,147 +172,141 @@ export default function ListadoPerrosTable() {
           </Button>
         </div>
       </div>
+      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-full table-fixed border-collapse">
+            <TableHeader>
+              <TableRow className="bg-gray-50 border-b border-gray-200 -mt-px">
+                <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                  Nombre
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                  Dueño
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                  Última vacunación
+                </TableHead>
+                <TableHead className="px-6 py-3 text-center text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                  Intervenciones este mes
+                </TableHead>
+              </TableRow>
+            </TableHeader>
 
-      <Card className="mt-6 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <Table className="min-w-full table-fixed border-collapse">
-              <TableHeader>
-                <TableRow className="bg-gray-50 border-b border-gray-200">
-                  <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Nombre
-                  </TableHead>
-                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Dueño
-                  </TableHead>
-                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Última vacunación
-                  </TableHead>
-                  <TableHead className="px-6 py-3 text-center text-sm font-medium text-gray-700">
-                    Intervenciones este mes
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody className="divide-y divide-gray-100 bg-white">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i} className="px-6 py-4">
-                      <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[140px]" />
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[160px]" />
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[110px]" />
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[48px] ml-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : perros.length > 0 ? (
-                  perros.map((p) => (
-                    <TableRow
-                      key={p.id}
-                      className="hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <TableCell className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <span className="text-base md:text-base ml-2 font-semibold">
-                            {p.nombre}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          {p.User?.nombre ?? p.duenioId ?? "-"}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          {p.RegistroSanidad
-                            ? formatDate(
-                                p.RegistroSanidad.Vacunas.fecha ??
-                                  p.updatedAt ??
-                                  p.createdAt
-                              )
-                            : "N/A"}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="px-6 py-4 text-center align-middle">
-                        {Number(p.intervencionCount) || 0}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="h-36 px-6 py-8 text-center"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <Dog className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          {search
-                            ? `Intenta ajustar los términos de búsqueda: "${search}"`
-                            : "Intenta agregar un nuevo perro"}
-                        </p>
-                      </div>
+            <TableBody className="divide-y divide-gray-100 bg-white">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="px-6 py-4">
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[140px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[160px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[110px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[48px] ml-auto" />
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              ) : perros.length > 0 ? (
+                perros.map((p) => (
+                  <TableRow
+                    key={p.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <TableCell className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <span className="text-base md:text-base ml-2 font-semibold">
+                          {p.nombre}
+                        </span>
+                      </div>
+                    </TableCell>
 
-          {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-100">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <Pagination>
-                  {/* added gap here */}
-                  <PaginationContent className="flex items-center gap-3">
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page > 1) setPage(page - 1);
-                        }}
-                        className={
-                          page <= 1 ? "pointer-events-none opacity-40" : ""
-                        }
-                      />
-                    </PaginationItem>
+                    <TableCell className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        {p.User?.nombre ?? p.duenioId ?? "-"}
+                      </div>
+                    </TableCell>
 
-                    <PaginationItem>
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page < totalPages) setPage(page + 1);
-                        }}
-                        className={
-                          page >= totalPages
-                            ? "pointer-events-none opacity-40"
-                            : ""
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-              <div className="text-muted-foreground text-center">
-                Página {page} de {totalPages}
-              </div>
+                    <TableCell className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        {p.RegistroSanidad
+                          ? formatDate(
+                              p.RegistroSanidad.Vacunas.fecha ??
+                                p.updatedAt ??
+                                p.createdAt
+                            )
+                          : "N/A"}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-6 py-4 text-center align-middle">
+                      {Number(p.intervencionCount) || 0}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-36 px-6 py-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Dog className="h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        {search
+                          ? `Intenta ajustar los términos de búsqueda: "${search}"`
+                          : "Intenta agregar un nuevo perro"}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <Pagination>
+                {/* added gap here */}
+                <PaginationContent className="flex items-center gap-3">
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page > 1) setPage(page - 1);
+                      }}
+                      className={
+                        page <= 1 ? "pointer-events-none opacity-40" : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page < totalPages) setPage(page + 1);
+                      }}
+                      className={
+                        page >= totalPages
+                          ? "pointer-events-none opacity-40"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="text-muted-foreground text-center">
+              Página {page} de {totalPages}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
