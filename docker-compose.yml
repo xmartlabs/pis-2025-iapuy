@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -19,11 +19,11 @@ services:
   nextjs:
     container_name: nextjs_testss
     build:
-      context: ./my-app
+      context: ./
       dockerfile: ../Dockerfile
     restart: unless-stopped
     volumes:
-      - ./my-app:/app
+      - ./:/app
       - /app/node_modules
     ports:
       - "3000:3000"
