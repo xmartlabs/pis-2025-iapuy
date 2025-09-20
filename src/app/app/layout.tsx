@@ -86,5 +86,5 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
         </main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

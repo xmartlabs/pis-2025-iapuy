@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -8,13 +10,24 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: "Archivo", sans-serif;
 }
 
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 @media (prefers-color-scheme: dark) {
   html {
@@ -93,6 +106,7 @@ body {
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: #BDD7B3;
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --custom-green: #5b9b40;
 }
 
 .dark {
@@ -137,3 +151,13 @@ body {
     @apply bg-background text-foreground font-sans;
   }
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Poppins", sans-serif !important;
+}
+

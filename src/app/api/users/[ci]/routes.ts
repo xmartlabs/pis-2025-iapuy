@@ -3,9 +3,10 @@ import { UserController } from "../controller/user.controller";
 
 const userController = new UserController();
 
-export async function GET(request: NextRequest) {
-  return userController.getUsers();
+export function GET(request: NextRequest, context: { params: { ci: string } }) {
+  return userController.getUser(request, { username: context.params.ci });
 }
+
 
 export async function POST(request: NextRequest) {
   return userController.createUser(request);
