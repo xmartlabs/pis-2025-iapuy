@@ -12,7 +12,7 @@ import { Op } from "sequelize";
 
 export class PerrosService {
   async findAll(
-    pagination: PaginationDto,
+    pagination: PaginationDto
   ): Promise<PaginationResultDto<Perro>> {
     const result = await Perro.findAndCountAll({
       where: pagination.query
@@ -74,23 +74,14 @@ export class PerrosService {
   }
 
   async findOne(id: string) {
-    try {
-      await initDatabase();
-      const perro = await Perro.findByPk(id, {
-        include: [
-          {
-            model: User,
-            attributes: ["nombre"],
-          },
-        ],
-      });
-      if (perro === null) {
-        return { error: "Perro no encontrado", status: 404 };
-      }
-      return { perro, status: 200 };
-    } catch {
-      return { error: "Bad Request", status: 404 };
+    await initDatabase();
+    const perro = await Perro.findByPk(id, {
+      include: [{ model: User, attributes: ["ci", "nombre"] }],
+    });
+    if (perro === null) {
+      return { error: "Perro no encontrado", status: 404 };
     }
+    return { perro, status: 200 };
   }
 
   async delete(id: string): Promise<boolean> {
