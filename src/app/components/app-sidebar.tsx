@@ -27,31 +27,31 @@ export function AppSidebar() {
   const items = [
   {
     title: "Perros",
-    url: "/app/admin/perros",
+    url: "/app/admin/perros/listado",
     icon:Dog,
     onlyAdmin:true,
   },
   {
     title: "Personas",
-    url: "/app/admin/personas",
+    url: "/app/admin/personas/listado",
     icon:PersonStanding,
     onlyAdmin:true,
   },
   {
     title: "Instituciones",
-    url: "/app/admin/instituciones",
+    url: "/app/admin/instituciones/listado",
     icon:Building,
     onlyAdmin:true,
   },
   {
     title: "Intervenciones",
-    url: tipo === TipoUsuario.Administrador ? "/app/admin/intervenciones":"/app/colaboradores/intervenciones",
+    url: tipo === TipoUsuario.Administrador ? "/app/admin/intervenciones":"/app/colaboradores/intervenciones/listado",
     icon:CalendarRange,
     onlyAdmin:false
   },
   {
     title: "Gastos",
-    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos":"/app/colaboradores/gastos",
+    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos":"/app/colaboradores/gastos/listado",
     icon:BadgeDollarSign,
     onlyAdmin:false
   },
