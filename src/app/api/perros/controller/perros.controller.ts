@@ -8,4 +8,7 @@ export class PerrosController {
   async getPerros(pagination: PaginationDto) {
     return await this.perrosService.findAll(pagination);
   }
+  async getPerro(id: string) {
+    return await this.perrosService.findOne(id);
+  }
 }

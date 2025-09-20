@@ -4,6 +4,7 @@ import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
+import { initDatabase } from "@/lib/init-database";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
@@ -70,5 +71,19 @@ export class PerrosService {
     };
 
     return getPaginationResultFromModel(pagination, processed);
+  }
+
+  async findOne(id: string) {
+    try {
+      await initDatabase();
+      const perro = await Perro.findByPk(id);
+      if (perro === null) {
+        return { error: "Perro no encontrado", status: 404 };
+      } else {
+        return { perro, status: 200 };
+      }
+    } catch {
+      return { error: "Bad Request", status: 404 };
+    }
   }
 }
