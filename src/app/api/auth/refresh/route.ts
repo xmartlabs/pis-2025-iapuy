@@ -1,27 +1,13 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { AuthController } from "../controller/auth.controller";
 const authController = new AuthController();
 
-export async function POST(req: Request) {
-  //Se obtiene el refresh token de la cookie guardada si la hay
-  const cookieHeader = req.headers.get("cookie") ?? "";
-  const refreshToken = cookieHeader
-    .split(";")
-    .find((c) => c.trim().startsWith("refreshToken="))
-    ?.split("=")[1];
-
-  if (!refreshToken) {
-    return NextResponse.json(
-      { error: "No se encontro un token de refresco en la solicitud." },
-      { status: 401 }
-    );
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const data = await authController.refresh(refreshToken);
-
+    const data = await authController.refresh(req);
     if (data.status === 200) {
-      return NextResponse.json({ accessToken: data.accessToken });
+      const res = NextResponse.json({ accessToken: data.accessToken });
+      return res;
     }
 
     return NextResponse.json({ error: data.error }, { status: data.status });

@@ -1,15 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  AuthController,
-  type LoginRequest,
-} from "../controller/auth.controller";
+import { AuthController } from "../controller/auth.controller";
 
 const authController = new AuthController();
 
 export async function POST(req: NextRequest) {
   try {
-    const { ci, password }: LoginRequest = (await req.json()) as LoginRequest;
-    const data = await authController.login({ ci, password });
+    const data = await authController.login(req);
     if (data.status === 200) {
       const res = NextResponse.json({ accessToken: data.accessToken });
       res.cookies.set("refreshToken", String(data.refreshToken), {
