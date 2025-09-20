@@ -4,10 +4,10 @@ import { Perro } from "@/app/models/perro.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
-import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
+import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
 import sequelize from "@/lib/database";
 
 export class RegistrosSanidadService {

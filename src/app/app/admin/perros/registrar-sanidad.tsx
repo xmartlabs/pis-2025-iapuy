@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { z, ZodType} from "zod";
+import { z} from "zod";
 import {
     Tabs,
     TabsContent,
@@ -38,6 +38,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+import type {Resolver} from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -74,10 +75,11 @@ export default function RegistroSanidad() {
     type FormValuesVacuna = z.infer<typeof vacunaSchema>;
     type FormValuesBanio = z.infer<typeof banioSchema>;
     type FormValuesDesparasitacion = z.infer<typeof desparasitacionSchema>;
-
+    
     type FormValues = FormValuesVacuna & FormValuesBanio & FormValuesDesparasitacion;
+
     const form = useForm<FormValues>({
-        resolver: zodResolver(schemaPorTab[tab] as unknown as ZodType<FormValues, any, any>),
+        resolver: zodResolver(schemaPorTab[tab]) as unknown as Resolver<FormValues>,
         defaultValues: {
             fechaInVac: "",
             marcaInVac: "",
@@ -165,7 +167,7 @@ export default function RegistroSanidad() {
                 });
             }
         } catch (error) {
-            console.error(error);
+            reportError(error);
         }
     }
 
@@ -192,7 +194,7 @@ export default function RegistroSanidad() {
                             <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">Registrar Sanidad</DialogTitle>
                         </DialogHeader>
                         <div className="!px-6 !-mt-5">
-                            <form onSubmit={form.handleSubmit(submitHandler)}>
+                            <form onSubmit={(e) => {e.preventDefault(); form.handleSubmit(submitHandler)(e).catch((err) => {reportError(err);})}}>
                                 <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={ (newTab) => {setTab(newTab as Tab)}}>
                                     <TabsList className="bg-[#DEEBD9] !rounded-md !p-1 !radius">
                                         <TabsTrigger value="vacuna"

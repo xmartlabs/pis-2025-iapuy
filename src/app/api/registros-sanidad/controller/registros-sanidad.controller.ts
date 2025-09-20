@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { RegistrosSanidadService } from "../service/registro-sanidad.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto"
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto"
 
 
 
@@ -25,17 +26,29 @@ export class RegistrosSanidadController {
   }
 
   async createEventoSanidad(request: NextRequest) {
-        let body : CreateRegistrosSanidadDTO
+
+        // esto es por el Eslint nunca se va a mandar esto
+        const buff = Buffer.alloc(0)
+        let body : CreateRegistrosSanidadDTO = {
+          tipoSanidad : "",
+          perroId : "", 
+          fecha : "",
+          vac : "",
+          carneVacunas :buff,
+          medicamento : "",
+          tipoDesparasitacion: 'Externa'
+        };
+;
 
         const formData = await request.formData();
 
-        if(formData.get("tipoSanidad") as string == 'vacuna') {
+        if(formData.get("tipoSanidad") as string === 'vacuna') {
 
             const file = formData.get("carneVacunas") as File
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
-            body= {
+             body  = {
             tipoSanidad : formData.get("tipoSanidad") as string,
             perroId : formData.get("perroId") as string,
             fecha : formData.get("fecha") as string,
@@ -46,9 +59,9 @@ export class RegistrosSanidadController {
             }
 
         }else{
+            
             const buffer = Buffer.alloc(0)
-
-            body = {
+             body  = {
             tipoSanidad : formData.get("tipoSanidad") as string,
             perroId : formData.get("perroId") as string,
             fecha : formData.get("fecha") as string,
@@ -59,8 +72,9 @@ export class RegistrosSanidadController {
             
           }
         }
-        
-       return await this.registrosSanidadService.create(body);
+      
+        const ret = await this.registrosSanidadService.create(body);
+        return ret;
        
       }
 }
