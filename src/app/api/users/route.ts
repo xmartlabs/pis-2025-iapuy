@@ -24,5 +24,5 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return userController.createUser(request);
+  return NextResponse.json(await userController.createUser(request));
 }

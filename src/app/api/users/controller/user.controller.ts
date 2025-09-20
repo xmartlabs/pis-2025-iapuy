@@ -5,6 +5,7 @@ import type { UpdateUserDto } from "../dtos/update-user.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import { UniqueConstraintError } from "sequelize";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
@@ -25,45 +26,47 @@ export class UserController {
       }
 
       return NextResponse.json(user);
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    } catch {
+      return {
+        error: "Internal Server Error",
+        status: 500 
+      }
     }
   }
 
   async createUser(request: NextRequest) {
     try {
-      const usrData: CreateUserDto = await request.json();
+      const usrData: CreateUserDto = await request.json() as CreateUserDto;
 
       if (!usrData.ci || !usrData.password) {
-        return NextResponse.json(
-          { error: "Username and password are required" },
-          { status: 400 }
-        );
+        return {
+          error: "Username and password are required",
+          status: 400
+        }
       }
 
       const ci = await this.userService.create(usrData);
-      return NextResponse.json({ message: "Usuario con ci "+ci+" creado con éxito" }, { status: 201 });
-    } catch (error: any) {
-      if (error.name === "SequelizeUniqueConstraintError") {
-        return NextResponse.json(
-          { error: "Username already exists" },
-          { status: 409 }
-        );
+      return {
+        message: `Usuario con ci ${String(ci)} creado con éxito`,
+        status: 201
       }
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        return {
+          error: "Username already exists" ,
+          status: 409 
+        };
+      }
+      return {
+        error: "Internal Server Error" ,
+        status: 500 
+      }
     }
   }
 
   async updateUser(request: NextRequest, { username }: { username: string }) {
     try {
-      const body: UpdateUserDto = await request.json();
+      const body: UpdateUserDto = await request.json() as UpdateUserDto;
       const user = await this.userService.update(username, body);
 
       if (!user) {
@@ -71,8 +74,7 @@ export class UserController {
       }
 
       return NextResponse.json(user);
-    } catch (error) {
-      console.error(error);
+    } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }
@@ -89,8 +91,7 @@ export class UserController {
       }
 
       return NextResponse.json({ message: "User deleted successfully" });
-    } catch (error) {
-      console.error(error);
+    } catch{
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }

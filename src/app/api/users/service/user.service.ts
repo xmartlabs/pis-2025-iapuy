@@ -1,8 +1,7 @@
 import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
-import { CreateUserDto } from "../dtos/create-user.dto";
+import type { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
-import { Perro } from "@/app/models/perro.entity";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
@@ -37,13 +36,14 @@ export class UserService {
     return await User.findByPk(username);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<String> {
-    createUserDto.password = await Hashing.hashPassword(createUserDto.password);
+  async create(createUserDto: CreateUserDto): Promise<string> {
+    const hash: unknown = Hashing.hashPassword(createUserDto.password);
+    createUserDto.password = hash as string;
     const transaction = await sequelize.transaction();
     
     try{
       const usr = await User.create({ ...createUserDto }, { transaction });
-      const perros : Array<String> = createUserDto.perros;
+      const perros : Array<string> = createUserDto.perros;
       await Promise.all(
       perros.map(async (perro) => {
           const p = await Perro.findOne({ where: { id: perro } });
