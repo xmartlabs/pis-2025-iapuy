@@ -79,9 +79,8 @@ export class PerrosService {
       const perro = await Perro.findByPk(id);
       if (perro === null) {
         return { error: "Perro no encontrado", status: 404 };
-      } else {
-        return { perro, status: 200 };
       }
+      return { perro, status: 200 };
     } catch {
       return { error: "Bad Request", status: 404 };
     }
