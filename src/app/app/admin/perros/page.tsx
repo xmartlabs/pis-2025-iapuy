@@ -1,6 +1,6 @@
 import DetallePerro from "./DetallePerro";
 import ListadoPerros from "./ListadoPerros";
-import RegistrarPerro from "./RegistrarPerro";
+import RegistrarPerro from "./registrar-perro";
 
 export default function PantallaPerros() {
   return (
@@ -11,3 +11,4 @@ export default function PantallaPerros() {
     </>
   );
 }
+ 

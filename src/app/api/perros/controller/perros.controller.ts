@@ -1,7 +1,7 @@
 import { PerrosService } from "../service/perros.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 export class PerrosController {
   constructor(
@@ -13,7 +13,7 @@ export class PerrosController {
   }
 
   async createPerro(request: NextRequest) {
-    const body: CreatePerroDTO = await request.json();
+    const body = await request.json() as unknown as CreatePerroDTO;
     return this.perrosService.create(body);
   }
 }

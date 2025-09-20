@@ -76,10 +76,12 @@ export default function RegistrarPerro() {
                 const duenios = datos.data;
                 setDuenos(duenios);
             } catch (err) {
-                console.error("Failed to fetch users: ", err);
+                reportError(err);
             }
         };
-        llamadaApi();
+        llamadaApi().catch((err) => {
+            reportError(err); 
+        });
     }, []);
 
     const createPerroSchema = z.object({
@@ -148,7 +150,7 @@ export default function RegistrarPerro() {
                 });
             }
         } catch (error) {
-            console.error(error)
+            reportError(error);
         }
     }
 
@@ -188,7 +190,7 @@ export default function RegistrarPerro() {
                         </DialogHeader>
 
                         <div className="!px-0 !pb-4">
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="!flex !flex-col !gap-6">
+                            <form onSubmit={(e) => {e.preventDefault(); form.handleSubmit(onSubmit)(e).catch((err) => {reportError(err);})}} className="!flex !flex-col !gap-6">
                                 <div className="!grid rid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="!w-full">
                                         <FormField
