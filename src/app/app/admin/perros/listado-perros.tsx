@@ -62,8 +62,7 @@ export default function ListadoPerrosTable() {
     const url = new URL("/api/perros", BASE_API_URL);
     url.searchParams.set("page", String(p));
     url.searchParams.set("size", String(s));
-    if (query && query.trim().length)
-      url.searchParams.set("query", query.trim());
+    if (query?.trim().length) url.searchParams.set("query", query.trim());
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
