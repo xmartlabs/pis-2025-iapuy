@@ -4,19 +4,18 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { MultiSelect } from "@/components/ui/multiselect";
 
 const formSchema = z.object({
   nombre: z.string().min(2, {
@@ -44,10 +43,10 @@ const formSchema = z.object({
         ctx.addIssue({code: "custom", path: ["perros"], message: "Si no tiene perros debes deseleccionarlos."})
     }
 });
+type FormValues = z.infer<typeof formSchema>
 
 export default function Formulario() {
-    // 1. Define your form.
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
         nombre: "",
@@ -61,16 +60,29 @@ export default function Formulario() {
         noPerro: false,
         },
     })
+
+    const listaPerros = [
+        { value: 'p1111111', label: 'Perro1'}
+    ]
     
-    // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
+    const onSubmit = async (values: FormValues) => {
+      await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      })
     }
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <form
+                onSubmit={(e) => {
+                    form
+                    .handleSubmit(onSubmit)(e)     // devuelve una Promise
+                    .catch((err) => {
+                        //err;
+                    })
+                }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <FormField
                     control={form.control}
                     name="nombre"
@@ -101,7 +113,7 @@ export default function Formulario() {
                     control={form.control}
                     name="rol"
                     render={({field}) => (
-                        <FormItem>
+                        <FormItem className="pt-[3%] pb-[3%] h-4/6">
                             <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Rol*</FormLabel>
                             <FormControl>
                                 <RadioGroup
@@ -186,42 +198,52 @@ export default function Formulario() {
                 <FormField
                     control={form.control}
                     name="perros"
-                    render={({field}) => {
-                        const noTiene = form.watch("noPerro"); 
-                        field.disabled = noTiene;
+                    render={({ field }) => {
+                        const noTiene = form.watch("noPerro") // true/false
                         return (
-                            <FormItem>
-                                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Perro</FormLabel>
-                                <FormControl>
-                                    <Input {...field}/>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        );
-                    }}
-                />
-                <FormField
-                    control={form.control}
-                    name="noPerro"
-                    render={({field}) => (
-                        <FormItem className="grid grid-cols-1 md:grid-cols-2">
+                        <FormItem>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
+                            Perro
+                            </FormLabel>
                             <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={(v) => {
-                                        field.onChange(v);
-                                        if(v) {
-                                            form.setValue("perros", [], { shouldValidate: true });
-                                        }
-                                    }}
+                                <MultiSelect
+                                    options={listaPerros}
+                                    selected={field.value ?? []}
+                                    onChange={field.onChange}
+                                    placeholder=""
+                                    disabled={!!noTiene}
+                                    createLabel="+ Agregar perro"
+                                    createHref="app/admin/perros/nuevo" // o usa onCreate={() => ...}
                                 />
                             </FormControl>
-                            <FormLabel>No tiene</FormLabel>
                             <FormMessage />
                         </FormItem>
+                        )
+                    }}
+                    />
+
+                    <FormField
+                    control={form.control}
+                    name="noPerro"
+                    render={({ field }) => (
+                        <FormItem className="grid grid-cols-2 gap-2 p-0 mt-[12.5%] w-2/5 h-1/4 left-[-5%] relative">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(v) => {
+                                field.onChange(v)
+                                if (v) {
+                                form.setValue("perros", [], { shouldValidate: true, shouldDirty: true })
+                                }
+                            }}
+                            />
+                        </FormControl>
+                        <FormLabel className="relative left-[-75%]">No tiene</FormLabel>
+                        <FormMessage />
+                        </FormItem>
                     )}
-                />
-                <Button type="submit">Crear persona</Button>
+                    />
+                <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
             </form>
         </Form>
     );

@@ -1,13 +1,11 @@
-import Migas from "./Migas";
-import Formulario from "./Formulario";
+import Migas from "./migas";
+import Formulario from "./formulario";
 
 export default function NuevaPersona() {
   return (
-    <div className="space-y-8">
+    <div className="pt-15 pb-15 pl-8 pr-8 space-y-8">
         <Migas/>
-        <div className="gap-[773px]">
-          <h1 className="align-middle text-5xl font-semibold tracking-wide text-accent-foreground">Nueva persona</h1>
-        </div>
+        <h1 className="align-middle font-serif text-5xl font-semibold tracking-tight text-accent-foreground">Nueva persona</h1>
         <Formulario />
     </div>
   );

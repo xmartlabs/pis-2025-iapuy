@@ -5,7 +5,6 @@ import type { UpdateUserDto } from "../dtos/update-user.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import { UniqueConstraintError } from "sequelize";
 
 export class UserController {
   constructor(private readonly userService: UserService = new UserService()) {}
@@ -35,32 +34,19 @@ export class UserController {
   }
 
   async createUser(request: NextRequest) {
-    try {
-      const usrData: CreateUserDto = await request.json() as CreateUserDto;
+    const usrData: CreateUserDto = await request.json() as CreateUserDto;
 
-      if (!usrData.ci || !usrData.password) {
-        return {
-          error: "Username and password are required",
-          status: 400
-        }
+    if (!usrData.ci || !usrData.password) {
+      return {
+        error: "Username and password are required",
+        status: 400
       }
+    }
 
-      const ci = await this.userService.create(usrData);
-      return {
-        message: `Usuario con ci ${String(ci)} creado con éxito`,
-        status: 201
-      }
-    } catch (error) {
-      if (error instanceof UniqueConstraintError) {
-        return {
-          error: "Username already exists" ,
-          status: 409 
-        };
-      }
-      return {
-        error: "Internal Server Error" ,
-        status: 500 
-      }
+    const ci = await this.userService.create(usrData);
+    return {
+      message: `Usuario con ci ${String(ci)} creado con éxito`,
+      status: 201
     }
   }
 

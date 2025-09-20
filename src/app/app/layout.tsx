@@ -8,7 +8,7 @@ export default function LoginLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main>{children}</main>
+      <main className="container">{children}</main>
     </SidebarProvider>
   );
 }
