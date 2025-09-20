@@ -1,4 +1,4 @@
-import DetallePersona from "./DetallePersona";
+import DetallePersona from "./detalle/page";
 import ListadoPersonas from "./ListadoPersonas";
 import NuevaPersona from "./NuevaPersona";
 

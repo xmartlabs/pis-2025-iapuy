@@ -1,19 +1,41 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { User } from "@/app/models/user.entity";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSearchParams } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 
+type PerroSummary = { nombre?: string };
+
+type UserData = CreateUserDto & {
+  banco?: string;
+  userPerros?: PerroSummary[];
+};
 export default function DetallePersona() {
-  const [user, setUser] = useState<User | null>(null);
+  const searchParams = useSearchParams();
+  const ci = searchParams.get("ci");
+
+  const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/users?`)
-      .then((res) => res.json() as Promise<User>)
+    if (!ci) return;
+
+    fetch(`/api/users/${ci}`)
+      .then((res) => res.json() as Promise<UserData>)
       .then((data) => {
         setUser(data);
         setError(null);
@@ -22,7 +44,7 @@ export default function DetallePersona() {
         setError("Error al obtener usuario.");
         setUser(null);
       });
-  }, []);
+  }, [ci]);
 
   return (
     <div className="!overflow-x-auto">
@@ -39,63 +61,89 @@ export default function DetallePersona() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid  items-center gap-3">
             <Label htmlFor="text">Nombre</Label>
-            <Input
-              disabled
-              type="text"
-              id="nombre"
-              placeholder={user?.nombre}
-            />
+            <Input type="text" id="nombre" defaultValue={user?.nombre || ""} />
           </div>
           <div className="grid items-center gap-3">
             <Label htmlFor="text">Contraseña</Label>
             <Input
-              disabled
               type="text"
               id="contraseña"
-              placeholder={user?.password}
+              defaultValue={user?.password || ""}
             />
           </div>
-          <div className="grid  items-center gap-3">
+          <div className=" items-center gap-3">
             <Label htmlFor="text">Rol</Label>
-            <Input disabled type="text" id="rol" placeholder={user?.rol} />
+            <RadioGroup className="flex pt-5" defaultValue="Administrador">
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="administrador" id="r1" />
+                <Label htmlFor="r1">Administrador</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="Colaborador" id="r2" />
+                <Label htmlFor="r2">Colaborador</Label>
+              </div>
+            </RadioGroup>
+            {/*TO DO - Obtener el rol desde el login*/}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid  items-center gap-3">
             <Label htmlFor="email">Banco</Label>
-            <Input disabled type="email" id="banco" placeholder={user?.banco} />
+            <Input type="email" id="banco" defaultValue={user?.banco || ""} />
           </div>
           <div className="grid  items-center gap-3">
             <Label htmlFor="email">Numero de Cuenta</Label>
             <Input
-              disabled
               type="email"
               id="email"
-              placeholder={user?.cuentaBancaria}
+              defaultValue={user?.cuentaBancaria || ""}
             />
           </div>
           <div className="grid items-center gap-3">
             <Label htmlFor="text">Cedula de Identidad</Label>
-            <Input disabled type="text" id="rol" placeholder={user?.ci} />
+            <Input type="text" id="rol" defaultValue={user?.ci || ""} />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid items-center gap-3">
             <Label htmlFor="email">Celular</Label>
             <Input
-              disabled
               type="email"
               id="celular"
-              placeholder={user?.celular}
+              defaultValue={user?.celular || ""}
             />
           </div>
           <div className="grid items-center gap-3">
-            <Label htmlFor="email">Perro</Label>
-            <Input disabled type="email" id="perro" placeholder={user?.perro} />
+            <Label htmlFor="text">Perros</Label>
+            <Select>
+              <SelectTrigger className="w-[180px] w-full">
+                <SelectValue
+                  placeholder={user?.userPerros?.[0]?.nombre || "Perros"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Perros</SelectLabel>
+                  {user &&
+                  Array.isArray(user.userPerros) &&
+                  user.userPerros.length > 0
+                    ? user.userPerros.map((p, index) =>
+                        p?.nombre ? (
+                          <SelectItem key={index} value={p.nombre}>
+                            {p.nombre}
+                          </SelectItem>
+                        ) : null
+                      )
+                    : "No tiene"}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid items-center gap-3">
-            <Label htmlFor="email">No tiene</Label>
-            <Input disabled type="email" id="perro" placeholder={"No tiene"} />
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={!user?.userPerros || user.userPerros.length === 0}
+            />
+            <p>No tiene</p>
           </div>
         </div>
 
