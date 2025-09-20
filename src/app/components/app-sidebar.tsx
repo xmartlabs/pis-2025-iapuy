@@ -21,9 +21,9 @@ export function AppSidebar() {
   const pathName=usePathname()
   const context = useContext(LoginContext);
   if (!context?.tipoUsuario) {
-    throw new Error("No se pudo determinar el tipo de usuario");
+    return null;
   }
-  const tipo:TipoUsuario=context?.tipoUsuario 
+  const tipo:TipoUsuario=context?.tipoUsuario;
   const items = [
   {
     title: "Perros",

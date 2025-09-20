@@ -21,20 +21,25 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
   let nombre:string =''
   let apellido:string =''
 
-  function handleLogout() {
-    // Borrar cookies o localStorage
-    //document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    // Avisar al backend
-    //await fetch("/api/logout", { method: "POST", credentials: "include" });
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
 
-    //borro contexto
-    context?.setToken(null);
-    //context?.setTipo(null);
-    context?.setNombre(null);
-    context?.setCI(null);
-    // Redirigir al login
-    router.push("/");
-    return null;
+      // Limpiar contexto
+      context?.setToken(null);
+      context?.setNombre(null);
+      context?.setCI(null);
+
+      // Redirigir al login
+      router.push("/");
+      context?.setTipo(null);
+    } catch (err) {
+      console.error("Error al cerrar sesión", err);
+      // Podés mostrar un mensaje al usuario si querés
+    }
   }
 
   if (data.length>1){
@@ -68,7 +73,9 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
                   </ContextMenuItem>
                   <ContextMenuItem>Perfil de [Nombre del perro]</ContextMenuItem>
                   <ContextMenuSeparator className="!border-[#BDD7B3]"/>
-                  <ContextMenuItem onClick={handleLogout}>Cerrar sesión</ContextMenuItem>
+                  <ContextMenuItem onClick={() => {handleLogout().catch(err => {console.error("Error al cerrar sesión:", err);});}}>
+                    Cerrar sesión
+                  </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>
         </header>
