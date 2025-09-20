@@ -69,7 +69,7 @@ export default function ListadoPersonas() {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
       {error && <p className="text-red-500 text-center">{error}</p>}{" "}
-      <div className="max-w-[1116px] mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+      <div className="max-w-full mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
           style={{ fontFamily: "Poppins, sans-serif" }}
@@ -88,7 +88,7 @@ export default function ListadoPersonas() {
           </Button>
         </div>
       </div>
-      <div className="max-w-[1116px] mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
+      <div className="max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
