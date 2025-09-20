@@ -3,44 +3,51 @@ import { Pencil, HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {DetallesPerroDto} from "@/app/api/perros/dtos/detalles-perro.dto";
 
-const info = {
-  name: "Firulais",
-  duenio: "Juan Pérez",
-  descripcion: "Un perro amigable y juguetón.",
-    fortalezas: "Muy leal y protector.",
-};
+export function Dato({ titulo, valor }: { titulo: string; valor: string }) {
+  return (
+    <div>
+      <h3
+        className="text-xs mb-1"
+        style={{ fontFamily: "Archivo, sans-serif" }}
+      >
+        {titulo}
+      </h3>
+      <p className="" style={{ fontFamily: "Archivo, sans-serif" }}>
+        {valor}
+      </p>
+    </div>
+  );
+}
 
-export function Dato({ titulo, valor } : { titulo: string; valor: string }) {
-    return (
-        <div>
-            <h3
-                className="text-xs mb-1"
-                style={{ fontFamily: "Archivo, sans-serif" }}
-            >
-                {titulo}
-            </h3>
-            <p className="" style={{ fontFamily: "Archivo, sans-serif" }}>
-                {valor}
-            </p>
-        </div>
-    );
+const perroDefault = new DetallesPerroDto("", "", "", [], "", "", "", null);
+
+type ApiResponse = {
+    perro: DetallesPerroDto;
+    error: string;
+    status: number;
 }
 
 export default function DetallePerro() {
-  const [infoPerro, setInfoPerro] = useState<any>(info);
+  const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
+  const [isOpenError, setIsOpenError] = useState(false);
 
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
   useEffect(() => {
     fetch(`/api/perros/detalles?id=${id}`)
-      .then((res) => res.json() as Promise<PerroDTO>)
-      .then((paginationResult) => {
-        setInfoPerro(paginationResult.data || info);
+      .then((res: Response) => res.json() as Promise<ApiResponse>)
+      .then((pageResult: ApiResponse) => {
+        setInfoPerro(pageResult.perro || perroDefault);
+        if (!pageResult.perro) {
+            setIsOpenError(true);
+        }
       })
       .catch(() => {
-        setInfoPerro(info);
+        setIsOpenError(true);
       });
   }, [id]);
   return (
@@ -66,7 +73,7 @@ export default function DetallePerro() {
               className="font-medium text-gray-700"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              {infoPerro.name}
+              {infoPerro.nombre}
             </li>
           </ol>
         </nav>
@@ -76,7 +83,7 @@ export default function DetallePerro() {
             className="text-3xl font-serif font-bold text-[#1B2F13]"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            {infoPerro.name}
+            {infoPerro.nombre}
           </h1>
           <div className="flex gap-2">
             <Button
@@ -94,11 +101,28 @@ export default function DetallePerro() {
         </div>
 
         <div className="space-y-4 text-[#121F0D]">
-            <Dato titulo="DUEÑO" valor={infoPerro.duenio} />
-            <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
-            <Dato titulo="FUERTES" valor={infoPerro.fortalezas} />
+          <Dato titulo="DUEÑO" valor={infoPerro.duenioNombre} />
+          <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
+          <Dato titulo="FUERTES" valor={infoPerro.fortalezas.toString()} />
         </div>
       </div>
+
+      {isOpenError && (
+        <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-xl font-bold mb-4">Error</h2>
+            <p>Hubo un problema cargando el Perro</p>
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/admin/perros"
+                className="bg-red-400 text-white px-4 py-2 rounded"
+              >
+                Regresar
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

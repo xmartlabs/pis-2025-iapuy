@@ -1,14 +1,15 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
-import { Perro } from "@/app/models/perro.entity";
-import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
-import { User } from "@/app/models/user.entity";
-import { UsrPerro } from "@/app/models/usrperro.entity";
-import { Vacuna } from "@/app/models/vacuna.entity";
-import { initDatabase } from "@/lib/init-database";
-import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op } from "sequelize";
+import {Intervencion} from "@/app/models/intervencion.entity";
+import {Perro} from "@/app/models/perro.entity";
+import {RegistroSanidad} from "@/app/models/registro-sanidad.entity";
+import {User} from "@/app/models/user.entity";
+import {UsrPerro} from "@/app/models/usrperro.entity";
+import {Vacuna} from "@/app/models/vacuna.entity";
+import {initDatabase} from "@/lib/init-database";
+import type {PaginationResultDto} from "@/lib/pagination/pagination-result.dto";
+import type {PaginationDto} from "@/lib/pagination/pagination.dto";
+import {getPaginationResultFromModel} from "@/lib/pagination/transform";
+import {Op} from "sequelize";
+import {DetallesPerroDto} from "@/app/api/perros/dtos/detalles-perro.dto";
 
 export class PerrosService {
   async findAll(
@@ -79,9 +80,13 @@ export class PerrosService {
       include: [{ model: User, attributes: ["ci", "nombre"] }],
     });
     if (perro === null) {
-      return { error: "Perro no encontrado", status: 404 };
+      return null;
     }
-    return { perro, status: 200 };
+    const duenio = await User.findByPk(perro.duenioId);
+    if (!duenio) {
+      return null;
+    }
+      return new DetallesPerroDto(perro.id, perro.nombre, perro.descripcion, perro.fortalezas, perro.duenioId, duenio.ci, duenio.nombre, perro.deletedAt);
   }
 
   async delete(id: string): Promise<boolean> {
