@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export async function POST() {
+export function POST() {
   try {
     // Limpiar cookie
     const res = NextResponse.json({ message: "Logout exitoso" });

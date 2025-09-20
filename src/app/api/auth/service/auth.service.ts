@@ -63,7 +63,7 @@ export class AuthService {
     }
   }
 
-  async refresh(refreshToken: string) {
+  refresh(refreshToken: string) {
     try {
       const payload = jwt.verify(refreshToken, JWT_SECRET) as PayloadForRefresh;
 

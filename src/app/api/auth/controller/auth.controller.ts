@@ -9,7 +9,7 @@ export class AuthController {
     return this.authService.login(ci, password);
   }
 
-  async refresh(req: NextRequest) {
+  refresh(req: NextRequest) {
     try {
       //Se obtiene el refresh token de la cookie guardada si la hay
       const cookieHeader = req.headers.get("cookie") ?? "";

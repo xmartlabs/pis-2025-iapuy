@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {useEffect,useState, useContext, useCallback } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { jwtDecode } from "jwt-decode";
 import { LoginDialog } from "@/app/components/login-dialog";
@@ -98,7 +98,7 @@ export default function Home() {
     });
     //setLoading(false);
   }, [handleLoginSuccess]);
-  
+
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     setSubmitting(true);
     setLoginError(null);
