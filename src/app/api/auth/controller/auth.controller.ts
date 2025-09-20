@@ -1,88 +1,36 @@
-import jwt from "jsonwebtoken";
-import { UserService } from "../../users/service/user.service";
-import { initDatabase } from "@/lib/init-database";
-import { Hashing } from "@/lib/crypto/hash";
+import { AuthService, type LoginRequest } from "../service/auth.service";
+import { type NextRequest } from "next/server";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-export enum TipoUsuario {
-  Colaborador = "Colaborador",
-  Administrador = "Administrador",
-}
-
-export interface LoginRequest {
-  ci: string;
-  password: string;
-}
-
-export interface PayloadForRefresh extends jwt.JwtPayload {
-  ci: string;
-  nombre: string;
-  tipo: string;
-}
 export class AuthController {
-  constructor(private readonly userService: UserService = new UserService()) {}
+  constructor(private readonly authService: AuthService = new AuthService()) {}
 
-  async login({ ci, password }: LoginRequest) {
-    try {
-      await initDatabase();
-
-      //Se verifican las credenciales del usuario
-      const user = await this.userService.findOne(ci);
-      if (
-        user === undefined ||
-        user === null ||
-        !(await Hashing.verifyPassword(password, user.password))
-      ) {
-        return { error: "Credenciales invalidas", status: 401 };
-      }
-      const ciUsuario = user.ci;
-      const nombreUsuario = user.nombre;
-      const tipoUsuario = user.esAdmin
-        ? TipoUsuario.Administrador
-        : TipoUsuario.Colaborador;
-
-      //Se crea el access token
-      const accessToken = jwt.sign(
-        { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-      );
-
-      //Se crea el refresh token
-      const refreshToken = jwt.sign(
-        { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
-        JWT_SECRET,
-        { expiresIn: "180d" }
-      );
-
-      //Se envia el access token y el refresh token
-      return { accessToken, refreshToken, status: 200 };
-    } catch {
-      return { error: "Bad Request", status: 400 };
-    }
+  async login(req: NextRequest) {
+    const { ci, password }: LoginRequest = (await req.json()) as LoginRequest;
+    return this.authService.login(ci, password);
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(req: NextRequest) {
     try {
-      const payload = jwt.verify(refreshToken, JWT_SECRET) as PayloadForRefresh;
+      //Se obtiene el refresh token de la cookie guardada si la hay
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      const refreshToken = cookieHeader
+        .split(";")
+        .find((c) => c.trim().startsWith("refreshToken="))
+        ?.split("=")[1];
 
-      //Se genera un nuevo access token
-      const newAccessToken = jwt.sign(
-        {
-          ci: payload.ci,
-          nombre: payload.nombre,
-          tipo: payload.tipo,
-        },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-      );
-      //Se envia el nuevo access token
-      return { accessToken: newAccessToken, status: 200 };
+      if (!refreshToken) {
+        return {
+          error: "No se encontro un token de refresco en la solicitud.",
+          status: 401,
+          accessToken: "",
+        };
+      }
+      return this.authService.refresh(refreshToken);
     } catch {
       return {
         error: "El refresh token es invalido o ha expirado.",
         status: 403,
+        accessToken: "",
       };
     }
   }
