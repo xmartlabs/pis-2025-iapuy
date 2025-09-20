@@ -1,12 +1,15 @@
 import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-    plugins: [react(), tsconfigPaths()],
-    test: {
-        environment: "jsdom",
-        globals: true,
-        setupFiles: "/src/setup-tests.ts",
+  test: {
+    include: ["src/**/*.test.ts"], // busca todos los tests
+    coverage: {
+      provider: "v8",              // cambiar "c8" por "v8"
+      reporter: ["text", "lcov"],  // mostrar en consola y generar html
+      all: true,                    // incluye todos los archivos
+      include: ["src/**/*.ts"],     // archivos a cubrir
+      // exclude opcional, si quieres incluir todo no pongas nada
     },
+    watch: true,                    // modo watch
+  },
 });
