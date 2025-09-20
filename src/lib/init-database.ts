@@ -44,11 +44,13 @@ export async function initDatabase() {
     =========== Perro relationships ===============
     */
     Perro.belongsTo(User, { foreignKey: "duenioId" });
+    Perro.hasMany(UsrPerro, { foreignKey: "perroId" });
+    Perro.hasOne(RegistroSanidad, { foreignKey: "perroId" });
 
     // Entidad intermedia para relacion N x N con usuarios
-    UsrPerro.belongsTo(User);
-    UsrPerro.belongsTo(Intervencion);
-    UsrPerro.belongsTo(Perro);
+    UsrPerro.belongsTo(User, { foreignKey: "userId" });
+    UsrPerro.belongsTo(Intervencion, { foreignKey: "intervencionId" });
+    UsrPerro.belongsTo(Perro, { foreignKey: "perroId" });
 
     /* 
     =========== Intervenciones relationships ===============
