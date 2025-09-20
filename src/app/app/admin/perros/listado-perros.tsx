@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Dog, Plus, User, Calendar } from "lucide-react";
+import { Search, Dog, Plus } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 
 const BASE_API_URL = (
@@ -143,7 +143,7 @@ export default function ListadoPerrosTable() {
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <Dog className="h-21 w-21 text-[rgba(91,155,64,1)]" />
+            <Dog className="h-21 w-21 text-[rgba(0, 0, 0, 1)]" />
             <h1 className="text-6xl font-extrabold tracking-tight ">Perros</h1>
           </div>
         </div>
@@ -228,14 +228,12 @@ export default function ListadoPerrosTable() {
 
                       <TableCell className="px-6 py-4 align-middle">
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <User className="h-4 w-4 text-muted-foreground" />
                           {p.User?.nombre ?? p.duenioId ?? "-"}
                         </div>
                       </TableCell>
 
                       <TableCell className="px-6 py-4 align-middle">
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
                           {p.RegistroSanidad
                             ? formatDate(
                                 p.RegistroSanidad.Vacunas.fecha ??
