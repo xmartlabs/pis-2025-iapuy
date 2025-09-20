@@ -12,6 +12,6 @@ export function POST() {
     });
     return res;
   } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

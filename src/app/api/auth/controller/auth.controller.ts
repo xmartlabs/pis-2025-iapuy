@@ -10,28 +10,20 @@ export class AuthController {
   }
 
   refresh(req: NextRequest) {
-    try {
-      //Se obtiene el refresh token de la cookie guardada si la hay
-      const cookieHeader = req.headers.get("cookie") ?? "";
-      const refreshToken = cookieHeader
-        .split(";")
-        .find((c) => c.trim().startsWith("refreshToken="))
-        ?.split("=")[1];
+    //Se obtiene el refresh token de la cookie guardada si la hay
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const refreshToken = cookieHeader
+      .split(";")
+      .find((c) => c.trim().startsWith("refreshToken="))
+      ?.split("=")[1];
 
-      if (!refreshToken) {
-        return {
-          error: "No se encontro un token de refresco en la solicitud.",
-          status: 401,
-          accessToken: "",
-        };
-      }
-      return this.authService.refresh(refreshToken);
-    } catch {
+    if (!refreshToken) {
       return {
-        error: "El refresh token es invalido o ha expirado.",
-        status: 403,
+        error: "No se encontro un token de refresco en la solicitud.",
+        status: 401,
         accessToken: "",
       };
     }
+    return this.authService.refresh(refreshToken);
   }
 }
