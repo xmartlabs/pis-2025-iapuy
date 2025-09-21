@@ -24,6 +24,7 @@ import { Search, Dog } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { RegistrarPerro } from "./registrar-perro";
+import { useRouter } from "next/navigation";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -40,6 +41,7 @@ export default function ListadoPerrosTable() {
   const [reload, setReload] = useState(false);
 
   const context = useContext(LoginContext);
+  const router = useRouter();
 
   // Debounce para la búsqueda
   useEffect(() => {
@@ -52,6 +54,10 @@ export default function ListadoPerrosTable() {
       clearTimeout(timer);
     };
   }, [searchInput]);
+
+  function go(id: string) {
+    router.push(`/app/admin/perros/detalles?id=${id}`);
+  }
 
   async function fetchPerros(
     pageNum: number,
@@ -268,6 +274,9 @@ export default function ListadoPerrosTable() {
                   <TableRow
                     key={p.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
+                    onClick={() => {
+                      go(p.id);
+                    }}
                   >
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-3">
