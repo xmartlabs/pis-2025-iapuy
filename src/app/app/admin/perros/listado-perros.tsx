@@ -2,7 +2,6 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -21,9 +20,10 @@ import {
 } from "@/components/ui/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Dog, Plus } from "lucide-react";
+import { Search, Dog } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
+import { RegistrarPerro } from "./registrar-perro";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -37,6 +37,7 @@ export default function ListadoPerrosTable() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
+  const [reload, setReload] = useState(false);
 
   const context = useContext(LoginContext);
 
@@ -186,7 +187,7 @@ export default function ListadoPerrosTable() {
     return () => {
       controller.abort();
     };
-  }, [page, size, search]);
+  }, [page, size, search, reload]);
 
   const formatDate = (iso?: string) => {
     if (!iso) return "-";
@@ -221,15 +222,7 @@ export default function ListadoPerrosTable() {
             />
           </div>
 
-          <Button
-            className="flex items-center gap-2 bg-[rgba(91,155,64,1)] hover:bg-[rgba(91,155,64,1)]  text-white rounded-md shadow-md px-5 py-2.5"
-            onClick={() => {
-              /* abrir modal/agregar */
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            <span>Agregar perro</span>
-          </Button>
+          <RegistrarPerro reload={reload} setReload={setReload} />
         </div>
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
