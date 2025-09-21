@@ -4,7 +4,7 @@ import path from "path";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // <--- acá le decís que @ apunta a src/
+      "@": path.resolve(__dirname, "src"), 
     },
   },
   test: {

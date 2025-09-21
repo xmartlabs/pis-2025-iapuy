@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { UserController } from "./controller/user.controller";
 import { initDatabase } from "@/lib/init-database";
 import { extractPagination } from "@/lib/pagination/extraction";
@@ -10,11 +10,16 @@ await initDatabase();
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-
-    return userController.getUsers(pagination);
+    const data = await userController.getUsers(pagination);
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return new Response(undefined, { status: 400 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Hubo un error desconocido" },
+      { status: 500 }
+    );
   }
 }
 
