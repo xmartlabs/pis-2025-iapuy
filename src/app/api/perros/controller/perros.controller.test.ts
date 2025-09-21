@@ -1,4 +1,29 @@
+// src/app/api/perros/controller/perros.controller.test.ts
+import "reflect-metadata";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// --- Mocks que deben ejecutarse antes de importar cualquier módulo que pueda inicializar sequelize ---
+vi.mock("@/app/models/perro.entity", () => ({ Perro: {} }));
+vi.mock("@/app/models/user.entity", () => ({ User: {} }));
+vi.mock("@/app/models/usrperro.entity", () => ({ UsrPerro: {} }));
+vi.mock("@/app/models/intervencion.entity", () => ({ Intervencion: {} }));
+vi.mock("@/app/models/registro-sanidad.entity", () => ({ RegistroSanidad: {} }));
+vi.mock("@/app/models/vacuna.entity", () => ({ Vacuna: {} }));
+
+vi.mock("@/lib/pagination/transform", () => ({
+  getPaginationResultFromModel: (_pagination: any, processed: any) => ({
+    data: processed.rows,
+    count: processed.count,
+  }),
+}));
+
+vi.mock("next/server", () => ({
+  NextResponse: {
+    json: vi.fn((data, opts) => ({ data, ...opts })),
+  },
+}));
+// --------------------------------------------------------------------------------------------
+
 import { PerrosController } from "@/app/api/perros/controller/perros.controller";
 import type { NextRequest } from "next/server";
 
@@ -7,12 +32,14 @@ describe("PerrosController", () => {
   let service: any;
 
   beforeEach(() => {
+    // limpiar mocks primero para evitar efectos entre tests
+    vi.clearAllMocks();
+
     service = {
       findAll: vi.fn(),
       create: vi.fn(),
     };
     controller = new PerrosController(service);
-    vi.clearAllMocks();
   });
 
   it("getPerros debería devolver lista de perros", async () => {
@@ -57,3 +84,4 @@ describe("PerrosController", () => {
     await expect(controller.createPerro(mockRequest)).rejects.toThrow("DB error");
   });
 });
+
