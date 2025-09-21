@@ -1,5 +1,6 @@
 import Migas from "./migas";
 import Formulario from "./formulario";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function NuevaPersona() {
   return (
@@ -7,6 +8,7 @@ export default function NuevaPersona() {
         <Migas/>
         <h1 className="align-middle font-serif text-5xl font-semibold tracking-tight text-accent-foreground">Nueva persona</h1>
         <Formulario />
+        <Toaster />
     </div>
   );
 }

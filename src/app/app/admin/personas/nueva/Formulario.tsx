@@ -16,21 +16,33 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { MultiSelect } from "@/components/ui/multiselect";
+import { useContext, useEffect, useState } from "react";
+import { LoginContext } from "@/app/context/login-context";
+import { toast } from "sonner"
+import { useRouter } from "next/navigation";
+
+const BASE_API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 const formSchema = z.object({
-  nombre: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
+  nombre: z.stringFormat("nombre", /^[\p{L}]+(?:\s+[\p{L}]+)+$/u, {
+    message: "Ingrese nombre completo",
   }),
-  pass: z.string().min(8, {
+  password: z.string().min(8, {
     message: "Su contraseña debe tener más de 8 caracteres.",
   }),
   rol: z.enum(["admin","colaborador"]),
-  banco: z.string(),
-  cuenta: z.string(),
+  banco: z.string().min(1, {
+    message: "Debe ingresar un banco"
+  }),
+  cuentaBancaria: z.string().min(1,{
+    message: "Debe ingresar un número de cuenta"
+  }),
   ci: z.stringFormat("ci", /^[0-9]{8}$/, {
     message: "La cédula deben ser 8 dígitos sin puntos ni guión."
   }),
-  celular: z.stringFormat("cel", /^[0-9]{9}$/),
+  celular: z.stringFormat("cel", /^[0-9]{9}$/, {
+    message: "Número de teléfono inválido"
+  }),
   perros: z.array(z.string()),
   noPerro: z.boolean(),
 }).superRefine((data, ctx) => {
@@ -43,17 +55,41 @@ const formSchema = z.object({
         ctx.addIssue({code: "custom", path: ["perros"], message: "Si no tiene perros debes deseleccionarlos."})
     }
 });
+
+const perrosSchema = z.object({
+    id: z.string(),
+    nombre: z.string(),
+  });
+const perrosArraySchema = z.array(perrosSchema);
+const perrosEnvelopeSchema = z.object({ data: perrosArraySchema });
+const refreshSchema = z.object({ accessToken: z.string() });
+
+type Perro = z.infer<typeof perrosSchema>;
+type PerroOption = { value: string; label: string };
+
 type FormValues = z.infer<typeof formSchema>
 
+function errorToString(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 export default function Formulario() {
+    const router = useRouter();
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
         nombre: "",
-        pass: "",
+        password: "",
         rol: "admin",
         banco: "",
-        cuenta: "",
+        cuentaBancaria: "",
         ci: "",
         celular: "",
         perros: [],
@@ -61,25 +97,180 @@ export default function Formulario() {
         },
     })
 
-    const listaPerros = [
-        { value: 'p1111111', label: 'Perro1'}
-    ]
+    const context = useContext(LoginContext);
+    const [listaPerros, setListaPerros] = useState<PerroOption[]>([]);
+
+    useEffect(() => {
+    async function fetchPerrosOptions(): Promise<void> {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => { controller.abort(); }, 10000);
+        const url = new URL("/api/perros", BASE_API_URL);
+
+        try {
+        const token = context?.tokenJwt ?? undefined;
+
+        const doFetch = async (authToken?: string) => {
+            const resp = await fetch(url.toString(), {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            },
+            signal: controller.signal,
+            });
+            return resp;
+        };
+
+        let resp = await doFetch(token);
+
+        if (resp.status === 401) {
+            const refreshResp = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+            });
+
+            if (refreshResp.ok) {
+            const body = (await refreshResp.json().catch(() => null)) as { accessToken?: string } | null;
+            const newToken = body?.accessToken ?? null;
+            if (newToken) {
+                context?.setToken(newToken);
+                resp = await doFetch(newToken);
+            }
+            }
+        }
+
+        if (!resp.ok) {
+            const txt = await resp.text().catch(() => "");
+            throw new Error(`API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`);
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json")) throw new Error("Expected JSON response");
+
+        const json: unknown = await resp.json();
+
+        const parsed = z.union([perrosArraySchema, perrosEnvelopeSchema]).parse(json);
+        const perros: Perro[] = Array.isArray(parsed) ? parsed : parsed.data;
+
+        const opciones: PerroOption[] = perros.map(p => ({ value: p.id, label: p.nombre }));
+        setListaPerros(opciones);
+        } catch (err) {
+            toast("Error cargando perros", {
+                description: errorToString(err),
+                action: {
+                    label: "Volver",
+                    onClick: () => { router.push("./") },
+                },
+            });
+            setListaPerros([]);
+        } finally {
+            clearTimeout(timeout);  
+        }
+    }
+
+    fetchPerrosOptions().catch((err) => {
+        toast("Error cargando perros", {
+            description: errorToString(err),
+            action: {
+                label: "Volver",
+                onClick: () => { router.push("./") },
+            },
+        });
+        setListaPerros([]);
+    });
+    }, [context, router]);
     
     const onSubmit = async (values: FormValues) => {
-      await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      })
-    }
+        form.clearErrors();
+
+        // opcional: timeout/abort como en el fetch de perros
+        const controller = new AbortController();
+        const timeout = setTimeout(() => { controller.abort(); }, 10000);
+
+        try {
+            const token = context?.tokenJwt ?? undefined;
+            const url = new URL("/api/users", BASE_API_URL);
+
+            const doPost = async (authToken?: string) => await fetch(url.toString(), {
+                method: "POST",
+                headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
+                body: JSON.stringify(values),
+                signal: controller.signal,
+            });
+
+            // 1er intento con el token actual (si hay)
+            let res = await doPost(token);
+
+            // Si expira (401), refrescá y reintentá
+            if (res.status === 401) {
+                const refreshResp = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+                    method: "POST",
+                    headers: { Accept: "application/json" },
+                    signal: controller.signal,
+                });
+
+                if (refreshResp.status === 200) {
+                    const raw: unknown = await refreshResp.json().catch(() => null);
+                    const parsed = refreshSchema.safeParse(raw);
+                    if (parsed.success) {
+                        const newToken = parsed.data.accessToken;
+                        context?.setToken(newToken);
+                        res = await doPost(newToken);
+                    } else {
+                        throw new Error();
+                    }
+                } else {
+                    throw new Error();
+                }
+            }
+
+            if (res.status === 409) {
+                form.setError("ci", {
+                    type: "conflict",
+                    message: "El número de cédula ingresado ya está en uso",
+                });
+                return;
+            }
+
+            // Otros errores
+            if (res.status !== 200) {
+                const txt = await res.text().catch(() => "");
+                throw new Error(txt || `Error ${res.status}: ${res.statusText}`);
+            }
+
+            // Éxito → redirigí
+            router.push("./"); // ajustá la ruta si querés
+        } catch (err) {
+            toast("Error creando usuario", {
+                description: err instanceof Error ? err.message : String(err),
+                action: {
+                    label: "Volver",
+                    onClick: () => { router.push("./") },
+                },
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+        };
     return (
         <Form {...form}>
             <form
                 onSubmit={(e) => {
                     form
-                    .handleSubmit(onSubmit)(e)     // devuelve una Promise
+                    .handleSubmit(onSubmit)(e)
                     .catch((err) => {
-                        //err;
+                        toast("Error creando usuario", {
+                            description: err instanceof Error ? err.message : String(err),
+                            action: {
+                                label: "Volver",
+                                onClick: () => { router.push("./") },
+                            },
+                        });
                     })
                 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -98,7 +289,7 @@ export default function Formulario() {
                 />
                 <FormField
                     control={form.control}
-                    name="pass"
+                    name="password"
                     render={({field}) => (
                         <FormItem>
                             <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Contraseña*</FormLabel>
@@ -158,7 +349,7 @@ export default function Formulario() {
                 />
                 <FormField
                     control={form.control}
-                    name="cuenta"
+                    name="cuentaBancaria"
                     render={({field}) => (
                         <FormItem>
                             <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Número de cuenta*</FormLabel>
@@ -230,7 +421,7 @@ export default function Formulario() {
                         <FormControl>
                             <Checkbox
                             checked={field.value}
-                            onCheckedChange={(v) => {
+                            onCheckedChange={(v: boolean) => {
                                 field.onChange(v)
                                 if (v) {
                                 form.setValue("perros", [], { shouldValidate: true, shouldDirty: true })

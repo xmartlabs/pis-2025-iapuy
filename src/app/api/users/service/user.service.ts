@@ -9,6 +9,24 @@ import { Hashing } from "@/lib/crypto/hash";
 import { Op } from "sequelize";
 import sequelize from "@/lib/database";
 
+function normalizePerros(input: unknown): string[] {
+  if (Array.isArray(input)) return input.map(String);
+
+  if (input === null) return [];
+
+  if (typeof input === "string") {
+    try {
+      const parsed : unknown = JSON.parse(input);
+      if (Array.isArray(parsed)) return parsed.map(String);
+      return input ? [input] : [];
+    } catch {
+      return input ? [input] : [];
+    }
+  }
+
+  return [];
+}
+
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
     const result = await User.findAndCountAll({
@@ -36,14 +54,18 @@ export class UserService {
     return await User.findByPk(username);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<string> {
-    const hash: unknown = Hashing.hashPassword(createUserDto.password);
-    createUserDto.password = hash as string;
+  async create(request: CreateUserDto): Promise<string> {
+    const { password, ...rest } = request;
+    if (typeof password !== "string") {
+      throw new Error("Invalid password type: expected string");
+    }
+    const hashed = await Hashing.hashPassword(password);
+    const createUserDto: CreateUserDto = { ...rest, password: hashed };
     const transaction = await sequelize.transaction();
-    
+
+    const perros = normalizePerros(createUserDto.perros);
     try{
       const usr = await User.create({ ...createUserDto }, { transaction });
-      const perros : Array<string> = createUserDto.perros;
       await Promise.all(
       perros.map(async (perro) => {
           const p = await Perro.findOne({ where: { id: perro } });
@@ -54,7 +76,7 @@ export class UserService {
       );
 
       await transaction.commit();
-
+      
       return usr.ci;
     }
     catch (error){

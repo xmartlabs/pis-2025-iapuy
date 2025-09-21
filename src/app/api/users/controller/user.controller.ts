@@ -35,7 +35,6 @@ export class UserController {
 
   async createUser(request: NextRequest) {
     const usrData: CreateUserDto = await request.json() as CreateUserDto;
-
     if (!usrData.ci || !usrData.password) {
       return {
         error: "Username and password are required",
