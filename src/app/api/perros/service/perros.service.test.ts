@@ -21,7 +21,6 @@ vi.mock("@/lib/pagination/transform", () => ({
   }),
 }));
 
-
 describe("PerrosService", () => {
   let service: PerrosService;
 
@@ -173,7 +172,6 @@ it("findAll should calculate intervencionCount from UsrPerros", async () => {
   expect(firulais.intervencionCount).toBe(2);
   expect(firulais.UsrPerros).toBeUndefined();
 });
-
 
 
 });

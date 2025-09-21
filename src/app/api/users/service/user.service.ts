@@ -33,6 +33,7 @@ export class UserService {
       where: pagination.query
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
+      attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
       include: [
         {
           model: Intervencion,
@@ -44,7 +45,7 @@ export class UserService {
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
-      order: pagination.getOrder(),
+      order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
     });
 
     return getPaginationResultFromModel(pagination, result);
@@ -65,7 +66,8 @@ export class UserService {
 
     const perros = normalizePerros(createUserDto.perros);
     try{
-      const usr = await User.create({ ...createUserDto }, { transaction });
+      const esAdmin = createUserDto.rol === "admin";
+      const usr = await User.create({ ...createUserDto, esAdmin }, { transaction });
       await Promise.all(
       perros.map(async (perro) => {
           const p = await Perro.findOne({ where: { id: perro } });
