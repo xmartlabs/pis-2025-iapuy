@@ -1,15 +1,14 @@
 import { PerrosService } from "../service/perros.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import type {DetallesPerroDto} from "@/app/api/perros/dtos/detalles-perro.dto";
 
 export class PerrosController {
   constructor(
-    private readonly perrosService: PerrosService = new PerrosService(),
+    private readonly perrosService: PerrosService = new PerrosService()
   ) {}
   async getPerros(pagination: PaginationDto) {
     return await this.perrosService.findAll(pagination);
   }
-  async getPerro(id: string): Promise<null | DetallesPerroDto> {
+  async getPerro(id: string) {
     return await this.perrosService.findOne(id);
   }
 

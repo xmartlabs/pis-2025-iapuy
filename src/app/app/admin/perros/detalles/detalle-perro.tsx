@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {DetallesPerroDto} from "@/app/api/perros/dtos/detalles-perro.dto";
+import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 
 export function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
@@ -22,13 +22,13 @@ export function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   );
 }
 
-const perroDefault = new DetallesPerroDto("", "", "", [], "", "", "", null);
+const perroDefault = new DetallesPerroDto("", "", "", [], "", "", null);
 
 type ApiResponse = {
-    perro: DetallesPerroDto;
-    error: string;
-    status: number;
-}
+  perro: DetallesPerroDto;
+  error: string;
+  status: number;
+};
 
 export default function DetallePerro() {
   const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
@@ -43,7 +43,7 @@ export default function DetallePerro() {
       .then((pageResult: ApiResponse) => {
         setInfoPerro(pageResult.perro || perroDefault);
         if (!pageResult.perro) {
-            setIsOpenError(true);
+          setIsOpenError(true);
         }
       })
       .catch(() => {
@@ -101,7 +101,12 @@ export default function DetallePerro() {
         </div>
 
         <div className="space-y-4 text-[#121F0D]">
-          <Dato titulo="DUEÑO" valor={infoPerro.duenioNombre} />
+          <Dato
+            titulo="DUEÑO"
+            valor={
+              infoPerro.duenioNombre ? "" : (infoPerro.duenioNombre as string)
+            }
+          />
           <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
           <Dato titulo="FUERTES" valor={infoPerro.fortalezas.toString()} />
         </div>
@@ -114,7 +119,7 @@ export default function DetallePerro() {
             <p>Hubo un problema cargando el Perro</p>
             <div className="mt-6 flex justify-center">
               <Link
-                href="/admin/perros"
+                href="/app/admin/perros"
                 className="bg-red-400 text-white px-4 py-2 rounded"
               >
                 Regresar
