@@ -6,7 +6,6 @@ export default function PantallaPerros() {
     <>
       <DetallePerro />
       <ListadoPerros />
-      <RegistrarPerro />
     </>
   );
 }
