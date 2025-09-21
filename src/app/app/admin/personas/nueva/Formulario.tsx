@@ -294,7 +294,7 @@ export default function Formulario() {
                         <FormItem>
                             <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Contraseña*</FormLabel>
                             <FormControl>
-                                <Input {...field}/>
+                                <Input {...field} type="password"/>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -403,8 +403,8 @@ export default function Formulario() {
                                     onChange={field.onChange}
                                     placeholder=""
                                     disabled={!!noTiene}
-                                    createLabel="+ Agregar perro"
-                                    createHref="app/admin/perros/nuevo" // o usa onCreate={() => ...}
+                                    createLabel="Agregar perro"
+                                    createHref="../perros/listado"
                                 />
                             </FormControl>
                             <FormMessage />

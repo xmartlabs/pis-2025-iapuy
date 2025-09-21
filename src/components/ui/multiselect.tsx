@@ -32,8 +32,8 @@ export function MultiSelect({
   options,
   selected,
   onChange,
-  placeholder = "Select options...",
-  emptyText = "No options found.",
+  placeholder = "Seleccione...",
+  emptyText = "No se encontró",
   className,
   disabled = false,
   createLabel,
@@ -41,6 +41,7 @@ export function MultiSelect({
   onCreate,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
   const router = useRouter()
 
   const setOpenSafe = (v: boolean) => { if (!disabled) setOpen(v) }
@@ -72,6 +73,12 @@ export function MultiSelect({
     [selected, options],
   )
 
+  const filteredOptions = React.useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return options
+    return options.filter(o => o.label.toLowerCase().includes(q))
+  }, [options, query])
+
   return (
     <Popover open={open} onOpenChange={setOpenSafe}>
       <PopoverTrigger asChild>
@@ -94,16 +101,23 @@ export function MultiSelect({
 
       {/* mismo ancho que el botón */}
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-        <Command>
-          <CommandInput placeholder="Search options..." className="h-9" disabled={disabled} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Buscar..."
+            className="h-9"
+            disabled={disabled}
+            onValueChange={setQuery}
+          />
+
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            {filteredOptions.length === 0 && <CommandEmpty>{emptyText}</CommandEmpty>}
+
             <CommandGroup>
-              {options.map((option) => (
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value}
-                  onSelect={() => handleSelect(option.value)}
+                  value={option.label} // buscamos por label
+                  onSelect={() => { handleSelect(option.value) }}
                   disabled={disabled}
                 >
                   {option.label}
