@@ -13,6 +13,7 @@ export class UserService {
       where: pagination.query
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
+      attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
       include: [
         {
           model: Intervencion,
@@ -24,7 +25,7 @@ export class UserService {
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
-      order: pagination.getOrder(),
+      order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
     });
 
     return getPaginationResultFromModel(pagination, result);
