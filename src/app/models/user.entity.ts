@@ -22,10 +22,16 @@ export class User extends Model {
   declare celular: string;
 
   @Column({ type: DataType.STRING })
+  declare banco: string;
+
+  @Column
   declare cuentaBancaria: string;
 
   @Column({ type: DataType.STRING })
   declare password: string;
+
+  @Column
+  declare esAdmin: boolean;
 
   @CreatedAt
   declare createdAt: Date;
@@ -35,6 +41,4 @@ export class User extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
 }
-

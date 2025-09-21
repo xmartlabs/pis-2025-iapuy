@@ -3,6 +3,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 import type { NextRequest } from "next/server";
 
+
 export class PerrosController {
   constructor(
     private readonly perrosService: PerrosService = new PerrosService()
@@ -15,5 +16,6 @@ export class PerrosController {
   async createPerro(request: NextRequest) {
     const body = await request.json() as unknown as CreatePerroDTO;
     return this.perrosService.create(body);
+
   }
 }

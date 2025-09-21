@@ -1,6 +1,5 @@
 import DetallePerro from "./DetallePerro";
-import ListadoPerros from "./ListadoPerros";
-import RegistrarPerro from "./registrar-perro";
+import ListadoPerros from "./listado-perros";
 
 export default function PantallaPerros() {
   return (
