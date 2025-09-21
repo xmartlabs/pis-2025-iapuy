@@ -18,7 +18,7 @@ export class PerrosService {
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
       include: [
-        { model: User },
+        { model: User, attributes: ["ci", "nombre"] },
         {
           model: UsrPerro,
           attributes: ["id"],
