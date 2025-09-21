@@ -2,12 +2,13 @@ import { Intervencion } from "@/app/models/intervencion.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
-import { UsrPerro } from "@/app/models/usrperro.entity";
-import { Vacuna } from "@/app/models/vacuna.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { UsrPerro } from "@/app/models/usrperro.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
+import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 export class PerrosService {
   async findAll(
@@ -70,5 +71,13 @@ export class PerrosService {
     };
 
     return getPaginationResultFromModel(pagination, processed);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const total = await Perro.destroy({ where: { id } });
+    return total > 0;
+  }
+  async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
+    return await Perro.create({ ...createPerroDto });
   }
 }

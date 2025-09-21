@@ -96,7 +96,6 @@ export default function Home() {
     renovarToken().catch(() => {
       setLoading(false);
     });
-    //setLoading(false);
   }, [handleLoginSuccess]);
 
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
@@ -116,8 +115,8 @@ export default function Home() {
 
       const response = (await res.json()) as LoginResponse;
       handleLoginSuccess(response);
-    } catch (error) {
-      console.error("Error de red o excepción:", error);
+    } catch {
+      // ignore network/login errors here; loading flag will be cleared in finally
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +148,9 @@ export default function Home() {
             <Form {...form}>
               <form
                 onSubmit={(e) => {
-                  form.handleSubmit(handleFormSubmit)(e).catch(console.error);
+                  form
+                    .handleSubmit(handleFormSubmit)(e)
+                    .catch(() => {});
                 }}
                 className="w-[436px] flex flex-col gap-6"
               >
