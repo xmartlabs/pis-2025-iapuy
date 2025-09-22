@@ -16,55 +16,34 @@ export class UserController {
     return paginationResult;
   }
 
-  async getUser(request: NextRequest, { username }: { username: string }) {
-    try {
-      const user = await this.userService.findOne(username);
+  async getUser(request: NextRequest, { ci }: { ci: string }) {
+    const user = await this.userService.findOne(ci);
 
-      if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(user);
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    if (!user) {
+      throw new Error("Usuario no encontrado");
     }
+    return user;
   }
 
   async createUser(request: NextRequest) {
-    try {
-      const body: CreateUserDto = await request.json();
-
-      if (!body.ci || !body.password) {
-        return NextResponse.json(
-          { error: "Username and password are required" },
-          { status: 400 }
-        );
+    const usrData: CreateUserDto = await request.json() as CreateUserDto;
+    if (!usrData.ci || !usrData.password) {
+      return {
+        error: "Username and password are required",
+        status: 400
       }
+    }
 
-      const user = await this.userService.create(body);
-      return NextResponse.json(user, { status: 201 });
-    } catch (error: any) {
-      if (error.name === "SequelizeUniqueConstraintError") {
-        return NextResponse.json(
-          { error: "Username already exists" },
-          { status: 409 }
-        );
-      }
-
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    const ci = await this.userService.create(usrData);
+    return {
+      message: `Usuario con ci ${String(ci)} creado con éxito`,
+      status: 201
     }
   }
 
   async updateUser(request: NextRequest, { username }: { username: string }) {
     try {
-      const body: UpdateUserDto = await request.json();
+      const body: UpdateUserDto = await request.json() as UpdateUserDto;
       const user = await this.userService.update(username, body);
 
       if (!user) {
@@ -72,8 +51,7 @@ export class UserController {
       }
 
       return NextResponse.json(user);
-    } catch (error) {
-      console.error(error);
+    } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }
@@ -90,8 +68,7 @@ export class UserController {
       }
 
       return NextResponse.json({ message: "User deleted successfully" });
-    } catch (error) {
-      console.error(error);
+    } catch{
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }

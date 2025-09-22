@@ -8,6 +8,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
+import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 export class PerrosService {
@@ -76,4 +77,33 @@ export class PerrosService {
   async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
       return await Perro.create({ ...createPerroDto });
     }
+
+  async findOne(id: string) {
+    const perro = await Perro.findByPk(id, {
+      include: [{ model: User, attributes: ["ci", "nombre"] }],
+    });
+    if (perro === null) {
+      return { error: "Perro no encontrado", status: 404 };
+    }
+    if (!perro.User) {
+        return { error: "Error en datos del perro: Dueño no encontrado", status: 404 };
+    }
+
+    const dtPerro = new DetallesPerroDto(
+      perro.id,
+      perro.nombre,
+      perro.descripcion,
+      perro.fortalezas,
+      perro.duenioId,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+      perro.User.nombre,
+      perro.deletedAt
+    );
+    return { perro: dtPerro, status: 200 };
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const total = await Perro.destroy({ where: { id } });
+    return total > 0;
+  }
 }

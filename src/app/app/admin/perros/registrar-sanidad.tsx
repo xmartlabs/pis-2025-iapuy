@@ -42,6 +42,7 @@ import type {Resolver} from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { LoginContext } from "@/app/context/login-context";
+import { useSearchParams } from "next/navigation";
 
 //! Para que el id del perro venga del URL sacar comentario
 //import { useSearchParams } from "next/navigation";
@@ -102,8 +103,7 @@ export default function RegistroSanidad() {
     });
 
     //! Si la URL tiene id?=perroID el perroIdURL se cambia por la ID hardcodeada
-    //const searchParams = useSearchParams();
-    //const perroIdURL = searchParams.get("id");
+    const searchParams = useSearchParams();
 
     // eslint-disable-next-line @typescript-eslint/consistent-return
     async function submitHandler(data: z.infer<typeof vacunaSchema> | z.infer<typeof banioSchema> | z.infer<typeof desparasitacionSchema>) {
@@ -111,7 +111,7 @@ export default function RegistroSanidad() {
 
             const formData = new FormData();
 
-            const perroId = "p1111111" //! hardcodeado hasta ver como se obtiene la id del perro
+            const perroId = searchParams.get("id") ?? "";
 
             if (tab === "vacuna") {
             const d = data as z.infer<typeof vacunaSchema>;

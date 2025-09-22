@@ -15,8 +15,8 @@ export default function RootLayout({
     <html lang="es">
       <body >
         <LoginProvider>
-          {children} 
-        </LoginProvider>       
+          {children}
+        </LoginProvider>
       </body>
     </html>
   );

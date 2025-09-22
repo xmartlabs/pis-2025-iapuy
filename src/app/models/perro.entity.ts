@@ -50,4 +50,5 @@ export class Perro extends Model{
   declare deletedAt: CreationOptional<Date>;
 
   declare UsrPerros?: UsrPerro[];
+  declare User?: User;
 }

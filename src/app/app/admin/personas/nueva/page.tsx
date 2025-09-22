@@ -1,3 +1,15 @@
+
+import { Toaster } from "@/components/ui/sonner"
+import Migas from "./Migas";
+import Formulario from "./Formulario";
+
 export default function NuevaPersona() {
-  return <h1>Pantalla de NuevaPersona</h1>;
+  return (
+    <div className="pt-15 pb-15 pl-8 pr-8 space-y-8">
+        <Migas/>
+        <h1 className="align-middle font-serif text-5xl font-semibold tracking-tight text-accent-foreground">Nueva persona</h1>
+        <Formulario />
+        <Toaster />
+    </div>
+  );
 }

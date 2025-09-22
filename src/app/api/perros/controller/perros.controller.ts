@@ -18,4 +18,15 @@ export class PerrosController {
     return this.perrosService.create(body);
 
   }
+  async getPerro(id: string) {
+    return await this.perrosService.findOne(id);
+  }
+
+  async deletePerro(id: string): Promise<boolean> {
+    try {
+      return await this.perrosService.delete(id);
+    } catch {
+      return false;
+    }
+  }
 }
