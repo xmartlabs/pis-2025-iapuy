@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 
-type PerroSummary = { nombre?: string };
+type PerroSummary = { id?:string, nombre?: string };
 type UserRowBase = {
   [key: string]: string | number | boolean | null | undefined;
 };
@@ -274,7 +274,7 @@ export default function ListadoPersonas() {
                               p?.nombre ? (
                                 <Link
                                   key={index}
-                                  href={`/app/admin/perros/detalle/${p.nombre}`}
+                                  href={`/app/admin/perros/detalles?id=${p.id}`}
                                   className="!underline hover:text-blue-800 mr-2 text-sm"
                                 >
                                   {p.nombre}
