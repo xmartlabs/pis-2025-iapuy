@@ -9,6 +9,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
+import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 
 export class PerrosService {
   async findAll(
@@ -19,7 +20,7 @@ export class PerrosService {
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
       include: [
-        { model: User },
+        { model: User, attributes: ["ci", "nombre"] },
         {
           model: UsrPerro,
           attributes: ["id"],
@@ -72,6 +73,10 @@ export class PerrosService {
 
     return getPaginationResultFromModel(pagination, processed);
   }
+
+  async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
+      return await Perro.create({ ...createPerroDto });
+    }
 
   async findOne(id: string) {
     const perro = await Perro.findByPk(id, {

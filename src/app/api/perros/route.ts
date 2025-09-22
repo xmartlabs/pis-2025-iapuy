@@ -47,3 +47,15 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+        try {
+          const dog = await perrosController.createPerro(request);
+          return NextResponse.json(dog, { status: 201 });
+        } catch {
+          return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+          );
+        }
+}
