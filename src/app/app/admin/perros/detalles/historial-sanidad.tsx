@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
@@ -13,75 +13,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { LoginContext } from "@/app/context/login-context";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
   const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(4);
+  const [size] = useState<number>(5);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
-  const context = useContext(LoginContext);
-
-  const fetchRegistrosSanidad = useCallback(
-    async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const triedRefresh = false;
-
-      const resp = await fetch(
-        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
-        {
-          method: "GET",
-          headers: baseHeaders,
-        },
-      );
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(
-              `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              },
-            );
-
-            return (await retryResp.json()) as Promise<
-              PaginationResultDto<EventoSanidadDto>
-            >;
-          }
-        }
-      }
-      return (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
-    },
-    [context, page, size],
-  );
 
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
   useEffect(() => {
-    fetchRegistrosSanidad(id)
+    fetch(
+      `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+    )
+      .then(
+        (res) => res.json() as Promise<PaginationResultDto<EventoSanidadDto>>,
+      )
       .then((paginationResult) => {
-        console.log(paginationResult);
         setRegistros(paginationResult.data || []);
         setTotalPages(paginationResult.totalPages || 1);
       })
@@ -89,7 +40,7 @@ export default function HistorialSanidad() {
         setRegistros([]);
         setIsOpenError(true);
       });
-  }, [id, context, page, size, fetchRegistrosSanidad]);
+  }, [id, page, size]);
 
   const handleNextPage = () => {
     if (page < totalPages) {
@@ -108,31 +59,17 @@ export default function HistorialSanidad() {
   return (
     <>
       <div className="flex flex-col gap-5 mb-4 w-full">
-        <h2
-          className="font-serif font-semibold text-xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
+        <h2 className="font-serif font-semibold text-xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif" style={{ fontFamily: "Poppins, sans-serif" }}>
           Historial de sanidad
         </h2>
-        <div
-          className="rounded-md border  w-full font-normal"
-          style={{ fontFamily: "Archivo, sans-serif" }}
-        >
+        <div className="rounded-md border  w-full font-normal" style={{ fontFamily: "Archivo, sans-serif" }}>
           <Table className="w-full table-fixed overflow-x-scroll">
-            <TableHeader className="h-[48px] text-sm text-gray-700 pointer-events-none w-full">
+            <TableHeader className="h-[48px] text-sm text-gray-700 pointer-events-none w-full" >
               <TableRow>
-                <TableHead
-                  className="w-[110px] min-w-[110px] sm:w-[200px] px-4 font-medium"
-                  key={columnHeader[0]}
-                >
+                <TableHead className="w-[110px] min-w-[110px] sm:w-[200px] px-4 font-medium" key={columnHeader[0]}>
                   {columnHeader[0]}
                 </TableHead>
-                <TableHead
-                  className="px-4 w-[105px] sm:w-full min-w[105px] font-medium"
-                  key={columnHeader[1]}
-                >
-                  {columnHeader[1]}
-                </TableHead>
+                <TableHead className="px-4 w-[105px] sm:w-full min-w[105px] font-medium" key={columnHeader[1]}>{columnHeader[1]}</TableHead>
                 <TableHead className="w-[96px] px-2 text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -140,16 +77,16 @@ export default function HistorialSanidad() {
               {registros && registros.length > 0
                 ? registros.map((registro, i) => (
                     <TableRow key={i}>
-                      <TableCell
-                        className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
-                      >
-                        {String(registro.fecha)}
-                      </TableCell>
-                      <TableCell
-                        className={`h-[56px] px-4 text-sm font-normal`}
-                      >
-                        {String(registro.actividad)}
-                      </TableCell>
+                          <TableCell
+                            className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
+                          >
+                            {String(registro.fecha)}
+                          </TableCell>
+                          <TableCell
+                              className={`h-[56px] px-4 text-sm font-normal`}
+                          >
+                              {String(registro.actividad)}
+                          </TableCell>
                       <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                         <div className="flex items-center justify-end gap-2">
                           <button
