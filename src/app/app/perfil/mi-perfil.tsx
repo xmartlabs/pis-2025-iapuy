@@ -17,12 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
+import { Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-type PerroSummary = { nombre?: string };
-
-type UserData = CreateUserDto & {
-  banco?: string;
-  userPerros?: PerroSummary[];
+type UserData = Omit<CreateUserDto, "perros"> & {
+  perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
 };
 
@@ -30,27 +29,12 @@ const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
-function getCIFromToken(token: string): string | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(atob(parts[1])) as Record<string, unknown>;
-    const ci = payload.ci;
-    return typeof ci === "string" ? ci : null;
-  } catch {
-    return null;
-  }
-}
-
 export default function DetallePersona() {
   const context = useContext(LoginContext);
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const userCi =
-    context?.ciUsuario ||
-    (context?.tokenJwt ? getCIFromToken(context.tokenJwt) : null);
+  const userCi = context?.ciUsuario;
 
   const fetchUser = useCallback(
     async (
@@ -200,14 +184,6 @@ export default function DetallePersona() {
             <Label htmlFor="text">Nombre</Label>
             <Input type="text" id="nombre" defaultValue={user?.nombre || ""} />
           </div>
-          <div className="grid items-center gap-3">
-            <Label htmlFor="text">Contraseña</Label>
-            <Input
-              type="text"
-              id="contraseña"
-              defaultValue={user?.password || ""}
-            />
-          </div>
           <div className=" items-center gap-3">
             <Label htmlFor="text">Rol</Label>
             <RadioGroup
@@ -257,16 +233,14 @@ export default function DetallePersona() {
             <Select>
               <SelectTrigger className="w-[180px] w-full">
                 <SelectValue
-                  placeholder={user?.userPerros?.[0]?.nombre || "Perros"}
+                  placeholder={user?.perros?.[0]?.nombre || "Perros"}
                 />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Perros</SelectLabel>
-                  {user &&
-                  Array.isArray(user.userPerros) &&
-                  user.userPerros.length > 0
-                    ? user.userPerros.map((p, index) =>
+                  {user && Array.isArray(user.perros) && user.perros.length > 0
+                    ? user.perros.map((p, index) =>
                         p?.nombre ? (
                           <SelectItem key={index} value={p.nombre}>
                             {p.nombre}
@@ -279,9 +253,7 @@ export default function DetallePersona() {
             </Select>
           </div>
           <div className="flex items-center gap-3">
-            <Checkbox
-              checked={!user?.userPerros || user.userPerros.length === 0}
-            />
+            <Checkbox checked={!user?.perros || user.perros.length === 0} />
             <p>No tiene</p>
           </div>
         </div>
@@ -296,6 +268,17 @@ export default function DetallePersona() {
             </span>
           </Button>
         </div>
+        {!user?.esAdmin && (
+          <div className="flex w-[732px] justify-start items-center mt-3">
+            <Alert>
+              <Info />
+              <AlertTitle>
+                Si necesitás una nueva contraseña, ponete en contacto con IAPUy
+              </AlertTitle>
+              <AlertDescription>Celular de contacto: 98554662</AlertDescription>
+            </Alert>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -33,13 +33,26 @@ export class UserService {
 
   async findOne(ci: string): Promise<User | null> {
     return await User.findByPk(ci, {
+      attributes: [
+        "ci",
+        "nombre",
+        "celular",
+        "banco",
+        "cuentaBancaria",
+        "esAdmin",
+      ],
       include: [
         {
           model: Perro,
-          as: "userPerros",
+          as: "perros",
+          attributes: ["nombre"],
         },
       ],
     });
+  }
+
+  async findOneForAuth(ci: string): Promise<User | null> {
+    return await User.findByPk(ci);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {

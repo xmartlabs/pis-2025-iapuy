@@ -27,7 +27,7 @@ export class AuthService {
     await initDatabase();
 
     //Se verifican las credenciales del usuario
-    const user = await this.userService.findOne(ci);
+    const user = await this.userService.findOneForAuth(ci);
     if (
       user === undefined ||
       user === null ||

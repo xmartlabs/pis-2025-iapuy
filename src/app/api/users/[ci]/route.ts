@@ -8,10 +8,11 @@ await initDatabase();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { ci: string } }
+  { params }: { params: Promise<{ ci: string }> }
 ) {
   try {
-    const data = await userController.getUser(request, { ci: params.ci });
+    const { ci } = await params;
+    const data = await userController.getUser(request, { ci });
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Usuario no encontrado") {
@@ -24,6 +25,6 @@ export async function GET(
   }
 }
 
-export async function POST(request: NextRequest) {
+export function POST(request: NextRequest) {
   return userController.createUser(request);
 }
