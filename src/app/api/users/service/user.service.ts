@@ -1,6 +1,10 @@
 import { User } from "@/app/models/user.entity";
 import type { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
+<<<<<<< HEAD
+=======
+import { Perro } from "@/app/models/perro.entity";
+>>>>>>> dev
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
@@ -16,6 +20,10 @@ export class UserService {
       include: [
         {
           model: Intervencion,
+        },
+        {
+          model: Perro,
+          as: "perros",
         },
       ],
       limit: pagination.size,
@@ -47,7 +55,6 @@ export class UserService {
   ): Promise<User | null> {
     const user = await User.findByPk(username);
     if (!user) return null;
-
     return await user.update(updateData);
   }
 

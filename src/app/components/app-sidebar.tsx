@@ -1,74 +1,99 @@
 'use client'
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Building,Dog,PersonStanding,CalendarRange,BadgeDollarSign} from "lucide-react"
 import Image from 'next/image'
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { inter } from "@/fonts";
+import { useContext } from "react";
+import { LoginContext } from "@/app/context/login-context";
+import {TipoUsuario} from "@/app/page"
 import {
   Sidebar,
   SidebarContent,
+  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-
-// Menu items.
-const items = [
+export function AppSidebar() {
+  const pathName=usePathname()
+  const context = useContext(LoginContext);
+  if (!context?.tipoUsuario) {
+    return null;
+  }
+  const tipo:TipoUsuario=context?.tipoUsuario;
+  const items = [
   {
     title: "Perros",
-    url: "/app/admin/perros",
+    url: "/app/admin/perros/listado",
+    icon:Dog,
+    onlyAdmin:true,
   },
   {
     title: "Personas",
-    url: "/app/admin/personas",
+    url: "/app/admin/personas/listado",
+    icon:PersonStanding,
+    onlyAdmin:true,
   },
   {
     title: "Instituciones",
-    url: "/app/admin/instituciones",
+    url: "/app/admin/instituciones/listado",
+    icon:Building,
+    onlyAdmin:true,
   },
   {
     title: "Intervenciones",
-    url: "/app/admin/intervenciones",
+    url: tipo === TipoUsuario.Administrador ? "/app/admin/intervenciones":"/app/colaboradores/intervenciones/listado",
+    icon:CalendarRange,
+    onlyAdmin:false
   },
   {
     title: "Gastos",
-    url: "/app/admin/gastos",
+    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos":"/app/colaboradores/gastos/listado",
+    icon:BadgeDollarSign,
+    onlyAdmin:false
   },
 ]
-
-export function AppSidebar() {
-  const pathName=usePathname()
   return (
-    <Sidebar className="w-[260px]">
-      <div className="w-[258px] h-[133px]">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={53}
-            height={53}
-          style={{marginLeft:'24px',marginTop:'40px'}}
-          />
+    <Sidebar>
+      <SidebarHeader className=" h-[261px]">
+        <div className="w-[258px] h-[133px]">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={150}
+              height={150}
+            style={{marginLeft:'16px',marginTop:'48px'}}
+            />
         </div>
-      <SidebarContent>
+      </SidebarHeader>
+      <SidebarContent className="!px-4" >
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className={`${inter.className} antialiased`}>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <div className={`w-[258px] h-[48px] flex items-center justify-center ${pathName === item.url ? "bg-[#E2E7F0]" : ""}`}>
-                       <Link
-                          href={item.url}
-                          className="w-[210px] h-[24px] flex items-center justify-center">
-                          <span className="font-medium text-[14px] leading-[24px] tracking-[-0.01em]">{item.title}</span>
+            <SidebarMenu>
+              {items.filter(item => {
+                  if (tipo === TipoUsuario.Administrador) return true; 
+                  return item.onlyAdmin === false; 
+                })
+                .map(item => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <div
+                        className={`w-[228px] h-[40px] flex items-center justify-start ${
+                          pathName === item.url ? "bg-[#DEEBD9]" : ""
+                        }`}
+                      >
+                        <Link href={item.url} className="flex items-center gap-2">
+                          <item.icon className="mr-2" />
+                          <span className="font-medium text-[14px] leading-5 tracking-normal">
+                            {item.title}
+                          </span>
                         </Link>
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
