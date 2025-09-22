@@ -85,6 +85,9 @@ export class PerrosService {
     if (perro === null) {
       return { error: "Perro no encontrado", status: 404 };
     }
+    if (!perro.User) {
+        return { error: "Error en datos del perro: Dueño no encontrado", status: 404 };
+    }
 
     const dtPerro = new DetallesPerroDto(
       perro.id,
@@ -92,7 +95,8 @@ export class PerrosService {
       perro.descripcion,
       perro.fortalezas,
       perro.duenioId,
-      perro.User?.nombre,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+      perro.User.nombre,
       perro.deletedAt
     );
     return { perro: dtPerro, status: 200 };

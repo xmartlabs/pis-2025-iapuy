@@ -1,10 +1,11 @@
 "use client";
 import { Pencil, HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
+import { LoginContext } from "@/app/context/login-context";
 
 export function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
@@ -22,7 +23,7 @@ export function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   );
 }
 
-const perroDefault = new DetallesPerroDto("", "", "", [], "", "", null);
+const perroDefault = new DetallesPerroDto("", "", "", "", "", "", null);
 
 type ApiResponse = {
   perro: DetallesPerroDto;
@@ -33,13 +34,64 @@ type ApiResponse = {
 export default function DetallePerro() {
   const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
   const [isOpenError, setIsOpenError] = useState(false);
+  const context = useContext(LoginContext);
+
+    const fetchDetallesPerro = useCallback(
+        async (id: string): Promise<ApiResponse> => {
+            const token = context?.tokenJwt;
+            const baseHeaders: Record<string, string> = {
+                Accept: "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            };
+            const triedRefresh = false;
+
+            const resp = await fetch(
+                `/api/perros/detalles?id=${id}`,
+                {
+                    method: "GET",
+                    headers: baseHeaders,
+                },
+            );
+            if (!resp.ok && !triedRefresh && resp.status === 401) {
+                const resp2 = await fetch("/api/auth/refresh", {
+                    method: "POST",
+                    headers: { Accept: "application/json" },
+                });
+                if (resp2.ok) {
+                    const refreshBody = (await resp2.json().catch(() => null)) as {
+                        accessToken?: string;
+                    } | null;
+
+                    const newToken = refreshBody?.accessToken ?? null;
+                    if (newToken) {
+                        context?.setToken(newToken);
+                        const retryResp = await fetch(
+                            `/api/perros/detalles?id=${id}`,
+                            {
+                                method: "GET",
+                                headers: {
+                                    Accept: "application/json",
+                                    Authorization: `Bearer ${newToken}`,
+                                },
+                            },
+                        );
+
+                        return (await retryResp.json()) as Promise<
+                            Promise<ApiResponse>
+                        >;
+                    }
+                }
+            }
+            return (await resp.json()) as Promise<ApiResponse>;
+        },
+        [context],
+    );
 
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
   useEffect(() => {
-    fetch(`/api/perros/detalles?id=${id}`)
-      .then((res: Response) => res.json() as Promise<ApiResponse>)
+      fetchDetallesPerro(id)
       .then((pageResult: ApiResponse) => {
         setInfoPerro(pageResult.perro || perroDefault);
         if (!pageResult.perro) {
@@ -52,7 +104,7 @@ export default function DetallePerro() {
   }, [id]);
   return (
     <>
-      <div className="w-full px-4 sm:px-8 py-6">
+      <div className="w-full">
         <nav className="text-sm text-gray-500 mb-4">
           <ol className="flex items-center space-x-2">
             <li>
@@ -104,11 +156,11 @@ export default function DetallePerro() {
           <Dato
             titulo="DUEÑO"
             valor={
-              infoPerro.duenioNombre ? "" : (infoPerro.duenioNombre as string)
+                infoPerro.duenioNombre ? (infoPerro.duenioNombre) : ""
             }
           />
           <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
-          <Dato titulo="FUERTES" valor={infoPerro.fortalezas.toString()} />
+          <Dato titulo="FUERTES" valor={infoPerro.fortalezas} />
         </div>
       </div>
 
