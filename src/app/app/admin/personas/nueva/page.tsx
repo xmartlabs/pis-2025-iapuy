@@ -1,6 +1,7 @@
-import Migas from "./migas";
-import Formulario from "./formulario";
+
 import { Toaster } from "@/components/ui/sonner"
+import Migas from "./Migas";
+import Formulario from "./Formulario";
 
 export default function NuevaPersona() {
   return (
