@@ -6,25 +6,32 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  DataType
 } from "sequelize-typescript";
 
 @Table({ tableName: "users" })
 export class User extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING })
   declare ci: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare nombre: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare celular: string;
+
+  @Column({ type: DataType.STRING })
+  declare banco: string;
 
   @Column
   declare cuentaBancaria: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare password: string;
+
+  @Column
+  declare esAdmin: boolean;
 
   @CreatedAt
   declare createdAt: Date;
@@ -34,6 +41,4 @@ export class User extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
-
 }
-
