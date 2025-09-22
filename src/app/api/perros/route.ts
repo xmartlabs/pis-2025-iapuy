@@ -43,19 +43,18 @@ export async function DELETE(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
-
 export async function POST(request: NextRequest) {
-        try {
-          const dog = await perrosController.createPerro(request);
-          return NextResponse.json(dog, { status: 201 });
-        } catch {
-          return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-          );
-        }
+  try {
+    const dog = await perrosController.createPerro(request);
+    return NextResponse.json(dog, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }

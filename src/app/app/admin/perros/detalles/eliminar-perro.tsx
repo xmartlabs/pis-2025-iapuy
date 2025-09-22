@@ -1,9 +1,10 @@
 "use client";
 import { CircleAlert, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { LoginContext } from "@/app/context/login-context";
 
 type ApiResponse = {
   success: boolean;
@@ -18,22 +19,56 @@ export default function EliminarPerro() {
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
-  function handleDelete():void {
-    fetch(`/api/perros?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    })
-      .then(
-        (res: Response): Promise<ApiResponse> =>
-          res.json() as Promise<ApiResponse>,
-      )
-      .then((data: ApiResponse): void => {
-        setResult(data.success);
+  const context = useContext(LoginContext);
+
+  async function handleDelete(): Promise<void> {
+    try {
+      const makeDelete = async (bearer?: string) => {
+        const headers: Record<string, string> = {
+          Accept: "application/json",
+          ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        };
+        const res = await fetch(`/api/perros?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          headers,
+        });
+        return res;
+      };
+
+      const token = context?.tokenJwt ?? undefined;
+      let res = await makeDelete(token);
+
+      if (res.status === 401) {
+        const refreshResp = await fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+
+        if (refreshResp.ok) {
+          const body = (await refreshResp.json().catch(() => null)) as {
+            accessToken?: string;
+          } | null;
+          const newToken = body?.accessToken ?? null;
+          if (newToken) {
+            context?.setToken(newToken);
+            res = await makeDelete(newToken);
+          }
+        }
+      }
+
+      if (res.ok) {
+        const data = (await res.json().catch(() => null)) as ApiResponse | null;
+        setResult(Boolean(data?.success ?? true));
         setIsResultOpen(true);
-      })
-      .catch(() => {
+      } else {
         setResult(false);
         setIsResultOpen(true);
-      });
+      }
+    } catch {
+      setResult(false);
+      setIsResultOpen(true);
+    }
   }
 
   return (
@@ -73,7 +108,7 @@ export default function EliminarPerro() {
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium shadow transition"
                   onClick={() => {
                     setIsConfirmOpen(false);
-                    handleDelete();
+                    handleDelete().catch(() => {});
                   }}
                 >
                   Confirmar
