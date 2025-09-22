@@ -20,7 +20,7 @@ import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-type UserData = Omit<CreateUserDto, "perros"> & {
+type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
 };
