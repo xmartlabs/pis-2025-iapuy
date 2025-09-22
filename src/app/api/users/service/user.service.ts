@@ -51,8 +51,28 @@ export class UserService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async findOne(username: string): Promise<User | null> {
-    return await User.findByPk(username);
+  async findOne(ci: string): Promise<User | null> {
+    return await User.findByPk(ci, {
+      attributes: [
+        "ci",
+        "nombre",
+        "celular",
+        "banco",
+        "cuentaBancaria",
+        "esAdmin",
+      ],
+      include: [
+        {
+          model: Perro,
+          as: "perros",
+          attributes: ["nombre"],
+        },
+      ],
+    });
+  }
+
+  async findOneForAuth(ci: string): Promise<User | null> {
+    return await User.findByPk(ci);
   }
 
   async create(request: CreateUserDto): Promise<string> {

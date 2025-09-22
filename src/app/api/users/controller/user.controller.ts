@@ -16,21 +16,13 @@ export class UserController {
     return paginationResult;
   }
 
-  async getUser(request: NextRequest, { username }: { username: string }) {
-    try {
-      const user = await this.userService.findOne(username);
+  async getUser(request: NextRequest, { ci }: { ci: string }) {
+    const user = await this.userService.findOne(ci);
 
-      if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(user);
-    } catch {
-      return {
-        error: "Internal Server Error",
-        status: 500 
-      }
+    if (!user) {
+      throw new Error("Usuario no encontrado");
     }
+    return user;
   }
 
   async createUser(request: NextRequest) {
