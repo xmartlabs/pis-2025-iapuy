@@ -1,15 +1,11 @@
 import { User } from "@/app/models/user.entity";
 import type { CreateUserDto } from "../dtos/create-user.dto";
 import { Intervencion } from "../../../models/intervencion.entity";
-<<<<<<< HEAD
-=======
 import { Perro } from "@/app/models/perro.entity";
->>>>>>> dev
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
-import { Perro } from "@/app/models/perro.entity";
 
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
