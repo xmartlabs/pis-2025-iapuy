@@ -142,7 +142,7 @@ export default function Home() {
         >
           <div className="w-[436px] flex flex-col items-start justify-start !mx-[64px] my-[58px] gap-8">
             <Image src="/logo.png" alt="Logo" width={150} height={150} />
-            <h1 className="w-[307px] h-[48px]  font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">
+            <h1 className="h-[48px]  font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">
               Iniciar Sesión
             </h1>
             <Form {...form}>
