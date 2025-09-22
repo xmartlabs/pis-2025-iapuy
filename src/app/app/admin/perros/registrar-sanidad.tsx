@@ -1,6 +1,6 @@
 'use client'
 
-import React from "react";
+import React, { useContext } from "react";
 import { HeartPulse } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,11 +41,21 @@ import {
 import type {Resolver} from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { LoginContext } from "@/app/context/login-context";
+
+//! Para que el id del perro venga del URL sacar comentario
+//import { useSearchParams } from "next/navigation";
+
+
+const BASE_API_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
 
 export default function RegistroSanidad() {
 
     const [tab, setTab] = React.useState<Tab>("vacuna");
     const [open, setOpen] = React.useState(false);
+    const context = useContext(LoginContext);
 
     const vacunaSchema = z.object({
         fechaInVac: z.string().min(2, { message: "Debes completar la fecha de vacunación" }),
@@ -91,10 +101,16 @@ export default function RegistroSanidad() {
         },
     });
 
+    //! Si la URL tiene id?=perroID el perroIdURL se cambia por la ID hardcodeada
+    //const searchParams = useSearchParams();
+    //const perroIdURL = searchParams.get("id");
+
+    // eslint-disable-next-line @typescript-eslint/consistent-return
     async function submitHandler(data: z.infer<typeof vacunaSchema> | z.infer<typeof banioSchema> | z.infer<typeof desparasitacionSchema>) {
         try {
 
             const formData = new FormData();
+
             const perroId = "p1111111" //! hardcodeado hasta ver como se obtiene la id del perro
 
             if (tab === "vacuna") {
@@ -133,11 +149,24 @@ export default function RegistroSanidad() {
             formData.append("tipoDesparasitacion", d.desparasitacionTipo);
 
             }
-
+            
             const res = await fetch("/api/registros-sanidad", {
                 method: "POST",
+                headers : {
+                Authorization: `Bearer ${context?.tokenJwt}`
+                },
                 body: formData
             });
+
+                if (res.status === 401) {
+                    const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+                    method: "POST",
+                    });
+                    if (resp2.ok) {
+                        return submitHandler(data);
+                    }
+                return;
+                }
 
             if (res.ok) {
                 setOpen(false);
