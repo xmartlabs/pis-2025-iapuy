@@ -86,12 +86,13 @@ export class RegistrosSanidadService {
     }
   }
 
-  async create(createRegistroSanidadDto: CreateRegistrosSanidadDTO): Promise<RegistroSanidad> {
+  async create(createRegistroSanidadDto: CreateRegistrosSanidadDTO): Promise<RegistroSanidad | null> {
     return await sequelize.transaction(async (t) => {
-      const regSanidad = await RegistroSanidad.create(
-        { perroId: createRegistroSanidadDto.perroId },
-        { transaction: t }
+      const regSanidad = await RegistroSanidad.findOne(
+        { where: { perroId: createRegistroSanidadDto.perroId } },
       );
+
+      if (regSanidad === null) return regSanidad;
 
       const fechaDate = new Date(createRegistroSanidadDto.fecha);
 
