@@ -1,5 +1,5 @@
 import CambiarContraseña from "./CambiarContraseña";
-import MiPerfil from "./MiPerfil";
+import MiPerfil from "./mi-perfil";
 
 export default function PantallaInsituciones() {
   return (
