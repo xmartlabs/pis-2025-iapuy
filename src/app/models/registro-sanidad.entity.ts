@@ -1,6 +1,7 @@
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -10,23 +11,24 @@ import {
 } from "sequelize-typescript";
 
 import { Perro } from "./perro.entity";
+import type { CreationOptional } from "sequelize";
 
 @Table({ tableName: "registro-sanidades" })
 export class RegistroSanidad extends Model {
   @PrimaryKey
-  @Column
-  declare id: string;
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+  declare id: CreationOptional<string>;
 
   @ForeignKey(() => Perro)
   @Column
   declare perroId: string;
 
   @CreatedAt
-  declare createdAt: Date;
+  declare createdAt: CreationOptional<Date>;
 
   @UpdatedAt
-  declare updatedAt: Date;
+  declare updatedAt: CreationOptional<Date>;
 
   @DeletedAt
-  declare deletedAt: Date;
+  declare deletedAt: CreationOptional<Date>;
 }

@@ -5,6 +5,8 @@ import { Vacuna } from "@/app/models/vacuna.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
+import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
+import sequelize from "@/lib/database";
 import { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 
 export class RegistrosSanidadService {
@@ -82,5 +84,41 @@ export class RegistrosSanidadService {
       const result = { rows: [], count: 0 };
       return getPaginationResultFromModel(pagination, result);
     }
+  }
+
+  async create(createRegistroSanidadDto: CreateRegistrosSanidadDTO): Promise<RegistroSanidad> {
+    return await sequelize.transaction(async (t) => {
+      const regSanidad = await RegistroSanidad.create(
+        { perroId: createRegistroSanidadDto.perroId },
+        { transaction: t }
+      );
+
+      const fechaDate = new Date(createRegistroSanidadDto.fecha);
+
+      if (createRegistroSanidadDto.tipoSanidad === 'banio') {
+        await Banio.create({
+          fecha: fechaDate,
+          registroSanidadId: regSanidad.id
+        }, { transaction: t });
+
+      } else if (createRegistroSanidadDto.tipoSanidad === 'desparasitacion') {
+        await Desparasitacion.create({
+          fecha: fechaDate,
+          medicamento: createRegistroSanidadDto.medicamento,
+          registroSanidadId: regSanidad.id,
+          tipoDesparasitacion: createRegistroSanidadDto.tipoDesparasitacion
+        }, { transaction: t });
+
+      } else {
+        await Vacuna.create({
+
+          fecha: fechaDate,
+          vac: createRegistroSanidadDto.vac,
+          registroSanidadId: regSanidad.id,
+          carneVacunas: createRegistroSanidadDto.carneVacunas
+        }, { transaction: t });
+      }
+      return regSanidad;
+    });
   }
 }

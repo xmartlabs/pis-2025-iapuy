@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import type { NextRequest } from "next/server";
+import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { RegistrosSanidadController } from "./controller/registros-sanidad.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
@@ -21,4 +21,17 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
+
+}
+
+export async function POST(request: NextRequest) {
+  try{
+    const regSanidad = await registrosSanidadController.createEventoSanidad(request);
+    return NextResponse.json(regSanidad, { status: 201 });
+  }catch {
+        return NextResponse.json(
+          { error: "Internal Server Error" },
+          { status: 500 }
+        );
+      }
 }
