@@ -3,5 +3,8 @@ export class CreateUserDto {
   declare password: string;
   declare nombre: string;
   declare celular: string;
+  declare banco: string;
   declare cuentaBancaria: string;
+  declare rol: "admin" | "colaborador";
+  declare perros: Array<string>;
 }
