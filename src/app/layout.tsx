@@ -1,7 +1,4 @@
-import "./globals.css";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-
 import "./globals.css";
 import { LoginProvider } from "@/app/context/login-provider";
 
@@ -18,8 +15,8 @@ export default function RootLayout({
     <html lang="es">
       <body >
         <LoginProvider>
-          {children} 
-        </LoginProvider>       
+          {children}
+        </LoginProvider>
       </body>
     </html>
   );
