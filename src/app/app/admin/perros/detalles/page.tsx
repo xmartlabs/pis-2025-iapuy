@@ -5,7 +5,7 @@ import EliminarPerro from "./eliminar-perro";
 
 export default function PantallaPerros() {
   return (
-    <div className="w-[96%] flex flex-col gap-4 pt-[3%] pb-[3%] pl-2">
+    <div className="w-[96%] flex flex-col gap-4 pb-[3%] pl-2">
       <DetallePerro />
       <HistorialIntervenciones />
       <HistorialSanidad />
