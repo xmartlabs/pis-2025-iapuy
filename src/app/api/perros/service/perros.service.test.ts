@@ -151,5 +151,40 @@ it("findAll should pass limit = 0 if pagination size is 0", async () => {
   expect(mockFn).toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
 });
 
+it("should return perro details when found", async () => {
+    const mockPerro = {
+      id: 1,
+      nombre: "Firulais",
+      descripcion: "Un perro muy bueno",
+      fortalezas: "Leal",
+      duenioId: 2,
+      User: { nombre: "Juan", ci: "12345678" },
+      deletedAt: null,
+    };
+    // Mock de findByPk para devolver un perro
+    (PerroModel.findByPk as any) = vi.fn().mockResolvedValue(mockPerro);
 
+    const service = new PerrosService();
+    const result = await service.findOne("1");
+
+    expect(result.status).toBe(200);
+    expect(result.perro).toBeDefined();
+    expect(result.perro!.id).toBe(1);
+    expect(result.perro!.nombre).toBe("Firulais");
+    expect(result.perro!.descripcion).toBe("Un perro muy bueno");
+    expect(result.perro!.fortalezas).toBe("Leal");
+    expect(result.perro!.duenioId).toBe(2);
+    expect(result.perro!.deletedAt).toBe(null);
+    expect(result.perro!.duenioNombre).toBe("Juan");
+  });
+
+  it("should return error when perro not found", async () => {
+    (PerroModel.findByPk as any) = vi.fn().mockResolvedValue(null);
+
+    const service = new PerrosService();
+    const result = await service.findOne("120");
+
+    expect(result.status).toBe(404);
+    expect(result.error).toBe("Perro no encontrado");
+  });
 });
