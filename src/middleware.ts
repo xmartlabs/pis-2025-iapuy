@@ -11,7 +11,6 @@ export async function middleware(req: NextRequest) {
   }
 
   const token = req.headers.get("authorization")?.split(" ")[1];
-
   if (!token) {
     return NextResponse.json(
       { error: "No se encontro un token de acceso en la solicitud." },
@@ -22,7 +21,21 @@ export async function middleware(req: NextRequest) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
   try {
-    await jwtVerify(token, secret);
+    const res = await jwtVerify(token, secret);
+
+    if (res.payload.tipo === "Colaborador") {
+      if (
+        pathname.startsWith("/api/intervencines") ||
+        pathname.startsWith("/api/gastos")
+      ) {
+        return NextResponse.next();
+      }
+      return NextResponse.json(
+        { error: "No tiene permisos para acceder a esta ruta" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.next();
   } catch {
     return NextResponse.json(
