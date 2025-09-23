@@ -36,8 +36,8 @@ export interface LoginResponse {
 }
 export interface JwtPayload {
   ci: string;
-  nombre: string;
-  tipo: TipoUsuario;
+  nombre: string; //name
+  tipo: TipoUsuario;//type
 }
 const LoginDialogTrigger = ({ onOpen }: { onOpen: () => void }) => (
   <button
@@ -65,14 +65,14 @@ export default function Home() {
       const decoded = jwtDecode<JwtPayload>(data.accessToken);
 
       context?.setToken(data.accessToken);
-      context?.setTipo(decoded.tipo);
-      context?.setNombre(decoded.nombre);
+      context?.setType(decoded.tipo);
+      context?.setUserName(decoded.nombre);
       context?.setCI(decoded.ci);
 
       if (decoded.tipo === TipoUsuario.Administrador) {
-        router.push("/app/admin/instituciones");
+        router.push("/app/admin/intervenciones/listado");
       } else {
-        router.push("/app/colaboradores/Intervenciones");
+        router.push("/app/colaboradores/Intervenciones/listado");
       }
     },
     [context, router]
@@ -109,7 +109,7 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        setLoginError("Usuario o contraseña incorrectos");
+        setLoginError("Este usuario no existe, por favor revisá los datos.");
         return;
       }
 
@@ -137,10 +137,10 @@ export default function Home() {
     >
       {!dialogOpen && (
         <main
-          className="w-[564px] min-h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
+          className="max-w-[564px] max-h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
           justify-between opacity-100 shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]"
         >
-          <div className="w-[436px] flex flex-col items-start justify-start !mx-[64px] my-[58px] gap-8">
+          <div className={`w-[436px] flex flex-col items-start justify-start !mx-[64px] ${loginError ?'my-[42px]' :'my-[58px]'} gap-8`}>
             <Image src="/logo.png" alt="Logo" width={150} height={150} />
             <h1 className="h-[48px]  font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">
               Iniciar Sesión
@@ -158,7 +158,7 @@ export default function Home() {
                   control={form.control}
                   name="ci"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
+                    <FormItem className="flex flex-col gap-2 relative">
                       <FormLabel>Cédula de identidad</FormLabel>
                       <FormControl>
                         <Input
@@ -167,7 +167,7 @@ export default function Home() {
                           className="w-full p-2 border rounded mt-1"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="absolute -bottom-6" />
                     </FormItem>
                   )}
                 />
@@ -175,7 +175,7 @@ export default function Home() {
                   control={form.control}
                   name="contrasenia"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
+                    <FormItem className="flex flex-col gap-2 relative">
                       <FormLabel>Contraseña</FormLabel>
                       <FormControl>
                         <Input
@@ -184,7 +184,7 @@ export default function Home() {
                           className="w-full p-2 border rounded mt-1"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="absolute -bottom-6"/>
                     </FormItem>
                   )}
                 />
@@ -194,29 +194,34 @@ export default function Home() {
                       setDialogOpen(true);
                     }}
                   />
-                  {/*<LoginDialog open={dialogOpen} onOpenChange={setDialogOpen} />*/}
                 </FormItem>
-                {loginError && (
-                  <div className="text-red-600 text-sm mb-2">{loginError}</div>
-                )}
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className={`w-full h-[40px] rounded-md pt-2 pr-3 pb-2 pl-3 text-white text-sm font-medium leading-6 tracking-normal 
-                              flex items-center justify-center gap-[4px] my-[8px]
-                              ${
-                                submitting
-                                  ? "bg-gray-400 cursor-not-allowed"
-                                  : "bg-[#5B9B40] hover:bg-[#4F8736] transition-colors"
-                              }`}
-                >
-                  Confirmar
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-full h-[40px] rounded-md pt-2 pr-3 pb-2 pl-3 text-white text-sm font-medium leading-6 tracking-normal 
+                                flex items-center justify-center gap-1 my-[8px]
+                                ${
+                                  submitting
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-[#5B9B40] hover:bg-[#4F8736] transition-colors"
+                                }`}
+                  >
+                    Iniciar
+                  </Button>
+                  {loginError && (
+                    <div className="w-[436px] h-[24px] opacity-100 font-sans font-medium 
+                                    text-sm leading-6 tracking-[0] text-center text-[var(--destructive,#DC2626)]"
+                    >
+                      {loginError}
+                    </div>
+                  )}
+                </div>
                 <Link
                   href="https://www.iapuy.org/contacto"
                   className="w-full h-[40px] rounded-md pt-2 pr-3 pb-2 pl-3 bg-white border border-[#BDD7B3] 
                             text-[#5B9B40] text-sm font-medium leading-6 tracking-normal 
-                            hover:bg-[#EFF5EC] transition-colors flex items-center justify-center gap-[4px]"
+                            hover:bg-[#EFF5EC] transition-colors flex items-center justify-center gap-1"
                 >
                   Quiero formar parte
                 </Link>

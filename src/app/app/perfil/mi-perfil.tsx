@@ -34,7 +34,7 @@ export default function DetallePersona() {
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const userCi = context?.ciUsuario;
+  const userCi = context?.userCI;
 
   const fetchUser = useCallback(
     async (

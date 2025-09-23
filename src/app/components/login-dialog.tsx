@@ -8,13 +8,14 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Phone} from "lucide-react";
+import { Mail } from "lucide-react";
 import Image from "next/image";
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 export const LoginDialog= ({ open, onOpenChange }: LoginDialogProps) =>(
+
     <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
             className="w-[423px] h-[203px] rounded-[8px] border border-[#D4D4D4] 
@@ -31,8 +32,8 @@ export const LoginDialog= ({ open, onOpenChange }: LoginDialogProps) =>(
                     </span>
                 </DialogDescription>
                 <div className="w-full flex items-center gap-2 opacity-100">
-                    <Phone className="w-4 h-4" />
-                    <span className="font-normal text-sm leading-5 tracking-normal">987654321</span>
+                    <Mail className="w-4 h-4" />
+                    <span className="font-normal text-sm leading-5 tracking-normal">contacto.iapuy@gmail.com</span>
                 </div>
             </DialogHeader>
 
@@ -68,4 +69,5 @@ export const LoginDialog= ({ open, onOpenChange }: LoginDialogProps) =>(
             </DialogFooter>
         </DialogContent>
     </Dialog> 
+    
 );
