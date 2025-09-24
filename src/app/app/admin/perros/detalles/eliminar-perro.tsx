@@ -1,10 +1,11 @@
 "use client";
-import { CircleAlert, Trash2 } from "lucide-react";
+
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useContext, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
+import { toast } from "sonner";
 
 type ApiResponse = {
   success: boolean;
@@ -14,10 +15,9 @@ type ApiResponse = {
 
 export default function EliminarPerro() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isResultOpen, setIsResultOpen] = useState(false);
-  const [result, setResult] = useState(false);
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
+  const router = useRouter();
 
   const context = useContext(LoginContext);
 
@@ -57,17 +57,47 @@ export default function EliminarPerro() {
         }
       }
 
-      if (res.ok) {
-        const data = (await res.json().catch(() => null)) as ApiResponse | null;
-        setResult(Boolean(data?.success ?? true));
-        setIsResultOpen(true);
+      const data = (await res.json().catch(() => null)) as ApiResponse | null;
+
+      if (res.ok && data?.success) {
+        toast.success(`Perro eliminado correctamente.`, {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#DEEBD9",
+            border: "1px solid #BDD7B3",
+            color: "#121F0D",
+          },
+        });
+
+        router.push("/app/admin/perros/listado");
       } else {
-        setResult(false);
-        setIsResultOpen(true);
+        toast.error(`No se pudo eliminar al perro.`, {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#cfaaaaff",
+            border: "1px solid #ec0909ff",
+            color: "#ec0909ff",
+          },
+        });
       }
     } catch {
-      setResult(false);
-      setIsResultOpen(true);
+      toast.error(`No se pudo eliminar al perro.`, {
+        duration: 5000,
+        icon: null,
+        className:
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+        style: {
+          background: "#cfaaaaff",
+          border: "1px solid #ec0909ff",
+          color: "#ec0909ff",
+        },
+      });
     }
   }
 
@@ -108,7 +138,7 @@ export default function EliminarPerro() {
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium shadow transition"
                   onClick={() => {
                     setIsConfirmOpen(false);
-                    handleDelete().catch(() => {});
+                    handleDelete().catch(() => { });
                   }}
                 >
                   Confirmar
@@ -123,56 +153,6 @@ export default function EliminarPerro() {
                   Cancelar
                 </Button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isResultOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 transition-opacity animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border border-gray-200 relative">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition"
-              onClick={() => {
-                setIsResultOpen(false);
-              }}
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-            <div className="flex flex-col items-center">
-              {result ? (
-                <>
-                  <Trash2 className="w-10 h-10 text-green-500 mb-2" />
-                  <h2 className="text-2xl font-semibold mb-2 text-gray-800 text-center">
-                    Perro eliminado correctamente
-                  </h2>
-                  <div className="mt-6 flex justify-center w-full">
-                    <Link
-                      href="/app/admin/perros"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow transition text-center"
-                    >
-                      Ok
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <CircleAlert className="w-10 h-10 text-red-500 mb-2" />
-                  <h2 className="text-2xl font-semibold mb-2 text-gray-800 text-center">
-                    Error: Por favor vuelva a intentarlo
-                  </h2>
-                  <div className="mt-6 flex justify-center w-full">
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow transition text-center"
-                      onClick={() => {
-                        setIsResultOpen(false);
-                      }}
-                    >
-                      Ok
-                    </Button>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>
