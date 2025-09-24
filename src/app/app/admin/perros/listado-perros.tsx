@@ -25,7 +25,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { RegistrarPerro } from "./registrar-perro";
 import { useRouter } from "next/navigation";
-import type { PerroDTO } from "./dtos/perro.dto";
+import type { PerroDTO } from "./DTOS/perro.dto";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -295,7 +295,7 @@ export default function ListadoPerrosTable() {
 
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        {p.RegistroSanidad && p.RegistroSanidad.Vacunas && p.RegistroSanidad.Vacunas[0].fecha
+                        {p.RegistroSanidad && p.RegistroSanidad.Vacunas && p.RegistroSanidad.Vacunas.length > 0 && p.RegistroSanidad.Vacunas[0].fecha
                           ? formatDate(
                               p.RegistroSanidad.Vacunas[0].fecha
                             )
