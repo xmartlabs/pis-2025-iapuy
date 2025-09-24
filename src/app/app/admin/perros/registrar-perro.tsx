@@ -219,7 +219,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
           className:
             "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
-            background: "#FFFFFF",
+            background: "#DEEBD9",
             border: "1px solid #BDD7B3",
             color: "#121F0D",
           },
