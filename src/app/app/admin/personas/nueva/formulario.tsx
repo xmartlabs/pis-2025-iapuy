@@ -420,6 +420,7 @@ export default function Formulario() {
                         <FormItem className="grid grid-cols-2 gap-2 p-0 mt-[12.5%] w-2/5 h-1/4 left-[-5%] relative">
                         <FormControl>
                             <Checkbox
+                            className="relative left-[20%] top-[-100%]"
                             checked={field.value}
                             onCheckedChange={(v: boolean) => {
                                 field.onChange(v)
@@ -429,7 +430,7 @@ export default function Formulario() {
                             }}
                             />
                         </FormControl>
-                        <FormLabel className="relative left-[-75%]">No tiene</FormLabel>
+                        <FormLabel className="relative left-[-50%] top-[-100%]">No tiene</FormLabel>
                         <FormMessage />
                         </FormItem>
                     )}
