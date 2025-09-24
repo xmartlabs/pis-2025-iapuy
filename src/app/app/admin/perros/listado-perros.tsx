@@ -201,10 +201,10 @@ export default function ListadoPerrosTable() {
   return (
     <div className=" max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
+        <div className="space-y-1 mb-[32px]">
           <div className="flex items-center gap-3">
-            <Dog className="h-21 w-21 text-[rgba(0, 0, 0, 1)]" />
-            <h1 className="text-6xl font-extrabold tracking-tight ">Perros</h1>
+            <Dog className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
+            <h1 className="text-5xl font-extrabold tracking-tight ">Perros</h1>
           </div>
         </div>
 
