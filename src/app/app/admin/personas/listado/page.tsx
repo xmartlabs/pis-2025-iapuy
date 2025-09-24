@@ -30,7 +30,7 @@ export default function ListadoPersonas() {
   const context = useContext(LoginContext);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(10);
+  const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
@@ -213,7 +213,7 @@ export default function ListadoPersonas() {
           </Button>
         </div>
       </div>
-      <div className="max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
+      <div className=" mb-8 max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
