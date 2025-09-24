@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { z} from "zod";
+import { z } from "zod";
 import {
     Tabs,
     TabsContent,
@@ -38,7 +38,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import type {Resolver} from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { LoginContext } from "@/app/context/login-context";
@@ -49,7 +49,7 @@ import { useSearchParams } from "next/navigation";
 
 
 const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
 export default function RegistroSanidad() {
@@ -82,11 +82,11 @@ export default function RegistroSanidad() {
     } as const;
 
     type Tab = keyof typeof schemaPorTab;
-    
+
     type FormValuesVacuna = z.infer<typeof vacunaSchema>;
     type FormValuesBanio = z.infer<typeof banioSchema>;
     type FormValuesDesparasitacion = z.infer<typeof desparasitacionSchema>;
-    
+
     type FormValues = FormValuesVacuna & FormValuesBanio & FormValuesDesparasitacion;
 
     const form = useForm<FormValues>({
@@ -114,59 +114,59 @@ export default function RegistroSanidad() {
             const perroId = searchParams.get("id") ?? "";
 
             if (tab === "vacuna") {
-            const d = data as z.infer<typeof vacunaSchema>;
+                const d = data as z.infer<typeof vacunaSchema>;
 
-            formData.append("tipoSanidad", "vacuna");
-            formData.append("perroId", perroId);
-            formData.append("fecha", d.fechaInVac);
-            formData.append("vac", d.marcaInVac ?? "");
-            formData.append("medicamento", "");
-            formData.append("tipoDesparasitacion", "Externa");
-            
-            if (d.carnetInVac) {
-            formData.append("carneVacunas", d.carnetInVac); 
-            }
+                formData.append("tipoSanidad", "vacuna");
+                formData.append("perroId", perroId);
+                formData.append("fecha", d.fechaInVac);
+                formData.append("vac", d.marcaInVac ?? "");
+                formData.append("medicamento", "");
+                formData.append("tipoDesparasitacion", "Externa");
+
+                if (d.carnetInVac) {
+                    formData.append("carneVacunas", d.carnetInVac);
+                }
 
             } else if (tab === "banio") {
 
-            const d = data as z.infer<typeof banioSchema>;
+                const d = data as z.infer<typeof banioSchema>;
 
-            formData.append("tipoSanidad", "banio");
-            formData.append("perroId", perroId);
-            formData.append("fecha", d.fechaInBanio);
-            formData.append("vac","");
-            formData.append("medicamento","");
-            formData.append("tipoDesparasitacion", "Externa");
+                formData.append("tipoSanidad", "banio");
+                formData.append("perroId", perroId);
+                formData.append("fecha", d.fechaInBanio);
+                formData.append("vac", "");
+                formData.append("medicamento", "");
+                formData.append("tipoDesparasitacion", "Externa");
 
             } else {
 
-            const d = data as z.infer<typeof desparasitacionSchema>;
-            formData.append("tipoSanidad", "desparasitacion");
-            formData.append("perroId", perroId);
-            formData.append("fecha", d.fechaInDes);
-            formData.append("vac","");
-            formData.append("medicamento",d.marcaInDes);
-            formData.append("tipoDesparasitacion", d.desparasitacionTipo);
+                const d = data as z.infer<typeof desparasitacionSchema>;
+                formData.append("tipoSanidad", "desparasitacion");
+                formData.append("perroId", perroId);
+                formData.append("fecha", d.fechaInDes);
+                formData.append("vac", "");
+                formData.append("medicamento", d.marcaInDes);
+                formData.append("tipoDesparasitacion", d.desparasitacionTipo);
 
             }
-            
+
             const res = await fetch("/api/registros-sanidad", {
                 method: "POST",
-                headers : {
-                Authorization: `Bearer ${context?.tokenJwt}`
+                headers: {
+                    Authorization: `Bearer ${context?.tokenJwt}`
                 },
                 body: formData
             });
 
-                if (res.status === 401) {
-                    const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+            if (res.status === 401) {
+                const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
                     method: "POST",
-                    });
-                    if (resp2.ok) {
-                        return submitHandler(data);
-                    }
-                return;
+                });
+                if (resp2.ok) {
+                    return submitHandler(data);
                 }
+                return;
+            }
 
             if (res.ok) {
                 setOpen(false);
@@ -223,8 +223,8 @@ export default function RegistroSanidad() {
                             <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">Registrar Sanidad</DialogTitle>
                         </DialogHeader>
                         <div className="!px-6 !-mt-5">
-                            <form onSubmit={(e) => {e.preventDefault(); form.handleSubmit(submitHandler)(e).catch((err) => {reportError(err);})}}>
-                                <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={ (newTab) => {setTab(newTab as Tab)}}>
+                            <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(submitHandler)(e).catch((err) => { reportError(err); }) }}>
+                                <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={(newTab) => { setTab(newTab as Tab) }}>
                                     <TabsList className="bg-[#DEEBD9] !rounded-md !p-1 !radius">
                                         <TabsTrigger value="vacuna"
                                             className="
@@ -289,21 +289,41 @@ export default function RegistroSanidad() {
                                                 <FormField
                                                     control={form.control}
                                                     name="carnetInVac"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Carnet de vacuna*</FormLabel>
-                                                            <FormControl>
-                                                                <Input
-                                                                    type="file"
-                                                                    onChange={(e) => {
-                                                                        const file = e.target.files?.[0] || null;
-                                                                        field.onChange(file);
-                                                                    }}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
+                                                    render={({ field }) => {
+                                                        const filename = (field.value as File | null)?.name ?? "Nada cargado todavía";
+
+                                                        return (
+                                                            <FormItem>
+                                                                <FormLabel>Carnet de vacuna*</FormLabel>
+                                                                <FormControl>
+                                                                    <div className="flex items-center w-full border border-gray-200 rounded-md overflow-hidden">
+                                                                        <label
+                                                                            className="flex-shrink-0 px-4 py-2 select-none cursor-pointer text-sm font-medium"
+                                                                            aria-hidden={false}
+                                                                        >
+                                                                            Adjuntar archivo
+                                                                            <input
+                                                                                type="file"
+                                                                                className="sr-only"
+                                                                                onChange={(e) => {
+                                                                                    const file = e.target.files?.[0] ?? null;
+                                                                                    field.onChange(file);
+                                                                                }}
+                                                                            />
+                                                                        </label>
+
+                                                                        <div
+                                                                            className="flex-1 px-3 py-2 text-sm text-gray-500 truncate"
+                                                                            aria-live="polite"
+                                                                        >
+                                                                            {filename}
+                                                                        </div>
+                                                                    </div>
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        );
+                                                    }}
                                                 />
                                             </CardContent>
                                         </Card>
@@ -400,8 +420,8 @@ export default function RegistroSanidad() {
 
                                 <DialogFooter className="!w-full !flex flex-row !items-center !justify-between gap-3 mt-2 !pb-6">
                                     <DialogClose asChild>
-                                        <Button  onClick={() => { form.reset() }}
-                                        variant="outline"
+                                        <Button onClick={() => { form.reset() }}
+                                            variant="outline"
                                             className="
                                                 !w-[96px] h-10 text-sm px-3 rounded-md
                                                 border-[#5B9B40] text-[#5B9B40] bg-white
