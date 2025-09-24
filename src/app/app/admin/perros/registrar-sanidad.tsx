@@ -222,37 +222,31 @@ export default function RegistroSanidad() {
                         <DialogHeader className="!w-full !p-6 !items-center !m-0">
                             <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">Registrar Sanidad</DialogTitle>
                         </DialogHeader>
-                        <div className="!px-6 !-mt-5">
+                        <div className="!px-6 !pt-0 !pb-4">
                             <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(submitHandler)(e).catch((err) => { reportError(err); }) }}>
-                                <Tabs defaultValue="regSanidad" className="!rounded-md" value={tab} onValueChange={(newTab) => { setTab(newTab as Tab) }}>
-                                    <TabsList className="bg-[#DEEBD9] !rounded-md !p-1 !radius">
+                                <Tabs defaultValue="regSanidad" className="!rounded-md !w-full" value={tab} onValueChange={(newTab) => { setTab(newTab as Tab) }}>
+                                    <TabsList className="!w-full bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between">
                                         <TabsTrigger value="vacuna"
-                                            className="
-                                            !px-3
+                                            className="flex-1 text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md
-                                            "
+                                            !rounded-md"
                                         >
                                             Vacuna
                                         </TabsTrigger>
                                         <TabsTrigger value="banio"
-                                            className="
-                                            !px-3
+                                            className="flex-1 text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md
-                                            "
+                                            !rounded-md"
                                         >
                                             Baño
                                         </TabsTrigger>
                                         <TabsTrigger value="desparasitacion"
-                                            className="
-                                            !px-3 
+                                            className="flex-1 text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md
-                                            "
+                                            !rounded-md"
                                         >
                                             Desparasitación
                                         </TabsTrigger>
