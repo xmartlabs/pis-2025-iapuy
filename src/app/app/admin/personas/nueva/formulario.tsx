@@ -426,7 +426,11 @@ export default function Formulario() {
                         const noTiene = form.watch("noPerro") // true/false
                         return (
                             <FormItem>
-                                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
+                                <FormLabel className={
+                                    `font-sans font-medium text-sm leading-5 ${(noTiene
+                                        ? "text-muted-foreground cursor-not-allowed opacity-60"
+                                        : "text-foreground")}`
+                                }>
                                     Perro
                                 </FormLabel>
                                 <FormControl>
