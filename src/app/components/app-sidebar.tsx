@@ -1,5 +1,5 @@
 'use client'
-import { Building,Dog,PersonStanding,CalendarRange,BadgeDollarSign} from "lucide-react"
+import { Building,Dog,PersonStanding,CalendarRange,/*BadgeDollarSign*/} from "lucide-react"
 import Image from 'next/image'
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,10 +20,10 @@ import {
 export function AppSidebar() {
   const pathName=usePathname()
   const context = useContext(LoginContext);
-  if (!context?.tipoUsuario) {
+  if (!context?.userType) {
     return null;
   }
-  const tipo:TipoUsuario=context?.tipoUsuario;
+  const type:TipoUsuario=context?.userType;
   const items = [
   {
     title: "Perros",
@@ -45,16 +45,16 @@ export function AppSidebar() {
   },
   {
     title: "Intervenciones",
-    url: tipo === TipoUsuario.Administrador ? "/app/admin/intervenciones":"/app/colaboradores/intervenciones/listado",
+    url: type === TipoUsuario.Administrador ? "/app/admin/intervenciones/listado":"/app/colaboradores/Intervenciones/listado",
     icon:CalendarRange,
     onlyAdmin:false
   },
-  {
+  /*{
     title: "Gastos",
-    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos":"/app/colaboradores/gastos/listado",
+    url: tipo === TipoUsuario.Administrador ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
     icon:BadgeDollarSign,
     onlyAdmin:false
-  },
+  },*/
 ]
   return (
     <Sidebar>
@@ -74,7 +74,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.filter(item => {
-                  if (tipo === TipoUsuario.Administrador) return true; 
+                  if (type === TipoUsuario.Administrador) return true; 
                   return item.onlyAdmin === false; 
                 })
                 .map(item => (

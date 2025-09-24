@@ -1,4 +1,4 @@
-import ListadoGastos from "./ListadoGastos";
+import ListadoGastos from "../ListadoGastos";
 
 export default function PantallaGastos() {
   return <ListadoGastos/>;

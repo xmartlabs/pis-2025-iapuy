@@ -26,17 +26,17 @@ export default function ConditionalSidebar({
 
   if (pathname === "/") return <>{children}</>;
 
-  const nombreUsuario = context?.nombreUsuario ?? "";
-  const data = nombreUsuario ? nombreUsuario.split(" ") : [];
+  const UserName = context?.userName ?? "";
+  const data = UserName ? UserName.split(" ") : [];
 
-  let iniciales = "ZZ";
+  let initials = "ZZ";
   if (data && data.length > 1) {
     const nombre = data[0]?.charAt(0) ?? "";
-    const apellido = data[1]?.charAt(0) ?? "";
-    iniciales = (nombre + apellido).toUpperCase();
+    const lastName = data[1]?.charAt(0) ?? "";
+    initials = (nombre + lastName).toUpperCase();
   } else if (data && data.length === 1) {
     const nombre = data[0]?.charAt(0) ?? "";
-    iniciales = (nombre + nombre).toUpperCase();
+    initials = (nombre + nombre).toUpperCase();
   }
 
   async function handleLogout() {
@@ -47,9 +47,9 @@ export default function ConditionalSidebar({
       });
 
       context?.setToken(null);
-      context?.setNombre(null);
+      context?.setUserName(null);
       context?.setCI(null);
-      context?.setTipo(null);
+      context?.setType(null);
       router.push("/");
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
@@ -68,7 +68,7 @@ export default function ConditionalSidebar({
           <ContextMenu>
             <ContextMenuTrigger>
               <div className="w-12 h-12 rounded-full bg-[#DEEBD9] flex items-center justify-center cursor-pointer">
-                {iniciales}
+                {initials}
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent
