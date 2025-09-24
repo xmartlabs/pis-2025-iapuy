@@ -10,22 +10,22 @@ interface LoginProviderProps {
 
 export const LoginProvider = ({ children }: LoginProviderProps) => {
   const [tokenJwt, setToken] = useState<string | null>(null);
-  const [tipoUsuario, setTipo] = useState<TipoUsuario | null>(null);
-  const [nombreUsuario, setNombre] = useState<string | null>(null);
-  const [ciUsuario, setCI] = useState<string | null>(null);
+  const [userType, setType] = useState<TipoUsuario | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userCI, setCI] = useState<string | null>(null);
 
   const value = useMemo(
     () => ({
       tokenJwt,
       setToken,
-      tipoUsuario,
-      setTipo,
-      nombreUsuario,
-      setNombre,
-      ciUsuario,
+      userType,
+      setType,
+      userName,
+      setUserName,
+      userCI,
       setCI,
     }),
-    [tokenJwt, tipoUsuario, nombreUsuario, ciUsuario]
+    [tokenJwt, userType, userName, userCI]
   );
 
   return (
