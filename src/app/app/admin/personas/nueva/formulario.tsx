@@ -104,7 +104,7 @@ export default function Formulario() {
     async function fetchPerrosOptions(): Promise<void> {
         const controller = new AbortController();
         const timeout = setTimeout(() => { controller.abort(); }, 10000);
-        const url = new URL("/api/perros", BASE_API_URL);
+        const url = new URL("/api/perros?size=-1", BASE_API_URL);
 
         try {
         const token = context?.tokenJwt ?? undefined;

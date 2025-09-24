@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { PaginationDto } from "./pagination.dto";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";

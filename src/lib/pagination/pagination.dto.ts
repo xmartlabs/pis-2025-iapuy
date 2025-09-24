@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import { Type } from "class-transformer";
 import { IsNumber, IsOptional, IsString, Min } from "class-validator";
 import { Order } from "sequelize";
@@ -10,7 +11,6 @@ export class PaginationDto {
 
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
   size: number = 15;
 
   @IsOptional()
