@@ -373,6 +373,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                               className="!w-full !md:max-w-[320px] !min-h-[80px] !md:h-[80px]"
                               placeholder=""
                               {...field}
+                              maxLength={255}
                             />
                           </FormControl>
                           <FormMessage />
