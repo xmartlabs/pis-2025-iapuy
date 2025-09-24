@@ -11,14 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Dog } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
@@ -26,6 +18,7 @@ import { LoginContext } from "@/app/context/login-context";
 import { RegistrarPerro } from "./registrar-perro";
 import { useRouter } from "next/navigation";
 import type { PerroDTO } from "./DTOS/perro.dto";
+import CustomPagination from "@/app/components/pagination";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -327,45 +320,7 @@ export default function ListadoPerrosTable() {
         </div>
 
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <Pagination>
-                {/* added gap here */}
-                <PaginationContent className="flex items-center gap-3">
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page > 1) setPage(page - 1);
-                      }}
-                      className={
-                        page <= 1 ? "pointer-events-none opacity-40" : ""
-                      }
-                    />
-                  </PaginationItem>
-
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page < totalPages) setPage(page + 1);
-                      }}
-                      className={
-                        page >= totalPages
-                          ? "pointer-events-none opacity-40"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-            <div className="text-muted-foreground text-center">
-              Página {page} de {totalPages}
-            </div>
-          </div>
+          <CustomPagination page={page} totalPages={totalPages} setPage={setPage}/>
         )}
       </div>
     </div>

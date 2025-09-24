@@ -1,7 +1,7 @@
 "use client";
 import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, ArrowRight, ArrowLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
@@ -13,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
+import CustomPagination from "@/app/components/pagination";
 
-type PerroSummary = { id?:string, nombre?: string };
+type PerroSummary = { id?: string, nombre?: string };
 type UserRowBase = {
   [key: string]: string | number | boolean | null | undefined;
 };
@@ -90,8 +91,7 @@ export default function ListadoPersonas() {
             if (!retryResp.ok) {
               const txt = await retryResp.text().catch(() => "");
               throw new Error(
-                `API ${retryResp.status}: ${retryResp.statusText}${
-                  txt ? ` - ${txt}` : ""
+                `API ${retryResp.status}: ${retryResp.statusText}${txt ? ` - ${txt}` : ""
                 }`
               );
             }
@@ -153,24 +153,13 @@ export default function ListadoPersonas() {
           setTotalPages(res.totalPages ?? 1);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       controller.abort();
     };
   }, [page, size]);
 
-  const handleNextPage = () => {
-    if (page < totalPages) {
-      setPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1);
-    }
-  };
   const columnToAttribute: Record<string, string> = {
     Nombre: "nombre",
     "Cédula de identidad": "ci",
@@ -215,11 +204,10 @@ export default function ListadoPersonas() {
                 {columnHeader.map((head, index) => (
                   <TableHead
                     key={head}
-                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${
-                      index >= 3 && head !== "Perro"
-                        ? "hidden sm:table-cell"
-                        : ""
-                    }`}
+                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${index >= 3 && head !== "Perro"
+                      ? "hidden sm:table-cell"
+                      : ""
+                      }`}
                   >
                     {head === "Cédula de identidad" ? (
                       <span className="sm:hidden">C.I</span>
@@ -245,9 +233,8 @@ export default function ListadoPersonas() {
                       return (
                         <TableCell
                           key={column}
-                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
-                            index >= 3 ? "hidden sm:table-cell" : ""
-                          }`}
+                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${index >= 3 ? "hidden sm:table-cell" : ""
+                            }`}
                         >
                           <div
                             className="truncate"
@@ -271,16 +258,16 @@ export default function ListadoPersonas() {
                       <div className="truncate">
                         {Array.isArray(user.perros) && user.perros.length > 0
                           ? user.perros.map((p, index) =>
-                              p?.nombre ? (
-                                <Link
-                                  key={index}
-                                  href={`/app/admin/perros/detalles?id=${p.id}`}
-                                  className="!underline hover:text-blue-800 mr-2 text-sm"
-                                >
-                                  {p.nombre}
-                                </Link>
-                              ) : null
-                            )
+                            p?.nombre ? (
+                              <Link
+                                key={index}
+                                href={`/app/admin/perros/detalles?id=${p.id}`}
+                                className="!underline hover:text-blue-800 mr-2 text-sm"
+                              >
+                                {p.nombre}
+                              </Link>
+                            ) : null
+                          )
                           : "No tiene"}
                       </div>
                     </TableCell>
@@ -295,36 +282,10 @@ export default function ListadoPersonas() {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+          )}
         </div>
-      </div>
-      <div className="mt-4 sm:mt-[5px] flex justify-center items-center gap-2">
-        <Button
-          onClick={handlePreviousPage}
-          disabled={page === 1}
-          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
-          aria-label="Página anterior"
-          size="sm"
-          className="px-3 py-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline ml-1"></span>
-        </Button>
-        <Button
-          onClick={handleNextPage}
-          disabled={page === totalPages}
-          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
-          aria-label="Página siguiente"
-          size="sm"
-          className="px-3 py-2"
-        >
-          <span className="hidden sm:inline mr-1"></span>
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="mt-2 sm:mt-[5px] flex justify-center items-center">
-        <p className="text-xs sm:text-sm leading-6 medium text-center">
-          Página {page} de {totalPages}
-        </p>
       </div>
     </div>
   );
