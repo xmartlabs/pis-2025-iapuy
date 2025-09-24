@@ -1,7 +1,7 @@
 "use client";
 import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { PersonStanding, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
@@ -194,12 +194,15 @@ export default function ListadoPersonas() {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
       <div className="mb-[32px] max-w-full mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
-        <h1
-          className="text-5xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Personas
-        </h1>
+        <div className="flex items-center gap-3">
+          <PersonStanding className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
+          <h1
+            className="text-5xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            Personas
+          </h1>
+        </div>
         <div className="flex justify-start sm:justify-end items-center">
           <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
           <Button
