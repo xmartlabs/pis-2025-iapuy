@@ -280,7 +280,7 @@ export default function Formulario() {
                     name="nombre"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Nombre*</FormLabel>
+                            <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">Nombre y apellido*</FormLabel>
                             <FormControl>
                                 <Input {...field} />
                             </FormControl>
