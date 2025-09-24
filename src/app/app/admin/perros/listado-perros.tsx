@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useContext, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -12,13 +11,14 @@ import {
 } from "@/components/ui/table";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Dog } from "lucide-react";
+import { Dog } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { RegistrarPerro } from "./registrar-perro";
 import { useRouter } from "next/navigation";
 import type { PerroDTO } from "./DTOS/perro.dto";
 import CustomPagination from "@/app/components/pagination";
+import CustomSearchBar from "@/app/components/search-bar";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -114,8 +114,7 @@ export default function ListadoPerrosTable() {
             if (!retryResp.ok) {
               const txt = await retryResp.text().catch(() => "");
               throw new Error(
-                `API ${retryResp.status}: ${retryResp.statusText}${
-                  txt ? ` - ${txt}` : ""
+                `API ${retryResp.status}: ${retryResp.statusText}${txt ? ` - ${txt}` : ""
                 }`
               );
             }
@@ -179,7 +178,7 @@ export default function ListadoPerrosTable() {
           setTotalPages(res.totalPages ?? 1);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         setLoading(false);
       });
@@ -210,18 +209,7 @@ export default function ListadoPerrosTable() {
         </div>
 
         <div className="flex items-start gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre..."
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-              }}
-              className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
-            />
-          </div>
-
+          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
           <RegistrarPerro reload={reload} setReload={setReload} />
         </div>
       </div>
@@ -290,8 +278,8 @@ export default function ListadoPerrosTable() {
                       <div className="flex items-center gap-2 text-sm text-gray-700">
                         {p.RegistroSanidad && p.RegistroSanidad.Vacunas && p.RegistroSanidad.Vacunas.length > 0 && p.RegistroSanidad.Vacunas[0].fecha
                           ? formatDate(
-                              p.RegistroSanidad.Vacunas[0].fecha
-                            )
+                            p.RegistroSanidad.Vacunas[0].fecha
+                          )
                           : "N/A"}
                       </div>
                     </TableCell>
@@ -320,7 +308,7 @@ export default function ListadoPerrosTable() {
         </div>
 
         {totalPages > 1 && (
-          <CustomPagination page={page} totalPages={totalPages} setPage={setPage}/>
+          <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
         )}
       </div>
     </div>

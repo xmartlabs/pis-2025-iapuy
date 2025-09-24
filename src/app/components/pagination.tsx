@@ -1,9 +1,9 @@
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 interface CustomPaginationProps {
-  page: number;
-  totalPages: number;
-  setPage: (v:number) => void
+    page: number;
+    totalPages: number;
+    setPage: (v: number) => void;
 }
 
 export default function CustomPagination({ page, totalPages, setPage }: CustomPaginationProps) {

@@ -249,14 +249,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button
-            className="
-                            !font-sans !font-medium !text-sm !leading-6 !tracking-normal 
-                            !flex !items-center !justify-center !gap-1
-                            !px-3 !md:px-4 !lg:px-6 !py-2
-                            !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]
-                            !rounded-md !h-10
-                            !w-auto
-                        "
+            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
           >
             <Plus size={16} />
             Agregar perro

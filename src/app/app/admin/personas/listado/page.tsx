@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 import CustomPagination from "@/app/components/pagination";
+import CustomSearchBar from "@/app/components/search-bar";
 
 type PerroSummary = { id?: string, nombre?: string };
 type UserRowBase = {
@@ -31,6 +32,20 @@ export default function ListadoPersonas() {
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [search, setSearch] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+
+  // Debounce para la búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Resetear a primera página al buscar
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
 
   async function fetchUsers(
     pageNum: number,
@@ -44,6 +59,7 @@ export default function ListadoPersonas() {
     const url = new URL("/api/users", BASE_API_URL);
     url.searchParams.set("page", String(p));
     url.searchParams.set("size", String(s));
+    url.searchParams.set("query", String(search));
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -158,7 +174,7 @@ export default function ListadoPersonas() {
     return () => {
       controller.abort();
     };
-  }, [page, size]);
+  }, [page, size, search]);
 
   const columnToAttribute: Record<string, string> = {
     Nombre: "nombre",
@@ -185,9 +201,10 @@ export default function ListadoPersonas() {
           Personas
         </h1>
         <div className="flex justify-start sm:justify-end items-center">
+          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
           <Button
             asChild
-            className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
+            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
           >
             <span className="flex items-center justify-center sm:justify-start">
               <Plus className="mr-2" />
