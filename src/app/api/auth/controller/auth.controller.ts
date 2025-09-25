@@ -10,7 +10,7 @@ export class AuthController {
   }
 
   refresh(req: NextRequest) {
-    //Se obtiene el refresh token de la cookie guardada si la hay
+    //Get the refresh token from the cookie if there is one
     const cookieHeader = req.headers.get("cookie") ?? "";
     const refreshToken = cookieHeader
       .split(";")

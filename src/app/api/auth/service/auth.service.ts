@@ -4,7 +4,7 @@ import { Hashing } from "@/lib/crypto/hash";
 import { UserService } from "../../users/service/user.service";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-export enum TipoUsuario {
+export enum UserType {
   Colaborador = "Colaborador",
   Administrador = "Administrador",
 }
@@ -16,8 +16,8 @@ export interface LoginRequest {
 
 export interface PayloadForRefresh extends jwt.JwtPayload {
   ci: string;
-  nombre: string;
-  tipo: string;
+  name: string;
+  type: string;
 }
 
 export class AuthService {
@@ -26,7 +26,7 @@ export class AuthService {
   async login(ci: string, password: string) {
     await initDatabase();
 
-    //Se verifican las credenciales del usuario
+    //Verify user credentials
     const user = await this.userService.findOneForAuth(ci);
     if (
       user === undefined ||
@@ -35,44 +35,44 @@ export class AuthService {
     ) {
       return { error: "Credenciales invalidas", status: 401 };
     }
-    const ciUsuario = user.ci;
-    const nombreUsuario = user.nombre;
-    const tipoUsuario = user.esAdmin
-      ? TipoUsuario.Administrador
-      : TipoUsuario.Colaborador;
+    const userCI = user.ci;
+    const userName = user.nombre;
+    const userType = user.esAdmin
+      ? UserType.Administrador
+      : UserType.Colaborador;
 
-    //Se crea el access token
+    //Create the access token
     const accessToken = jwt.sign(
-      { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
+      { ci: userCI, name: userName, type: userType },
       JWT_SECRET,
       { expiresIn: "15m" }
     );
 
-    //Se crea el refresh token
+    //Create the new refresh token
     const refreshToken = jwt.sign(
-      { ci: ciUsuario, nombre: nombreUsuario, tipo: tipoUsuario },
+      { ci: userCI, name: userName, type: userType },
       JWT_SECRET,
       { expiresIn: "180d" }
     );
 
-    //Se envia el access token y el refresh token
+    //Return the access token and the refresh token
     return { accessToken, refreshToken, status: 200 };
   }
 
   refresh(refreshToken: string) {
     const payload = jwt.verify(refreshToken, JWT_SECRET) as PayloadForRefresh;
 
-    //Se genera un nuevo access token
+    //Generate a new access token
     const accessToken = jwt.sign(
       {
         ci: payload.ci,
-        nombre: payload.nombre,
-        tipo: payload.tipo,
+        name: payload.name,
+        type: payload.type,
       },
       JWT_SECRET,
       { expiresIn: "15m" }
     );
-    //Se envia el nuevo access token
+    //Return the new access token
     return { accessToken, status: 200 };
   }
 }
