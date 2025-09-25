@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { useEffect } from "react";
+import { useState,useEffect,useContext } from "react";
+import { LoginContext } from "@/app/context/login-context";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -7,16 +8,43 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger
  } from "@/components/ui/dropdown-menu";
+ interface Dog {
+  id: string;
+  nombre: string;
+}
  interface props{
     iniciales:string,
-    userCI:string,
     handleLogout:()=>void,
 
  }
 export const DropDownMenu = (p:props)=>{
-    useEffect(()=>{
+    const [dogs, setdogs] = useState<Dog[]>([]);
+    const context = useContext(LoginContext);
+    const token=context?.tokenJwt
 
-    },[])
+    useEffect(() => {
+
+    const getDogs = async () => {
+      try {
+        const res = await fetch(`/api/users/${context?.userCI}/perros`, {
+          method: "GET",
+          headers:{
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as Dog[];
+          setdogs(data);
+        
+        }
+      } catch{
+        // ignore errors for now
+      }
+    };
+    getDogs().catch(() => {});
+  }, [context,token]);
     return (
         <header className="bg-background flex h-18 border-b border-sidebar-border justify-end !py-3 !pr-8">
             <DropdownMenu>
@@ -34,7 +62,12 @@ export const DropDownMenu = (p:props)=>{
                     <DropdownMenuItem asChild>
                         <Link href={"/app/perfil"}>Mi perfil</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Perfil de [Nombre del perro]</DropdownMenuItem>
+                    {/*<DropdownMenuItem>Perfil de [Nombre del perro]</DropdownMenuItem>*/}
+                    {dogs.map((d) => (
+                        <DropdownMenuItem key={d.id} asChild>
+                            <Link href={`/app/admin/perros/detalles?id=${d.id}`}>Perfil de {d.nombre}</Link>
+                        </DropdownMenuItem>
+                    ))}
                     <DropdownMenuSeparator className="!border-[#BDD7B3]" />
                     <DropdownMenuItem onClick={p.handleLogout}>
                         Cerrar sesión

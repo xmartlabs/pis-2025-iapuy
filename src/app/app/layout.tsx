@@ -81,7 +81,6 @@ export default function LoginLayout({ children }: Props) {
   const userName = context?.userName ?? "";
   const data = userName?.split(" ");
   let iniciales: string = "";
-  const CI : string = context?.userCI ?? "";
   let name: string = "";
   let lastName: string = "";
 
@@ -120,7 +119,7 @@ export default function LoginLayout({ children }: Props) {
       <SidebarInset>
         <SidebarTrigger className="block md:hidden" />
         {/* eslint-disable-next-line no-void*/}
-        <DropDownMenu iniciales={iniciales} userCI={CI} handleLogout={() => void handleLogout()}/>
+        <DropDownMenu iniciales={iniciales} handleLogout={() => void handleLogout()}/>
         <main className="!ml-8 !mt-[60px]">{children}</main>
       </SidebarInset>
     </SidebarProvider>
