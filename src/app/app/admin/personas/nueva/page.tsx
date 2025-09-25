@@ -1,7 +1,7 @@
 
 import { Toaster } from "@/components/ui/sonner"
 import Migas from "./Migas";
-import Formulario from "./Formulario";
+import Formulario from "./formulario";
 
 export default function NuevaPersona() {
   return (

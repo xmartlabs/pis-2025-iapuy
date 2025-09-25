@@ -46,8 +46,8 @@ export class PerrosService {
           ],
         },
       ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
+      limit: pagination.size > 0 ? pagination.size : undefined,
+      offset: pagination.size > 0 ? pagination.getOffset() : undefined,
       order: pagination.getOrder(),
       subQuery: false,
     });

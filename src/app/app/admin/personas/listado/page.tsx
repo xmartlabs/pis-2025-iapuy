@@ -1,7 +1,7 @@
 "use client";
 import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, ArrowRight, ArrowLeft } from "lucide-react";
+import { PersonStanding, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
@@ -13,8 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
+import CustomPagination from "@/app/components/pagination";
+import CustomSearchBar from "@/app/components/search-bar";
 
-type PerroSummary = { id?:string, nombre?: string };
+type PerroSummary = { id?: string, nombre?: string };
 type UserRowBase = {
   [key: string]: string | number | boolean | null | undefined;
 };
@@ -28,8 +30,22 @@ export default function ListadoPersonas() {
   const context = useContext(LoginContext);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(10);
+  const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [search, setSearch] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+
+  // Debounce para la búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Resetear a primera página al buscar
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
 
   async function fetchUsers(
     pageNum: number,
@@ -43,6 +59,7 @@ export default function ListadoPersonas() {
     const url = new URL("/api/users", BASE_API_URL);
     url.searchParams.set("page", String(p));
     url.searchParams.set("size", String(s));
+    url.searchParams.set("query", String(search));
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -90,8 +107,7 @@ export default function ListadoPersonas() {
             if (!retryResp.ok) {
               const txt = await retryResp.text().catch(() => "");
               throw new Error(
-                `API ${retryResp.status}: ${retryResp.statusText}${
-                  txt ? ` - ${txt}` : ""
+                `API ${retryResp.status}: ${retryResp.statusText}${txt ? ` - ${txt}` : ""
                 }`
               );
             }
@@ -153,24 +169,13 @@ export default function ListadoPersonas() {
           setTotalPages(res.totalPages ?? 1);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       controller.abort();
     };
-  }, [page, size]);
+  }, [page, size, search]);
 
-  const handleNextPage = () => {
-    if (page < totalPages) {
-      setPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1);
-    }
-  };
   const columnToAttribute: Record<string, string> = {
     Nombre: "nombre",
     "Cédula de identidad": "ci",
@@ -188,17 +193,21 @@ export default function ListadoPersonas() {
   ];
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
-      <div className="max-w-full mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
-        <h1
-          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Personas
-        </h1>
+      <div className="mb-[32px] max-w-full mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+        <div className="flex items-center gap-3">
+          <PersonStanding className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
+          <h1
+            className="text-5xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            Personas
+          </h1>
+        </div>
         <div className="flex justify-start sm:justify-end items-center">
+          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
           <Button
             asChild
-            className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
+            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
           >
             <span className="flex items-center justify-center sm:justify-start">
               <Plus className="mr-2" />
@@ -207,7 +216,7 @@ export default function ListadoPersonas() {
           </Button>
         </div>
       </div>
-      <div className="max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
+      <div className=" mb-8 max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
@@ -215,11 +224,10 @@ export default function ListadoPersonas() {
                 {columnHeader.map((head, index) => (
                   <TableHead
                     key={head}
-                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${
-                      index >= 3 && head !== "Perro"
-                        ? "hidden sm:table-cell"
-                        : ""
-                    }`}
+                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${index >= 3 && head !== "Perro"
+                      ? "hidden sm:table-cell"
+                      : ""
+                      }`}
                   >
                     {head === "Cédula de identidad" ? (
                       <span className="sm:hidden">C.I</span>
@@ -245,9 +253,8 @@ export default function ListadoPersonas() {
                       return (
                         <TableCell
                           key={column}
-                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
-                            index >= 3 ? "hidden sm:table-cell" : ""
-                          }`}
+                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${index >= 3 ? "hidden sm:table-cell" : ""
+                            }`}
                         >
                           <div
                             className="truncate"
@@ -271,16 +278,16 @@ export default function ListadoPersonas() {
                       <div className="truncate">
                         {Array.isArray(user.perros) && user.perros.length > 0
                           ? user.perros.map((p, index) =>
-                              p?.nombre ? (
-                                <Link
-                                  key={index}
-                                  href={`/app/admin/perros/detalles?id=${p.id}`}
-                                  className="!underline hover:text-blue-800 mr-2 text-sm"
-                                >
-                                  {p.nombre}
-                                </Link>
-                              ) : null
-                            )
+                            p?.nombre ? (
+                              <Link
+                                key={index}
+                                href={`/app/admin/perros/detalles?id=${p.id}`}
+                                className="!underline hover:text-blue-800 mr-2 text-sm"
+                              >
+                                {p.nombre}
+                              </Link>
+                            ) : null
+                          )
                           : "No tiene"}
                       </div>
                     </TableCell>
@@ -295,36 +302,10 @@ export default function ListadoPersonas() {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+          )}
         </div>
-      </div>
-      <div className="mt-4 sm:mt-[5px] flex justify-center items-center gap-2">
-        <Button
-          onClick={handlePreviousPage}
-          disabled={page === 1}
-          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
-          aria-label="Página anterior"
-          size="sm"
-          className="px-3 py-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline ml-1"></span>
-        </Button>
-        <Button
-          onClick={handleNextPage}
-          disabled={page === totalPages}
-          // para evitar warning de eslint al hacer previousElementSibling y nextElementSibling
-          aria-label="Página siguiente"
-          size="sm"
-          className="px-3 py-2"
-        >
-          <span className="hidden sm:inline mr-1"></span>
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="mt-2 sm:mt-[5px] flex justify-center items-center">
-        <p className="text-xs sm:text-sm leading-6 medium text-center">
-          Página {page} de {totalPages}
-        </p>
       </div>
     </div>
   );

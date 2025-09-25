@@ -9,14 +9,10 @@ export class RegistrosSanidadController {
   ) { }
 
   async getRegistrosSanidad(pagination: PaginationDto, id: string) {
-    try {
-      return await this.registrosSanidadService.findAll(
-        pagination,
-        id,
-      );
-    } catch (error) {
-      return { listadoRegistros: [], error };
-    }
+    return await this.registrosSanidadService.findAll(
+      pagination,
+      id,
+    );
   }
 
   async createEventoSanidad(request: NextRequest) {

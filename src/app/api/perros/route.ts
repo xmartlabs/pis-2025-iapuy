@@ -40,9 +40,15 @@ export async function DELETE(request: NextRequest) {
       },
       { status: 500 },
     );
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Internal Server Error" },
+      {
+        success: false,
+        message:
+          error instanceof Error ?
+            error.message :
+            "Internal Server Error",
+      },
       { status: 500 }
     );
   }
