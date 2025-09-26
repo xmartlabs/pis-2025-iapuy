@@ -28,8 +28,8 @@ const FormSchema = z.object({
   password: z.string().min(1, { message: "Debe ingresar la contraseña" }),
 });
 export enum UserType {
-  Colaborador = "Colaborador",
-  Administrador = "Administrador",
+  Collaborator = "Colaborador",
+  Administrator = "Administrador",
 }
 export interface LoginResponse {
   accessToken: string;
@@ -69,7 +69,7 @@ export default function Home() {
       context?.setUserName(decoded.name);
       context?.setCI(decoded.ci);
 
-      if (decoded.type === UserType.Administrador) {
+      if (decoded.type === UserType.Administrator) {
         router.push("/app/admin/intervenciones/listado");
       } else {
         router.push("/app/colaboradores/Intervenciones/listado");

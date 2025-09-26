@@ -51,7 +51,7 @@ export function AppSidebar() {
     {
       title: "Intervenciones",
       url:
-        type === UserType.Administrador
+        type === UserType.Administrator
           ? "/app/admin/intervenciones/listado"
           : "/app/colaboradores/Intervenciones/listado",
       icon: CalendarRange,
@@ -59,7 +59,7 @@ export function AppSidebar() {
     },
     /*{
     title: "Gastos",
-    url: tipo === UserType.Administrador ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
+    url: tipo === UserType.Administrator ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
     icon:BadgeDollarSign,
     onlyAdmin:false
   },*/
@@ -83,7 +83,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items
                 .filter((item) => {
-                  if (type === UserType.Administrador) return true;
+                  if (type === UserType.Administrator) return true;
                   return item.onlyAdmin === false;
                 })
                 .map((item) => (
