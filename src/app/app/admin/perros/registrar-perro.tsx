@@ -22,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -36,7 +35,6 @@ import {
 } from "@/components/ui/select";
 import { useContext, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
 import { LoginContext } from "@/app/context/login-context";
 
 type UserPair = {
@@ -67,6 +65,8 @@ const BASE_API_URL = (
 interface AgregarPerroProps {
   reload: boolean;
   setReload: (product: boolean) => void;
+  open: boolean;
+  setOpen: (o: boolean) => void;
 }
 
 export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
@@ -74,9 +74,12 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   reload,
   // eslint-disable-next-line react/prop-types
   setReload,
+  // eslint-disable-next-line react/prop-types
+  open,
+  // eslint-disable-next-line react/prop-types
+  setOpen
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
-  const [open, setOpen] = useState(false);
   const context = useContext(LoginContext);
 
   useEffect(() => {
@@ -143,7 +146,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
     llamadaApi().catch((err) => {
       reportError(err);
     });
-  }, []);
+  }, [context]);
 
   const createPerroSchema = z.object({
     nombrePerro: z.string().min(2, {
@@ -247,15 +250,6 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
-          >
-            <Plus size={16} />
-            Agregar perro
-          </Button>
-        </DialogTrigger>
-
         <DialogContent
           className="
                         !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6

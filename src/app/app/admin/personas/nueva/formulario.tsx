@@ -21,6 +21,8 @@ import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner"
 import { useRouter } from "next/navigation";
 
+import { RegistrarPerro } from "../../perros/registrar-perro";
+
 const BASE_API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 const formSchema = z.object({
@@ -100,6 +102,8 @@ export default function Formulario() {
     const context = useContext(LoginContext);
     const [listaPerros, setListaPerros] = useState<PerroOption[]>([]);
     const [showPassword, setShowPassword] = useState(false);
+    const [reload, setReload] = useState(false);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         async function fetchPerrosOptions(): Promise<void> {
@@ -441,7 +445,7 @@ export default function Formulario() {
                                         placeholder=""
                                         disabled={!!noTiene}
                                         createLabel="Agregar perro"
-                                        createHref="../perros/listado"
+                                        onCreate={() => { setOpen(true); }}
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -473,6 +477,7 @@ export default function Formulario() {
                     )}
                 />
                 <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
+                <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} />
             </form>
         </Form>
     );
