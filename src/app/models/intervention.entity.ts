@@ -11,10 +11,10 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 
-export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
+export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 
 @Table({ tableName: "intervenciones" })
-export class Intervencion extends Model {
+export class Intervention extends Model {
   @PrimaryKey
   @Column
   declare id: string;
@@ -31,7 +31,7 @@ export class Intervencion extends Model {
       isIn: [["educativa", "recreativa", "terapeutica"]],
     },
   })
-  declare tipo: TipoIntervencion;
+  declare tipo: TipoIntervention;
 
   @Column
   declare post_evaluacion?: string;

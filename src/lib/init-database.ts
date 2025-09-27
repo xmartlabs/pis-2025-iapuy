@@ -1,7 +1,7 @@
 import { User } from "@/app/models/user.entity";
 import sequelize from "./database";
 import { Perro } from "@/app/models/perro.entity";
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervencion } from "@/app/models/intervention.entity";
 import { Acompania } from "@/app/models/acompania.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";

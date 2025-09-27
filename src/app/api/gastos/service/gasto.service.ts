@@ -1,5 +1,5 @@
 import { Gasto } from "@/app/models/gastos.entity";
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervencion } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";

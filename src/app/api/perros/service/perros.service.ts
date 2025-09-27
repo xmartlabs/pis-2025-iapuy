@@ -1,4 +1,4 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervencion } from "@/app/models/intervention.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
@@ -75,8 +75,8 @@ export class PerrosService {
   }
 
   async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
-      return await Perro.create({ ...createPerroDto });
-    }
+    return await Perro.create({ ...createPerroDto });
+  }
 
   async findOne(id: string) {
     const perro = await Perro.findByPk(id, {
@@ -86,7 +86,10 @@ export class PerrosService {
       return { error: "Perro no encontrado", status: 404 };
     }
     if (!perro.User) {
-        return { error: "Error en datos del perro: Dueño no encontrado", status: 404 };
+      return {
+        error: "Error en datos del perro: Dueño no encontrado",
+        status: 404,
+      };
     }
 
     const dtPerro = new DetallesPerroDto(
@@ -95,7 +98,7 @@ export class PerrosService {
       perro.descripcion,
       perro.fortalezas,
       perro.duenioId,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
       perro.User.nombre,
       perro.deletedAt
     );

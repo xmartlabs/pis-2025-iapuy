@@ -9,7 +9,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Intervencion } from "./intervencion.entity";
+import { Intervencion } from "./intervention.entity";
 import { Perro } from "./perro.entity";
 
 @Table({ tableName: "usrperros" })

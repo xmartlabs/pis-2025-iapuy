@@ -10,7 +10,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Intervencion } from "./intervencion.entity";
+import { Intervencion } from "./intervention.entity";
 
 export type EstadoGasto = "no pagado" | "pagado";
 
