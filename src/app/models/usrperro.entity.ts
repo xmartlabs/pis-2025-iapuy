@@ -1,6 +1,9 @@
+/* eslint-disable new-cap */
+
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -15,19 +18,19 @@ import { Perro } from "./perro.entity";
 @Table({ tableName: "usrperros" })
 export class UsrPerro extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING })
   declare id: string;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Perro)
-  @Column
+  @Column({ type: DataType.STRING })
   declare perroId: string;
 
   @ForeignKey(() => Intervencion)
-  @Column
+  @Column({ type: DataType.STRING })
   declare intervencionId: string;
 
   @CreatedAt

@@ -1,6 +1,9 @@
+/* eslint-disable new-cap */
+
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -13,17 +16,17 @@ import { RegistroSanidad } from "./registro-sanidad.entity";
 @Table({ tableName: "vacunas" })
 export class Vacuna extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING })
   declare id: string;
 
-  @Column
+  @Column({ type: DataType.DATE })
   declare fecha: Date;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare vac: string;
 
   @ForeignKey(() => RegistroSanidad)
-  @Column
+  @Column({ type: DataType.STRING })
   declare registroSanidadId: string;
 
   @CreatedAt

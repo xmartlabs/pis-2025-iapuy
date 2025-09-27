@@ -1,6 +1,10 @@
+/* eslint-disable new-cap */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -14,11 +18,11 @@ import { Perro } from "./perro.entity";
 @Table({ tableName: "registro-sanidades" })
 export class RegistroSanidad extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING })
   declare id: string;
 
   @ForeignKey(() => Perro)
-  @Column
+  @Column({ type: DataType.STRING })
   declare perroId: string;
 
   @CreatedAt
