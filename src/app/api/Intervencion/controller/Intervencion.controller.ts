@@ -7,7 +7,6 @@ export class IntervencionController {
     private readonly intervencionService: IntervencionService = new IntervencionService()
   ) {}
   async getIntervenciones(pagination: PaginationDto) {
-      console.log("controller")
       return await this.intervencionService.findAll(pagination);
   }
 }

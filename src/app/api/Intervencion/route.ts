@@ -10,7 +10,9 @@ await initDatabase();
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-    return NextResponse.json(await intervencionController.getIntervenciones(pagination));
+    const res = await intervencionController.getIntervenciones(pagination);
+    console.log(res.data[0]);
+    return NextResponse.json(res);
   } catch (error) {
       if (error instanceof Error) {
           console.log(error.message);

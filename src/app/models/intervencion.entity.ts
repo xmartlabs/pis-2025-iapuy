@@ -11,7 +11,7 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 
-export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
+export type TipoIntervencion = "Educativa" | "Recreativa" | "Terapeutica";
 
 @Table({ tableName: "intervenciones" })
 export class Intervencion extends Model {
@@ -22,22 +22,26 @@ export class Intervencion extends Model {
   @Column
   declare timeStamp: Date;
 
-  @Column
-  declare costo: number;
+  @Column({ field: "costo" })
+  declare cost: number;
 
   @Column({
-    type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
+    field: "tipo",
+    type: DataType.ENUM("Educativa", "Recreativa", "Terapeutica"),
     validate: {
-      isIn: [["educativa", "recreativa", "terapeutica"]],
+      isIn: [["Educativa", "Recreativa", "Terapeutica"]],
     },
   })
-  declare tipo: TipoIntervencion;
+  declare type: TipoIntervencion;
 
-  @Column
-  declare post_evaluacion?: string;
+  @Column({ field: "post_evaluacion" })
+  declare post_evaluation?: string;
 
-  @Column({ type: DataType.ARRAY(DataType.STRING) })
-  declare fotosUrls: string[];
+  @Column({
+    field: "fotosUrls",
+    type: DataType.ARRAY(DataType.STRING),
+  })
+  declare photosUrls: string[];
 
   @ForeignKey(() => User)
   @Column

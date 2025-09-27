@@ -185,7 +185,7 @@ export default function ListadoIntervenciones() {
 
     fetchIntervenciones(page, size, search, controller.signal)
       .then((res) => {
-        console.log(res);
+        console.log(res.data);
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
@@ -309,13 +309,13 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm">
-                        {"Org" /*inter.org ?? inter.org ?? "-"*/}
+                        {inter.institucions.nombre ||""}
                       </div>
                     </TableCell>
 
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.type || "-"}
+                        {inter.type}
                       </div>
                     </TableCell>
 
@@ -324,7 +324,7 @@ export default function ListadoIntervenciones() {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
-                        {inter.estado || "temp"}
+                        {inter.state || ""}
                       </div>
                     </TableCell>
                   </TableRow>

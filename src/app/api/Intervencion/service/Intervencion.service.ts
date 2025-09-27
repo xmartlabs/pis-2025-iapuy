@@ -5,6 +5,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import {InstitucionIntervencion} from "@/app/models/institucion-intervenciones.entity";
 import {Acompania} from "@/app/models/acompania.entity";
+import type {InstitutionDto} from "@/app/app/admin/intervenciones/dtos/institution.dto";
 
 export class IntervencionService {
   async findAll(
@@ -13,18 +14,8 @@ export class IntervencionService {
     const result = await Intervencion.findAndCountAll({
         include: [
             {
-                model: Acompania,
-                attributes: ["id"],
-            },
-            {
-                model: InstitucionIntervencion,
-                attributes: ["id"],
-                include: [
-                    {
-                        model: Institucion,
-                        attributes: ["id", "nombre"],
-                    },
-                ]
+                model: Institucion,
+                attributes: ["id", "nombre"],
             },
         ],
       limit: pagination.size,

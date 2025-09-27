@@ -79,12 +79,26 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervencion, User)) {
     Intervencion.belongsToMany(User, {
       through: Acompania,
-      foreignKey: "intervencionId",
+      foreignKey: "id",
     });
   }
-  if (!hasAssociation(Intervencion, InstitucionIntervencion)) {
+  if (!hasAssociation(Intervencion, Institucion)) {
     Intervencion.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
+        foreignKey: "intervencionId",
+        otherKey: "institucionId",
+    });
+  }
+};
+
+const registerInstitucionIntervencionAssociations = () => {
+  if (!hasAssociation(InstitucionIntervencion, Institucion)) {
+    InstitucionIntervencion.belongsTo(Institucion, {
+      foreignKey: "institucionId",
+    });
+  }
+  if (!hasAssociation(InstitucionIntervencion, Intervencion)) {
+    InstitucionIntervencion.belongsTo(Intervencion, {
       foreignKey: "intervencionId",
     });
   }
@@ -159,6 +173,7 @@ export async function initDatabase(): Promise<void> {
     registerIntervencionAssociations();
     registerRegistroSanidadAssociations();
     registerInstitucionAssociations();
+    registerInstitucionIntervencionAssociations();
     registerGastoAssociations();
 
     initialized = true;
