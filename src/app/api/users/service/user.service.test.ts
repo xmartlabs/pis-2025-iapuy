@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
 import { UserService } from "./user.service";
 import { User } from "@/app/models/user.entity";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreateUserDto } from "../dtos/create-user.dto";
-
 
 // ---- Mocks ----
 vi.mock("@/app/models/user.entity", () => ({
@@ -34,6 +33,7 @@ describe("UserService", () => {
     vi.clearAllMocks();
   });
 
+  // ---- CU Listar Usuarios ----
   it("findAll should return paginated users", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findAndCountAllMock = User.findAndCountAll as Mock;
@@ -100,25 +100,92 @@ describe("UserService", () => {
   });
 
   it("delete should return true if deleted", async () => {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const destroyMock = User.destroy as Mock;
-  destroyMock.mockResolvedValue(1);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const destroyMock = User.destroy as Mock;
+    destroyMock.mockResolvedValue(1);
 
-  const result = await service.delete("12345678");
+    const result = await service.delete("12345678");
 
-  expect(destroyMock).toHaveBeenCalledWith({ where: { username: "12345678" } });
-  expect(result).toBe(true);
-});
+    expect(destroyMock).toHaveBeenCalledWith({
+      where: { username: "12345678" },
+    });
+    expect(result).toBe(true);
+  });
 
-it("delete should return false if not deleted", async () => {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const destroyMock = User.destroy as Mock;
-  destroyMock.mockResolvedValue(0);
+  it("delete should return false if not deleted", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const destroyMock = User.destroy as Mock;
+    destroyMock.mockResolvedValue(0);
 
-  const result = await service.delete("12345678");
+    const result = await service.delete("12345678");
 
-  expect(destroyMock).toHaveBeenCalledWith({ where: { username: "12345678" } });
-  expect(result).toBe(false);
-});
+    expect(destroyMock).toHaveBeenCalledWith({
+      where: { username: "12345678" },
+    });
+    expect(result).toBe(false);
+  });
 
+  // ---- CU Consultar/Editar Perfil ----
+  it("consultar perfil debería devolver un usuario existente", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    const mockUser = { ci: "12345678", nombre: "Juan", celular: "099111222" };
+    findByPkMock.mockResolvedValue(mockUser);
+
+    const result = await service.findOne("12345678");
+
+    expect(findByPkMock).toHaveBeenCalledWith("12345678", expect.any(Object));
+    expect(result).toEqual(mockUser);
+  });
+
+  it("consultar perfil debería devolver null si el usuario no existe", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    findByPkMock.mockResolvedValue(null);
+
+    const result = await service.findOne("00000000");
+
+    expect(result).toBeNull();
+  });
+
+  // ---- CU Consultar/Editar Perfil ----
+  it("editar perfil debería actualizar los datos de un usuario", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    const updateMock = vi.fn().mockResolvedValue({
+      ci: "12345678",
+      nombre: "Carlos",
+      celular: "099333444",
+    });
+
+    findByPkMock.mockResolvedValue({ update: updateMock });
+
+    const result = await service.update("12345678", {
+      nombre: "Carlos",
+      celular: "099333444",
+    });
+
+    expect(findByPkMock).toHaveBeenCalledWith("12345678");
+    expect(updateMock).toHaveBeenCalledWith({
+      nombre: "Carlos",
+      celular: "099333444",
+    });
+    expect(result).toEqual({
+      ci: "12345678",
+      nombre: "Carlos",
+      celular: "099333444",
+    });
+  });
+
+  it("editar perfil debería devolver null si el usuario no existe", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    findByPkMock.mockResolvedValue(null);
+
+    const result = await service.update("99999999", {
+      nombre: "Nuevo",
+    });
+
+    expect(result).toBeNull();
+  });
 });
