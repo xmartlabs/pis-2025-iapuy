@@ -1,0 +1,390 @@
+"use client";
+
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Funnel } from "lucide-react";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import { LoginContext } from "@/app/context/login-context";
+import { useRouter } from "next/navigation";
+import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
+import NuevaInstervencion from "../NuevaIntervencion";
+
+const BASE_API_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
+
+export default function ListadoIntervenciones() {
+  const [intervention, setIntervention] = useState<InterventionDto[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [size] = useState<number>(12);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [reload, setReload] = useState(false);
+
+  const context = useContext(LoginContext);
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
+
+  function go(id: string) {
+    router.push(`/app/admin/intervenciones/detalles?id=${id}`);
+  }
+
+  const fetchIntervenciones = useCallback(
+    async (
+      pageNum: number,
+      pageSize: number,
+      query?: string,
+      signal?: AbortSignal,
+      triedRefresh = false,
+    ): Promise<PaginationResultDto<InterventionDto> | null> => {
+      const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
+      const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
+
+      const url = new URL("/api/Intervencion", BASE_API_URL);
+      url.searchParams.set("page", String(p));
+      url.searchParams.set("size", String(s));
+      if (query?.trim().length) url.searchParams.set("query", query.trim());
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
+
+      try {
+        const token = context?.tokenJwt;
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
+          signal: combinedSignal,
+        });
+
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(
+            new URL("/api/auth/refresh", BASE_API_URL),
+            {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              signal: combinedSignal,
+            },
+          );
+
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              const retryResp = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${newToken}`,
+                },
+                signal: combinedSignal,
+              });
+
+              if (!retryResp.ok) {
+                const txt = await retryResp.text().catch(() => "");
+                throw new Error(
+                  `API ${retryResp.status}: ${retryResp.statusText}${
+                    txt ? ` - ${txt}` : ""
+                  }`,
+                );
+              }
+
+              const ct2 = retryResp.headers.get("content-type") ?? "";
+              if (!ct2.includes("application/json"))
+                throw new Error("Expected JSON response");
+
+              const body2 = (await retryResp.json()) as unknown;
+              if (
+                !body2 ||
+                typeof body2 !== "object" ||
+                !Array.isArray(
+                  (body2 as PaginationResultDto<InterventionDto>).data,
+                )
+              )
+                throw new Error("Malformed API response");
+              return body2 as PaginationResultDto<InterventionDto>;
+            }
+          }
+        }
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`,
+          );
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as unknown;
+        if (
+          !body ||
+          typeof body !== "object" ||
+          !Array.isArray((body as PaginationResultDto<InterventionDto>).data)
+        )
+          throw new Error("Malformed API response");
+        return body as PaginationResultDto<InterventionDto>;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
+        return null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    [context],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+
+    fetchIntervenciones(page, size, search, controller.signal)
+      .then((res) => {
+        console.log(res);
+        if (res) {
+          setIntervention(res.data);
+          setTotalPages(res.totalPages ?? 1);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [page, size, search, reload, fetchIntervenciones]);
+
+  return (
+    <div className=" max-w-[92%]">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
+        <h1
+          className="text-5xl font-bold tracking-tight leading-[1.2] tracking-[0.01em]"
+          style={{ fontFamily: "Inter, sans-serif" }}
+        >
+          Intervenciones
+        </h1>
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar"
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+            }}
+            className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
+          />
+        </div>
+        <div className="flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
+          <NuevaInstervencion />
+        </div>
+      </div>
+      <div className="flex justify-end mb-2 p-3">
+        <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
+          <Funnel className="w-[20px] h-[20px] "></Funnel>
+        </div>
+      </div>
+      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-full table-fixed border-collapse">
+            <TableHeader>
+              <TableRow
+                className="bg-gray-50 border-b border-gray-200 -mt-px font-medium font-sm leading-[1.1]"
+                style={{ fontFamily: "Roboto, sans-serif" }}
+              >
+                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Fecha y hora
+                </TableHead>
+                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Organizacion
+                </TableHead>
+                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Tipo de intervencion
+                </TableHead>
+                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Cantidad de duplas necesarias
+                </TableHead>
+                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Estado
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody className="divide-y divide-gray-100 bg-white">
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i} className="px-6 py-4">
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[140px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[160px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[110px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[48px] ml-auto" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[48px] ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : intervention.length > 0 ? (
+                intervention.map((inter) => (
+                  <TableRow
+                    key={inter.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                    onClick={() => {
+                      go(inter.id);
+                    }}
+                  >
+                    <TableCell className="px-4 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <span className="text-base md:text-base ml-2">
+                          {`${new Date(inter.timeStamp).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            },
+                          )} ${new Date(inter.timeStamp).toLocaleTimeString(
+                            "pt-BR",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}`}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        {"Org" /*inter.org ?? inter.org ?? "-"*/}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        {inter.type || "-"}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-6 py-4">
+                      {Number(2) || 0}
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
+                        {inter.estado || "temp"}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        {search
+                          ? `Intenta ajustar los términos de búsqueda: "${search}"`
+                          : "No se encuentran intervenciones"}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+      {
+        <div className="px-6 py-4 border-t border-gray-100">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <Pagination>
+              {/* added gap here */}
+              <PaginationContent className="flex items-center gap-3">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page > 1) setPage(page - 1);
+                    }}
+                    className={
+                      page <= 1 ? "pointer-events-none opacity-40" : ""
+                    }
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page < totalPages) setPage(page + 1);
+                    }}
+                    className={
+                      page >= totalPages ? "pointer-events-none opacity-40" : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+          <div className="text-muted-foreground text-center">
+            Página {page} de {totalPages}
+          </div>
+        </div>
+      }
+    </div>
+  );
+}

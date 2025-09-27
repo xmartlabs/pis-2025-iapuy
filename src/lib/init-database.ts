@@ -14,6 +14,7 @@ import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 
 import { Gasto } from "@/app/models/gastos.entity";
 import type { ModelStatic, Model } from "sequelize";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -21,12 +22,12 @@ const hasAssociation = (
   sourceModel: ModelStatic<Model<any, any>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   targetModel: ModelStatic<Model<any, any>>,
-  as?: string
+  as?: string,
 ): boolean => {
   const assocs = sourceModel.associations ?? {};
   if (as) return Boolean(assocs[as]);
   return Object.values(assocs).some(
-    (a) => (a as { target?: unknown }).target === targetModel
+    (a) => (a as { target?: unknown }).target === targetModel,
   );
 };
 
@@ -78,6 +79,12 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervencion, User)) {
     Intervencion.belongsToMany(User, {
       through: Acompania,
+      foreignKey: "intervencionId",
+    });
+  }
+  if (!hasAssociation(Intervencion, InstitucionIntervencion)) {
+    Intervencion.belongsToMany(Institucion, {
+      through: InstitucionIntervencion,
       foreignKey: "intervencionId",
     });
   }
