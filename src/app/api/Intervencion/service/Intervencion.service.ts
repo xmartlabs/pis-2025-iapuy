@@ -16,6 +16,9 @@ export class IntervencionService {
             {
                 model: Institucion,
                 attributes: ["id", "nombre"],
+                where: pagination.query
+                    ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+                    : undefined,
             },
         ],
       limit: pagination.size,
