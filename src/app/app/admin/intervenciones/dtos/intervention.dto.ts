@@ -4,28 +4,28 @@ export class InterventionDto {
   id: string;
   timeStamp: Date;
   cost: number;
-  type: "educativa" | "recreativa" | "terapeutica";
+  tipo: "educativa" | "recreativa" | "terapeutica";
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
   institucions: InstitutionDto;
   cantidadTuplasNecesarias?: number;
-  estado?: string;
+  status: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
 
   constructor(
+    institucions: InstitutionDto,
     id: string,
     timeStamp: Date,
     cost: number,
-    type: "educativa" | "recreativa" | "terapeutica",
+    tipo: "educativa" | "recreativa" | "terapeutica",
     postEvaluacion: string | undefined,
     photosUrls: string[],
     userId: string,
-    institucions: InstitutionDto,
     cantidadTuplasNecesarias?: number,
-    estado?: string,
+    status: string,
     createdAt?: Date,
     updatedAt?: Date,
     deletedAt?: Date,
@@ -33,7 +33,7 @@ export class InterventionDto {
     this.id = id;
     this.timeStamp = timeStamp;
     this.cost = cost;
-    this.type = type;
+    this.tipo = tipo;
     this.postEvaluacion = postEvaluacion;
     this.photosUrls = photosUrls;
     this.userId = userId;
@@ -42,6 +42,6 @@ export class InterventionDto {
     this.deletedAt = deletedAt;
     this.institucions = institucions;
     this.cantidadTuplasNecesarias = cantidadTuplasNecesarias;
-    this.estado = estado;
+    this.status = status;
   }
 }

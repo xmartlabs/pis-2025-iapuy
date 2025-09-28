@@ -221,7 +221,7 @@ export default function ListadoIntervenciones() {
             className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
           />
         </div>
-        <div className="flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
+        <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
           <NuevaInstervencion />
         </div>
       </div>
@@ -231,26 +231,26 @@ export default function ListadoIntervenciones() {
         </div>
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
-        <div className="w-full overflow-x-auto">
-          <Table className="min-w-full table-fixed border-collapse">
+        <div className="sm:w-full overflow-x-auto">
+          <Table className="table-fixed border-collapse">
             <TableHeader>
               <TableRow
-                className="bg-gray-50 border-b border-gray-200 -mt-px font-medium font-sm leading-[1.1]"
+                className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
                 style={{ fontFamily: "Roboto, sans-serif" }}
               >
-                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Fecha y hora
                 </TableHead>
-                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Organizacion
                 </TableHead>
-                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Tipo de intervencion
                 </TableHead>
-                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Cantidad de duplas necesarias
                 </TableHead>
-                <TableHead className="w-[200px] px-6 py-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
               </TableRow>
@@ -286,9 +286,9 @@ export default function ListadoIntervenciones() {
                       go(inter.id);
                     }}
                   >
-                    <TableCell className="px-4 py-4 align-middle">
+                    <TableCell className="p-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-base md:text-base ml-2">
+                        <span className="text-base md:text-base">
                           {`${new Date(inter.timeStamp).toLocaleDateString(
                             "pt-BR",
                             {
@@ -307,24 +307,24 @@ export default function ListadoIntervenciones() {
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.institucions.nombre ||""}
+                        {inter.Institucions?.[0]?.nombre || ""}
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.type}
+                        {inter.tipo}
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="p-3">
                       {Number(2) || 0}
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="p-3">
                       <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
-                        {inter.state || ""}
+                        {inter.status || ""}
                       </div>
                     </TableCell>
                   </TableRow>

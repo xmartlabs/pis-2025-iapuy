@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
@@ -14,11 +14,18 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LoginContext } from "@/app/context/login-context";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious
+} from "@/components/ui/pagination";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
   const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(4);
+  const [size] = useState<number>(3);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
@@ -91,25 +98,13 @@ export default function HistorialSanidad() {
       });
   }, [id, context, page, size, fetchRegistrosSanidad]);
 
-  const handleNextPage = () => {
-    if (page < totalPages) {
-      setPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1);
-    }
-  };
-
   const columnHeader: string[] = ["Fecha", "Actividad"];
 
   return (
     <>
       <div className="flex flex-col gap-5 mb-4 w-full">
         <h2
-          className="font-serif font-semibold text-xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
+          className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Historial de sanidad
@@ -172,31 +167,44 @@ export default function HistorialSanidad() {
           </Table>
         </div>
       </div>
-      <div className="mt-4 sm:mt-[5px] flex justify-center items-center gap-2">
-        <Button
-          onClick={handlePreviousPage}
-          disabled={page === 1}
-          size="sm"
-          className="px-3 py-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline ml-1"></span>
-        </Button>
-        <Button
-          onClick={handleNextPage}
-          disabled={page === totalPages}
-          size="sm"
-          className="px-3 py-2"
-        >
-          <span className="hidden sm:inline mr-1"></span>
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="mt-2 sm:mt-[5px] flex justify-center items-center">
-        <p className="text-xs sm:text-sm leading-6 medium text-center">
-          Página {page} de {totalPages}
-        </p>
-      </div>
+        {
+            <div className="px-6 border-t border-gray-100">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <Pagination>
+                        <PaginationContent className="flex items-center gap-3">
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (page > 1) setPage(page - 1);
+                                    }}
+                                    className={
+                                        page <= 1 ? "pointer-events-none opacity-40" : ""
+                                    }
+                                />
+                            </PaginationItem>
+
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (page < totalPages) setPage(page + 1);
+                                    }}
+                                    className={
+                                        page >= totalPages ? "pointer-events-none opacity-40" : ""
+                                    }
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+                <div className="text-muted-foreground text-center">
+                    Página {page} de {totalPages}
+                </div>
+            </div>
+        }
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">

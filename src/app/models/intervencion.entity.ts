@@ -22,8 +22,11 @@ export class Intervencion extends Model {
   @Column
   declare timeStamp: Date;
 
-  @Column({ field: "costo" })
-  declare cost: number;
+  @Column
+  declare costo: number;
+
+  @Column
+  declare status: string;
 
   @Column({
     field: "tipo",
@@ -32,16 +35,13 @@ export class Intervencion extends Model {
       isIn: [["Educativa", "Recreativa", "Terapeutica"]],
     },
   })
-  declare type: TipoIntervencion;
+  declare tipo: TipoIntervencion;
 
-  @Column({ field: "post_evaluacion" })
-  declare post_evaluation?: string;
+  @Column
+  declare post_evaluacion?: string;
 
-  @Column({
-    field: "fotosUrls",
-    type: DataType.ARRAY(DataType.STRING),
-  })
-  declare photosUrls: string[];
+  @Column({ type: DataType.ARRAY(DataType.STRING) })
+  declare fotosUrls: string[];
 
   @ForeignKey(() => User)
   @Column

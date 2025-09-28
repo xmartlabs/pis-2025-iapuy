@@ -14,8 +14,8 @@ export class Institucion extends Model {
   @Column
   declare id: string;
 
-  @Column({ field: "nombre" })
-  declare name: string;
+  @Column
+  declare nombre: string;
 
   @Column
   declare contacto: string;

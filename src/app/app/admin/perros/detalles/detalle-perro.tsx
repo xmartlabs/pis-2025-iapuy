@@ -138,7 +138,7 @@ export default function DetallePerro() {
           >
             {infoPerro.nombre}
           </h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
