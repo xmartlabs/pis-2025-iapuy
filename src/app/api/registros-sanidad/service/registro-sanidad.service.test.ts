@@ -54,6 +54,7 @@ describe("RegistrosSanidadService", () => {
   };
 
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   await service.create(dto as CreateRegistrosSanidadDTO);
 
 
@@ -82,20 +83,21 @@ describe("RegistrosSanidadService", () => {
 
     
     const dto: Partial<CreateRegistrosSanidadDTO> = {
-      perroId:  2 as unknown as string,
+      perroId: 2 as unknown as string,
       tipoSanidad: "banio",
       fecha: "20-09-2025",
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(transactionMock).toHaveBeenCalled();
     expect(registroCreateMock).toHaveBeenCalledWith(
-      { perroId: dto.perroId },
+      { perroId: 2},
       { transaction: "transaction" }
     );
     expect(banioCreateMock).toHaveBeenCalledWith(
-      { fecha: new Date(dto.fecha!), registroSanidadId: 2 },
+      { fecha: new Date("20-09-2025"), registroSanidadId: 2 },
       { transaction: "transaction" }
     );
   });
@@ -120,11 +122,12 @@ describe("RegistrosSanidadService", () => {
       carneVacunas: "CV123" as unknown as Buffer<ArrayBufferLike>,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(transactionMock).toHaveBeenCalled();
     expect(registroCreateMock).toHaveBeenCalledWith(
-      { perroId: dto.perroId},
+      { perroId: 3},
       { transaction: "transaction" }
     );
     expect(vacunaCreateMock).toHaveBeenCalledWith(
@@ -150,6 +153,7 @@ describe("RegistrosSanidadService", () => {
 
     const dto: Partial<CreateRegistrosSanidadDTO>  = { perroId: 5 as unknown as string, tipoSanidad: "banio", fecha: "23-09-2025" };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const result = await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(result).toEqual({ id: 5 });
@@ -169,6 +173,7 @@ describe("RegistrosSanidadService", () => {
       fecha: "24-09-2025",
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await expect(service.create(dto as CreateRegistrosSanidadDTO)).rejects.toThrow("DB error");
   });
 
