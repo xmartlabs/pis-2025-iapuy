@@ -184,7 +184,7 @@ export default function Formulario() {
             });
             setListaPerros([]);
         });
-    }, [context, router]);
+    }, [context, router, reload]);
 
     const onSubmit = async (values: FormValues) => {
         form.clearErrors();
@@ -262,6 +262,17 @@ export default function Formulario() {
             clearTimeout(timeout);
         }
     };
+     const handlePerroCreated = (p: { id: string; nombre: string }) => {
+        setListaPerros(prev => {
+        if (prev.some(o => o.value === p.id)) return prev;
+        return [...prev, { value: p.id, label: p.nombre }];
+        });
+
+        const current = form.getValues("perros") ?? [];
+        if (!current.includes(p.id)) {
+        form.setValue("perros", [...current, p.id], { shouldDirty: true, shouldValidate: true });
+        }
+  };
     return (
         <Form {...form}>
             <form
@@ -477,8 +488,8 @@ export default function Formulario() {
                     )}
                 />
                 <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
-                <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} />
             </form>
+            <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} onCreated={handlePerroCreated} ownerRequired={false} ownerDisabled={true}/>
         </Form>
     );
 }
