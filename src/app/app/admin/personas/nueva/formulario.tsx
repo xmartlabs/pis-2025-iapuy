@@ -434,22 +434,21 @@ export default function Formulario() {
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="perros"
-                    render={({ field }) => {
-                        const noTiene = form.watch("noPerro") // true/false
-                        return (
-                            <FormItem>
-                                <FormLabel className={
-                                    `font-sans font-medium text-sm leading-5 ${(noTiene
-                                        ? "text-muted-foreground cursor-not-allowed opacity-60"
-                                        : "text-foreground")}`
-                                }>
-                                    Perro
-                                </FormLabel>
-                                <FormControl>
-                                    <MultiSelect
+                <div className="md:col-span-2">
+                    <div className="flex items-start gap-4 w-10/16">
+                        <div className="flex-1">
+                            <FormField
+                                control={form.control}
+                                name="perros"
+                                render={({ field }) => {
+                                const noTiene = form.watch("noPerro")
+                                return (
+                                    <FormItem>
+                                    <FormLabel className="font-sans font-medium text-sm leading-5">
+                                        Perro
+                                    </FormLabel>
+                                    <FormControl>
+                                        <MultiSelect
                                         options={listaPerros}
                                         selected={field.value ?? []}
                                         onChange={field.onChange}
@@ -457,36 +456,43 @@ export default function Formulario() {
                                         disabled={!!noTiene}
                                         createLabel="Agregar perro"
                                         onCreate={() => { setOpen(true); }}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )
-                    }}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="noPerro"
-                    render={({ field }) => (
-                        <FormItem className="grid grid-cols-2 gap-2 p-0 mt-[12.5%] w-2/5 h-1/4 left-[-5%] relative">
-                            <FormControl>
-                                <Checkbox
-                                    className="relative left-[20%] top-[-100%]"
-                                    checked={field.value}
-                                    onCheckedChange={(v: boolean) => {
-                                        field.onChange(v)
-                                        if (v) {
+                                        className="min-w-[240px]"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )
+                                }}
+                            />
+                        </div>
+                        <div className="shrink-0">
+                            <FormField
+                                control={form.control}
+                                name="noPerro"
+                                render={({ field }) => (
+                                <FormItem>
+                                    {/* h-10 = misma altura que el input => centra verticalmente */}
+                                    <div className="flex items-center h-10 gap-2 mt-[22px]">
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={(v: boolean) => {
+                                            field.onChange(v)
+                                            if (v) {
                                             form.setValue("perros", [], { shouldValidate: true, shouldDirty: true })
-                                        }
-                                    }}
-                                />
-                            </FormControl>
-                            <FormLabel className="relative left-[-50%] top-[-100%]">No tiene</FormLabel>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                                            }
+                                        }}
+                                        />
+                                    </FormControl>
+                                    <span className="m-0 whitespace-nowrap text-sm">No tiene</span>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                </div>
                 <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
             </form>
             <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} onCreated={handlePerroCreated} ownerRequired={false} ownerDisabled={true}/>
