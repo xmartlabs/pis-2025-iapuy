@@ -27,7 +27,7 @@ export async function middleware(req: NextRequest) {
       if (
         pathname.startsWith("/api/intervencines") ||
         pathname.startsWith("/api/gastos") ||
-        pathname.startsWith("/api/users")
+        pathname.startsWith("/api/users/profile")
       ) {
         return NextResponse.next();
       }

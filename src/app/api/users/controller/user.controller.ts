@@ -25,25 +25,41 @@ export class UserController {
     return user;
   }
 
+  async getUserWithToken(req: NextRequest) {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+
+    const user = await this.userService.findOneWithToken(accessToken);
+
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+    return user;
+  }
+
   async createUser(request: NextRequest) {
-    const usrData: CreateUserDto = await request.json() as CreateUserDto;
+    const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
     if (!usrData.ci || !usrData.password) {
       return {
         error: "Username and password are required",
-        status: 400
-      }
+        status: 400,
+      };
     }
 
     const ci = await this.userService.create(usrData);
     return {
       message: `Usuario con ci ${String(ci)} creado con éxito`,
-      status: 201
-    }
+      status: 201,
+    };
   }
 
   async updateUser(request: NextRequest, { username }: { username: string }) {
     try {
-      const body: UpdateUserDto = await request.json() as UpdateUserDto;
+      const body: UpdateUserDto = (await request.json()) as UpdateUserDto;
       const user = await this.userService.update(username, body);
 
       if (!user) {
@@ -68,7 +84,7 @@ export class UserController {
       }
 
       return NextResponse.json({ message: "User deleted successfully" });
-    } catch{
+    } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }
