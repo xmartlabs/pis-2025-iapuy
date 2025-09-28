@@ -25,6 +25,9 @@ export class Intervention extends Model {
   @Column
   declare costo: number;
 
+  @Column
+  declare pairsQuantity?: number;
+
   @Column({
     type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
     validate: {
