@@ -14,7 +14,7 @@ import { User } from "./user.entity";
 export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 
 @Table({ tableName: "intervenciones" })
-export class Intervention extends Model {
+export class Intervencion extends Model {
   @PrimaryKey
   @Column
   declare id: string;

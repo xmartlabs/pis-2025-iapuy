@@ -25,7 +25,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import NuevaInstervencion from "../NuevaIntervencion";
+import NuevaInstervencion from "../nueva/page";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -185,7 +185,6 @@ export default function ListadoIntervenciones() {
 
     fetchIntervenciones(page, size, search, controller.signal)
       .then((res) => {
-        console.log(res.data);
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
@@ -320,7 +319,7 @@ export default function ListadoIntervenciones() {
                     </TableCell>
 
                     <TableCell className="p-3">
-                      {Number(2) || 0}
+                      {Number(inter.pairsQuantity) || 0}
                     </TableCell>
                     <TableCell className="p-3">
                       <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">

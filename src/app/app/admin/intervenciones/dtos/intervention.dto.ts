@@ -9,7 +9,7 @@ export class InterventionDto {
   photosUrls: string[];
   userId: string;
   institucions: InstitutionDto;
-  cantidadTuplasNecesarias?: number;
+  pairsQuantity: number;
   status: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -24,7 +24,7 @@ export class InterventionDto {
     postEvaluacion: string | undefined,
     photosUrls: string[],
     userId: string,
-    cantidadTuplasNecesarias?: number,
+    pairsQuantity: number,
     status: string,
     createdAt?: Date,
     updatedAt?: Date,
@@ -41,7 +41,7 @@ export class InterventionDto {
     this.updatedAt = updatedAt;
     this.deletedAt = deletedAt;
     this.institucions = institucions;
-    this.cantidadTuplasNecesarias = cantidadTuplasNecesarias;
+    this.pairsQuantity = pairsQuantity;
     this.status = status;
   }
 }

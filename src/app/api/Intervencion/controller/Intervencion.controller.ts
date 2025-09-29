@@ -9,4 +9,7 @@ export class IntervencionController {
   async getIntervenciones(pagination: PaginationDto) {
       return await this.intervencionService.findAll(pagination);
   }
+  async getInterventionByDogId(pagination: PaginationDto, dogId: string) {
+      return await this.intervencionService.findByDogId(pagination, dogId);
+  }
 }

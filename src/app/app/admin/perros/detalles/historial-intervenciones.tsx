@@ -22,7 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
-import { useRouter } from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 
 const BASE_API_URL = (
@@ -47,6 +47,7 @@ export default function HistorialIntervenciones() {
 
     const fetchIntervenciones = useCallback(
         async (
+            id: string,
             pageNum: number,
             pageSize: number,
             signal?: AbortSignal,
@@ -55,7 +56,7 @@ export default function HistorialIntervenciones() {
             const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
             const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-            const url = new URL("/api/Intervencion", BASE_API_URL);
+            const url = new URL(`/api/perros/interventions?id=${id}`, BASE_API_URL);
             url.searchParams.set("page", String(p));
             url.searchParams.set("size", String(s));
 
@@ -163,12 +164,16 @@ export default function HistorialIntervenciones() {
         [context],
     );
 
+    const searchParams = useSearchParams();
+    const id: string = searchParams.get("id") ?? "";
+
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);
 
-        fetchIntervenciones(page, size, controller.signal)
+        fetchIntervenciones(id, page, size, controller.signal)
             .then((res) => {
+                console.log(`interventions ${res.data}`);
                 if (res) {
                     setIntervention(res.data);
                     setTotalPages(res.totalPages ?? 1);
@@ -182,13 +187,13 @@ export default function HistorialIntervenciones() {
         return () => {
             controller.abort();
         };
-    }, [page, size, reload, fetchIntervenciones]);
+    }, [id, page, size, reload, fetchIntervenciones]);
 
     return (
         <div className="flex flex-col gap-5 mb-2 w-full">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <h1
-                    className="font-serif font-semibold text-2xl tracking-tight leading-8 tracking-tight text-[#1B2F13] font-size-text-2xl font-family-font-serif"
+                    className="font-serif font-semibold text-2xl leading-8 tracking-tight text-[#1B2F13] font-size-text-2xl font-family-font-serif"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                     Intervenciones

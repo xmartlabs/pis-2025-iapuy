@@ -85,8 +85,15 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervencion, Institucion)) {
     Intervencion.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
-        foreignKey: "intervencionId",
-        otherKey: "institucionId",
+      foreignKey: "intervencionId",
+      otherKey: "institucionId",
+    });
+  }
+  if (!hasAssociation(Intervencion, Perro)) {
+    Intervencion.belongsTo(Perro, {
+      through: UsrPerro,
+      foreignKey: "id",
+      otherKey: "intervencionId",
     });
   }
 };

@@ -88,7 +88,6 @@ export default function HistorialSanidad() {
   useEffect(() => {
     fetchRegistrosSanidad(id)
       .then((paginationResult) => {
-        console.log(paginationResult);
         setRegistros(paginationResult.data || []);
         setTotalPages(paginationResult.totalPages || 1);
       })

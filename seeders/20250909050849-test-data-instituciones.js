@@ -137,6 +137,34 @@ module.exports = {
         updatedAt: new Date(),
       },
     ]);
+
+    // Insert usrperros (relations between users, perros, and intervenciones)
+    await queryInterface.bulkInsert("usrperros", [
+      {
+        userId: "11111111", // Santiago
+        perroId: "p1111111",
+        intervencionId: int1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        userId: "22222222", // María
+        perroId: "p2222222",
+        intervencionId: int2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        userId: "33333333", // Carlos
+        perroId: "p3333333",
+        intervencionId: int3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+    ]);
   },
 
   async down(queryInterface, Sequelize) {
@@ -145,5 +173,6 @@ module.exports = {
     await queryInterface.bulkDelete("intervenciones", null, {});
     await queryInterface.bulkDelete("patologias", null, {});
     await queryInterface.bulkDelete("instituciones", null, {});
+    await queryInterface.bulkDelete("usrperros", null, {});
   },
 };
