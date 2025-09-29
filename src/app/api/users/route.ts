@@ -25,19 +25,47 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try{
+  try {
     return NextResponse.json(await userController.createUser(request));
-  }
-  catch(error){
+  } catch (error) {
     if (error instanceof UniqueConstraintError) {
       return NextResponse.json(
-        {error: "El CI ya está en uso"},
-        {status: 409}
+        { error: "El CI ya está en uso" },
+        { status: 409 }
       );
     }
     return NextResponse.json(
-      {error: "Internal Server Error"},
-      {status: 500}
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+export async function DELETE(request: NextRequest) {
+  try {
+    const ci: string = request.nextUrl.searchParams.get("ci") ?? "";
+    const res: boolean = await userController.deleteUser(ci);
+
+    if (res) {
+      return NextResponse.json(
+        { success: true, message: "User deleted successfully" },
+        { status: 200 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        message: "User not found.",
+      },
+      { status: 404 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      },
+      { status: 500 }
     );
   }
 }
