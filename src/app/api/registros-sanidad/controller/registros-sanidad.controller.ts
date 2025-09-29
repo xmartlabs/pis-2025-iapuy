@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { RegistrosSanidadService } from "../service/registro-sanidad.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto"
+import type { CreateHealthRecordDTO } from "../dtos/create-registro-sanidad.dto"
 
 export class RegistrosSanidadController {
   constructor(
@@ -17,9 +17,9 @@ export class RegistrosSanidadController {
 
   async createEventoSanidad(request: NextRequest) {
 
-    // esto es por el Eslint nunca se va a mandar esto
+    // this is for Eslint, we will never send this
     const buff = Buffer.alloc(0)
-    let body: CreateRegistrosSanidadDTO = {
+    let body: CreateHealthRecordDTO = {
       tipoSanidad: "",
       perroId: "",
       fecha: "",

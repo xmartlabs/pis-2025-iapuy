@@ -5,7 +5,7 @@ import { Vacuna } from "@/app/models/vacuna.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
+import type { CreateHealthRecordDTO } from "../dtos/create-registro-sanidad.dto";
 import sequelize from "@/lib/database";
 import { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 
@@ -70,43 +70,42 @@ export class RegistrosSanidadService {
 
   }
 
-  async create(createRegistroSanidadDto: CreateRegistrosSanidadDTO): Promise<RegistroSanidad | null> {
+  async create(createHealthRecordDto: CreateHealthRecordDTO): Promise<RegistroSanidad | null> {
     return await sequelize.transaction(async (t) => {
-      let regSanidad = await RegistroSanidad.findOne(
-        { where: { perroId: createRegistroSanidadDto.perroId } },
+      let healthRec = await RegistroSanidad.findOne(
+        { where: { perroId: createHealthRecordDto.perroId } },
       );
 
-      if (regSanidad === null) regSanidad = await RegistroSanidad.create(
-        { perroId: createRegistroSanidadDto.perroId },
+      if (healthRec === null) healthRec = await RegistroSanidad.create(
+        { perroId: createHealthRecordDto.perroId },
         { transaction: t }
       );
 
-      const fechaDate = new Date(createRegistroSanidadDto.fecha);
+      const date = new Date(createHealthRecordDto.fecha);
 
-      if (createRegistroSanidadDto.tipoSanidad === 'banio') {
+      if (createHealthRecordDto.tipoSanidad === 'banio') {
         await Banio.create({
-          fecha: fechaDate,
-          registroSanidadId: regSanidad.id
+          fecha: date,
+          registroSanidadId: healthRec.id
         }, { transaction: t });
 
-      } else if (createRegistroSanidadDto.tipoSanidad === 'desparasitacion') {
+      } else if (createHealthRecordDto.tipoSanidad === 'desparasitacion') {
         await Desparasitacion.create({
-          fecha: fechaDate,
-          medicamento: createRegistroSanidadDto.medicamento,
-          registroSanidadId: regSanidad.id,
-          tipoDesparasitacion: createRegistroSanidadDto.tipoDesparasitacion
+          fecha: date,
+          medicamento: createHealthRecordDto.medicamento,
+          registroSanidadId: healthRec.id,
+          tipoDesparasitacion: createHealthRecordDto.tipoDesparasitacion
         }, { transaction: t });
 
       } else {
         await Vacuna.create({
-
-          fecha: fechaDate,
-          vac: createRegistroSanidadDto.vac,
-          registroSanidadId: regSanidad.id,
-          carneVacunas: createRegistroSanidadDto.carneVacunas
+          fecha: date,
+          vac: createHealthRecordDto.vac,
+          registroSanidadId: healthRec.id,
+          carneVacunas: createHealthRecordDto.carneVacunas
         }, { transaction: t });
       }
-      return regSanidad;
+      return healthRec;
     });
   }
 }

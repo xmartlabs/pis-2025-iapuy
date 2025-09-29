@@ -1,4 +1,4 @@
-export class CreateRegistrosSanidadDTO {
+export class CreateHealthRecordDTO {
     declare tipoSanidad : string;
     declare perroId : string; 
     declare fecha : string;

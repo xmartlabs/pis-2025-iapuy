@@ -54,51 +54,51 @@ const BASE_API_URL = (
 
 export default function RegistroSanidad() {
 
-    const [tab, setTab] = React.useState<Tab>("vacuna");
+    const [tab, setTab] = React.useState<Tab>("vaccine");
     const [open, setOpen] = React.useState(false);
     const context = useContext(LoginContext);
 
     const vacunaSchema = z.object({
-        fechaInVac: z.string().min(2, { message: "Debes completar la fecha de vacunación" }),
-        marcaInVac: z.string(),
-        carnetInVac: z.instanceof(File, { message: "Debes adjuntar el carnet de vacuna" })
+        vaccDateIn: z.string().min(2, { message: "Debes completar la fecha de vacunación" }),
+        vaccBrandIn: z.string(),
+        vaccCardIn: z.instanceof(File, { message: "Debes adjuntar el carnet de vacuna" })
 
     });
 
     const banioSchema = z.object({
-        fechaInBanio: z.string().min(2, { message: "Debes completar la fecha del baño" }),
+        bathDateIn: z.string().min(2, { message: "Debes completar la fecha del baño" }),
     });
 
     const desparasitacionSchema = z.object({
-        desparasitacionTipo: z.enum(["Interna", "Externa"]),
-        fechaInDes: z.string().min(2, { message: "Debes completar la fecha de desparasitación." }),
-        marcaInDes: z.string()
+        dewType: z.enum(["Interna", "Externa"]),
+        dewDateIn: z.string().min(2, { message: "Debes completar la fecha de desparasitación." }),
+        dewBrandIn: z.string()
     });
 
     const schemaPorTab = {
-        vacuna: vacunaSchema,
-        banio: banioSchema,
-        desparasitacion: desparasitacionSchema,
+        vaccine: vacunaSchema,
+        bath: banioSchema,
+        deworming: desparasitacionSchema,
     } as const;
 
     type Tab = keyof typeof schemaPorTab;
 
-    type FormValuesVacuna = z.infer<typeof vacunaSchema>;
-    type FormValuesBanio = z.infer<typeof banioSchema>;
-    type FormValuesDesparasitacion = z.infer<typeof desparasitacionSchema>;
+    type VaccineFormValues = z.infer<typeof vacunaSchema>;
+    type BathFormValues = z.infer<typeof banioSchema>;
+    type DewormingFormValues = z.infer<typeof desparasitacionSchema>;
 
-    type FormValues = FormValuesVacuna & FormValuesBanio & FormValuesDesparasitacion;
+    type FormValues = VaccineFormValues & BathFormValues & DewormingFormValues;
 
     const form = useForm<FormValues>({
         resolver: zodResolver(schemaPorTab[tab]) as unknown as Resolver<FormValues>,
         defaultValues: {
-            fechaInVac: "",
-            marcaInVac: "",
-            carnetInVac: undefined,
-            fechaInBanio: "",
-            desparasitacionTipo: "Interna",
-            fechaInDes: "",
-            marcaInDes: "",
+            vaccDateIn: "",
+            vaccBrandIn: "",
+            vaccCardIn: undefined,
+            bathDateIn: "",
+            dewType: "Interna",
+            dewDateIn: "",
+            dewBrandIn: "",
         },
     });
 
@@ -113,27 +113,27 @@ export default function RegistroSanidad() {
 
             const perroId = searchParams.get("id") ?? "";
 
-            if (tab === "vacuna") {
+            if (tab === "vaccine") {
                 const d = data as z.infer<typeof vacunaSchema>;
 
                 formData.append("tipoSanidad", "vacuna");
                 formData.append("perroId", perroId);
-                formData.append("fecha", d.fechaInVac);
-                formData.append("vac", d.marcaInVac ?? "");
+                formData.append("fecha", d.vaccDateIn);
+                formData.append("vac", d.vaccBrandIn ?? "");
                 formData.append("medicamento", "");
                 formData.append("tipoDesparasitacion", "Externa");
 
-                if (d.carnetInVac) {
-                    formData.append("carneVacunas", d.carnetInVac);
+                if (d.vaccCardIn) {
+                    formData.append("carneVacunas", d.vaccCardIn);
                 }
 
-            } else if (tab === "banio") {
+            } else if (tab === "bath") {
 
                 const d = data as z.infer<typeof banioSchema>;
 
                 formData.append("tipoSanidad", "banio");
                 formData.append("perroId", perroId);
-                formData.append("fecha", d.fechaInBanio);
+                formData.append("fecha", d.bathDateIn);
                 formData.append("vac", "");
                 formData.append("medicamento", "");
                 formData.append("tipoDesparasitacion", "Externa");
@@ -143,10 +143,10 @@ export default function RegistroSanidad() {
                 const d = data as z.infer<typeof desparasitacionSchema>;
                 formData.append("tipoSanidad", "desparasitacion");
                 formData.append("perroId", perroId);
-                formData.append("fecha", d.fechaInDes);
+                formData.append("fecha", d.dewDateIn);
                 formData.append("vac", "");
-                formData.append("medicamento", d.marcaInDes);
-                formData.append("tipoDesparasitacion", d.desparasitacionTipo);
+                formData.append("medicamento", d.dewBrandIn);
+                formData.append("tipoDesparasitacion", d.dewType);
 
             }
 
@@ -224,26 +224,26 @@ export default function RegistroSanidad() {
                         </DialogHeader>
                         <div className="!px-6 !pt-0 !pb-4">
                             <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(submitHandler)(e).catch((err) => { reportError(err); }) }}>
-                                <Tabs defaultValue="regSanidad" className="!rounded-md !w-full" value={tab} onValueChange={(newTab) => { setTab(newTab as Tab) }}>
-                                    <TabsList className="!w-full bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between">
-                                        <TabsTrigger value="vacuna"
-                                            className="flex-1 text-center !px-4 !py-2
+                                <Tabs defaultValue="vaccine" className="!rounded-md" value={tab} onValueChange={(newTab) => { setTab(newTab as Tab) }}>
+                                    <TabsList className="bg-[#DEEBD9] rounded-md p-1 flex items-center justify-between">
+                                        <TabsTrigger value="vaccine"
+                                            className="w-full text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
                                             !rounded-md"
                                         >
                                             Vacuna
                                         </TabsTrigger>
-                                        <TabsTrigger value="banio"
-                                            className="flex-1 text-center !px-4 !py-2
+                                        <TabsTrigger value="bath"
+                                            className="w-full text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
                                             !rounded-md"
                                         >
                                             Baño
                                         </TabsTrigger>
-                                        <TabsTrigger value="desparasitacion"
-                                            className="flex-1 text-center !px-4 !py-2
+                                        <TabsTrigger value="deworming"
+                                            className="w-full text-center !px-4 !py-2
                                             data-[state=active]:bg-white data-[state=active]:text-black 
                                             data-[state=inactive]:text-[#5B9B40]
                                             !rounded-md"
@@ -251,12 +251,12 @@ export default function RegistroSanidad() {
                                             Desparasitación
                                         </TabsTrigger>
                                     </TabsList>
-                                    <TabsContent value="vacuna" className="">
+                                    <TabsContent value="vaccine" className="">
                                         <Card className="!border-none !shadow-none">
-                                            <CardContent className="grid gap-6 !pb-6 !pt-4">
+                                            <CardContent className="!px-0 grid gap-6 !pb-6 !pt-4">
                                                 <FormField
                                                     control={form.control}
-                                                    name="fechaInVac"
+                                                    name="vaccDateIn"
                                                     render={({ field }) => (
                                                         <FormItem className="grid gap-2">
                                                             <FormLabel>Fecha*</FormLabel>
@@ -269,7 +269,7 @@ export default function RegistroSanidad() {
                                                 />
                                                 <FormField
                                                     control={form.control}
-                                                    name="marcaInVac"
+                                                    name="vaccBrandIn"
                                                     render={({ field }) => (
                                                         <FormItem className="grid gap-2">
                                                             <FormLabel>Marca</FormLabel>
@@ -282,7 +282,7 @@ export default function RegistroSanidad() {
                                                 />
                                                 <FormField
                                                     control={form.control}
-                                                    name="carnetInVac"
+                                                    name="vaccCardIn"
                                                     render={({ field }) => {
                                                         const filename = (field.value as File | null)?.name ?? "Nada cargado todavía";
 
@@ -322,12 +322,12 @@ export default function RegistroSanidad() {
                                             </CardContent>
                                         </Card>
                                     </TabsContent>
-                                    <TabsContent value="banio">
+                                    <TabsContent value="bath">
                                         <Card className="!border-none !shadow-none">
-                                            <CardContent className="grid !pb-6 !pt-4">
+                                            <CardContent className="!px-0 grid !pb-6 !pt-4">
                                                 <FormField
                                                     control={form.control}
-                                                    name="fechaInBanio"
+                                                    name="bathDateIn"
                                                     render={({ field }) => (
                                                         <FormItem className="grid gap-2">
                                                             <FormLabel>Fecha*</FormLabel>
@@ -341,36 +341,36 @@ export default function RegistroSanidad() {
                                             </CardContent>
                                         </Card>
                                     </TabsContent>
-                                    <TabsContent value="desparasitacion">
+                                    <TabsContent value="deworming">
                                         <Card className="!border-none !shadow-none !pb-6 !pt-4">
-                                            <CardContent className="grid !gap-6">
+                                            <CardContent className="!px-0 grid !gap-6">
                                                 <FormField
                                                     control={form.control}
-                                                    name="desparasitacionTipo"
+                                                    name="dewType"
                                                     render={({ field }) => (
                                                         <FormItem className="flex gap-4">
                                                             <RadioGroup value={field.value} onValueChange={field.onChange} defaultValue="interna" className="flex gap-4">
                                                                 <div className="flex items-center gap-2">
                                                                     <RadioGroupItem value="Interna" id="r1"
                                                                         className="
-                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
-                                                            data-[state=checked]:!border-[#5B9B40]
-                                                            data-[state=checked]:!text-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                                                        "
+                                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
+                                                                            data-[state=checked]:!border-[#5B9B40]
+                                                                            data-[state=checked]:!text-[#5B9B40]
+                                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                                                                        "
                                                                     />
                                                                     <Label htmlFor="r1">Interna</Label>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     <RadioGroupItem value="Externa" id="r2"
                                                                         className="
-                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
-                                                            data-[state=checked]:!border-[#5B9B40]
-                                                            data-[state=checked]:!text-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                                                        "
+                                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
+                                                                            data-[state=checked]:!border-[#5B9B40]
+                                                                            data-[state=checked]:!text-[#5B9B40]
+                                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                                                                        "
                                                                     />
                                                                     <Label htmlFor="r2">Externa</Label>
                                                                 </div>
@@ -382,7 +382,7 @@ export default function RegistroSanidad() {
 
                                                 <FormField
                                                     control={form.control}
-                                                    name="fechaInDes"
+                                                    name="dewDateIn"
                                                     render={({ field }) => (
                                                         <FormItem className="grid gap-2">
                                                             <FormLabel>Fecha*</FormLabel>
@@ -396,7 +396,7 @@ export default function RegistroSanidad() {
 
                                                 <FormField
                                                     control={form.control}
-                                                    name="marcaInDes"
+                                                    name="dewBrandIn"
                                                     render={({ field }) => (
                                                         <FormItem className="grid gap-2">
                                                             <FormLabel>Marca</FormLabel>
