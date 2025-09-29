@@ -3,11 +3,38 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { PerrosController } from "./controller/perros.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
-
+import { jwtVerify } from "jose";
 const perrosController = new PerrosController();
 await initDatabase();
 
 export async function GET(request: NextRequest) {
+
+  //controlo que los colaboradores no accedan al GET
+  const token = request.headers.get("authorization")?.split(" ")[1];
+  if (!token) {
+    return NextResponse.json(
+      { error: "No se encontro un token de acceso en la solicitud." },
+      { status: 401 }
+    );
+  }
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+  try {
+    const { payload } = await jwtVerify(token, secret);
+     if (payload.tipo === "Colaborador") {
+
+      return NextResponse.json(
+        { error: "No tiene permisos para acceder a esta ruta" },
+        { status: 500 }
+      );
+      
+     }
+  }catch{
+    return NextResponse.json(
+      { error: "El token de acceso es invalido o ha expirado." },
+      { status: 401 }
+    );
+  }
+  
   try {
     const pagination = await extractPagination(request);
 
