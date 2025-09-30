@@ -1,4 +1,5 @@
 import EditarIntervencion from "../EditarIntervencion";
+import EvaluarIntervencion from "../evaluar-intervencion";
 import ListadoIntervenciones from "../ListadoIntervenciones";
 
 export default function PantallaIntervencionesCollaborador() {
@@ -6,6 +7,7 @@ export default function PantallaIntervencionesCollaborador() {
     <>
       <EditarIntervencion />
       <ListadoIntervenciones />
+      <EvaluarIntervencion/>
     </>
   );
 }
