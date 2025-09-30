@@ -4,21 +4,15 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
-import { AppSidebar } from "@/app/components/app-sidebar";
+import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
+import {DropDownMenu} from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
 import { useContext, useEffect } from "react";
 import type { TipoUsuario } from "@/app/page";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger
- } from "@/components/ui/dropdown-menu";
+
 type Props = Readonly<{ children: React.ReactNode }>;
 
 export default function LoginLayout({ children }: Props) {
@@ -87,8 +81,8 @@ export default function LoginLayout({ children }: Props) {
   const userName = context?.userName ?? "";
   const data = userName?.split(" ");
   let iniciales: string = "";
-  let nombre: string = "";
-  let apellido: string = "";
+  let name: string = "";
+  let lastName: string = "";
 
   async function handleLogout() {
     try {
@@ -109,12 +103,12 @@ export default function LoginLayout({ children }: Props) {
   }
 
   if (data.length > 1) {
-    nombre = data?.[0].charAt(0);
-    apellido = data?.[1].charAt(0);
-    iniciales = (nombre + apellido).toUpperCase();
+    name = data?.[0].charAt(0);
+    lastName = data?.[1].charAt(0);
+    iniciales = (name + lastName).toUpperCase();
   } else if (data.length === 1) {
-    nombre = data?.[0].charAt(0);
-    iniciales = nombre + nombre;
+    name = data?.[0].charAt(0);
+    iniciales = name + name;
   } else {
     iniciales = "ZZ";
   }
@@ -124,34 +118,8 @@ export default function LoginLayout({ children }: Props) {
       <AppSidebar />
       <SidebarInset>
         <SidebarTrigger className="block md:hidden" />
-        <header className="bg-background flex h-18 border-b border-sidebar-border justify-end !py-3 !pr-8">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="w-12 h-12 rounded-full bg-[#DEEBD9] flex items-center justify-center cursor-pointer">
-                {iniciales}
-              </div>
-            </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="bottom"
-                align="end"
-                sideOffset={4}
-                className="border !border-[#BDD7B3]"
-              >
-                <DropdownMenuItem asChild>
-                  <Link href={"/app/perfil"}>Mi perfil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>Perfil de [Nombre del perro]</DropdownMenuItem>
-                <DropdownMenuSeparator className="!border-[#BDD7B3]" />
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleLogout().catch(() => {});
-                  }}
-                >
-                  Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-          </DropdownMenu>          
-        </header>
+        {/* eslint-disable-next-line no-void*/}
+        <DropDownMenu iniciales={iniciales} handleLogout={() => void handleLogout()}/>
         <main className="!ml-8 !mt-[60px]">{children}</main>
       </SidebarInset>
     </SidebarProvider>

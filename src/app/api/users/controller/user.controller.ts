@@ -4,6 +4,7 @@ import type { CreateUserDto } from "../dtos/create-user.dto";
 import type { UpdateUserDto } from "../dtos/update-user.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { User } from "@/app/models/user.entity";
+//import type {Perro} from "@/app/models/perro.entity"
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 
 export class UserController {
@@ -61,5 +62,10 @@ export class UserController {
 
   async deleteUser(ci: string): Promise<boolean> {
     return await this.userService.delete(ci);
+  }
+  async getUserDogs( ci:string){
+    const dogs= await this.userService.findDogIdsByUser(ci);
+    
+    return dogs;
   }
 }

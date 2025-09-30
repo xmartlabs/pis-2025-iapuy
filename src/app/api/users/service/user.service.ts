@@ -70,6 +70,15 @@ export class UserService {
       ],
     });
   }
+  async findDogIdsByUser(duenioId: string): Promise<Perro[]> {
+
+    const Perros = await Perro.findAll({
+      where: { duenioId },
+      attributes: ["id","nombre"],
+    });
+
+    return Perros;
+  }
 
   async findOneForAuth(ci: string): Promise<User | null> {
     return await User.findByPk(ci);
