@@ -75,20 +75,7 @@ export class UserController {
     }
   }
 
-  async deleteUser(request: NextRequest, { username }: { username: string }) {
-    try {
-      const deleted = await this.userService.delete(username);
-
-      if (!deleted) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      return NextResponse.json({ message: "User deleted successfully" });
-    } catch {
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
-    }
+  async deleteUser(ci: string): Promise<boolean> {
+    return await this.userService.delete(ci);
   }
 }

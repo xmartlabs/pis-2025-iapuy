@@ -131,9 +131,9 @@ export class UserService {
     return await user.update(updateData);
   }
 
-  async delete(username: string): Promise<boolean> {
+  async delete(ci: string): Promise<boolean> {
     const deleted = await User.destroy({
-      where: { username },
+      where: { ci },
     });
 
     return deleted > 0;
