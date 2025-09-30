@@ -26,24 +26,24 @@ export class UserController {
   }
 
   async createUser(request: NextRequest) {
-    const usrData: CreateUserDto = await request.json() as CreateUserDto;
+    const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
     if (!usrData.ci || !usrData.password) {
       return {
         error: "Username and password are required",
-        status: 400
-      }
+        status: 400,
+      };
     }
 
     const ci = await this.userService.create(usrData);
     return {
       message: `Usuario con ci ${String(ci)} creado con éxito`,
-      status: 201
-    }
+      status: 201,
+    };
   }
 
   async updateUser(request: NextRequest, { username }: { username: string }) {
     try {
-      const body: UpdateUserDto = await request.json() as UpdateUserDto;
+      const body: UpdateUserDto = (await request.json()) as UpdateUserDto;
       const user = await this.userService.update(username, body);
 
       if (!user) {
@@ -59,20 +59,7 @@ export class UserController {
     }
   }
 
-  async deleteUser(request: NextRequest, { username }: { username: string }) {
-    try {
-      const deleted = await this.userService.delete(username);
-
-      if (!deleted) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      return NextResponse.json({ message: "User deleted successfully" });
-    } catch{
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
-    }
+  async deleteUser(ci: string): Promise<boolean> {
+    return await this.userService.delete(ci);
   }
 }
