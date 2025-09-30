@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
     const dog = await perrosController.createPerro(request);
     return NextResponse.json(dog, { status: 201 });
   } catch (error) {
-    console.log(error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
