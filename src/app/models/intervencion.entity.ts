@@ -11,6 +11,8 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 
+import type { CreationOptional } from "sequelize";
+
 export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
 
 @Table({ tableName: "intervenciones" })
@@ -51,4 +53,8 @@ export class Intervencion extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  declare driveLink: CreationOptional<string>;
+
 }

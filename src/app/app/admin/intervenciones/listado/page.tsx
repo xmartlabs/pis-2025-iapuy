@@ -1,4 +1,4 @@
-import ListadoIntervenciones from "@/app/app/colaboradores/Intervenciones/ListadoIntervenciones";
+import ListadoIntervenciones from "@/app/app/colaboradores/intervenciones/ListadoIntervenciones";
 import NuevaInstervencion from "../NuevaIntervencion";
 
 export default function PantallaIntervenciones() {
