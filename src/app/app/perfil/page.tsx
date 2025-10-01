@@ -1,3 +1,5 @@
+'use client'
+
 import CambiarContraseña from "./CambiarContraseña";
 import MiPerfil from "./mi-perfil";
 

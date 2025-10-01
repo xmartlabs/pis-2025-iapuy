@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Hubo un error desconocido" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -30,7 +30,7 @@ export async function DELETE(request: NextRequest) {
     if (res) {
       return NextResponse.json(
         { success: true, message: "Dog deleted successfully" },
-        { status: 200 },
+        { status: 200 }
       );
     }
     return NextResponse.json(
@@ -38,16 +38,14 @@ export async function DELETE(request: NextRequest) {
         success: false,
         message: "Internal Server Error: Dog could not be deleted",
       },
-      { status: 500 },
+      { status: 500 }
     );
   } catch (error) {
     return NextResponse.json(
       {
         success: false,
         message:
-          error instanceof Error ?
-            error.message :
-            "Internal Server Error",
+          error instanceof Error ? error.message : "Internal Server Error",
       },
       { status: 500 }
     );
@@ -57,9 +55,11 @@ export async function POST(request: NextRequest) {
   try {
     const dog = await perrosController.createPerro(request);
     return NextResponse.json(dog, { status: 201 });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
       { status: 500 }
     );
   }

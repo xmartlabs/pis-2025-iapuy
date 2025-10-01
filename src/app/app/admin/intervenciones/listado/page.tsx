@@ -1,3 +1,5 @@
+'use client'
+
 import ListadoIntervenciones from "@/app/app/colaboradores/Intervenciones/ListadoIntervenciones";
 import NuevaInstervencion from "../NuevaIntervencion";
 

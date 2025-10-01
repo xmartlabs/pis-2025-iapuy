@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -11,8 +12,6 @@ import {
 } from "sequelize-typescript";
 
 import {
-  InferAttributes,
-  InferCreationAttributes,
   type CreationOptional
 } from "sequelize"
 
@@ -23,7 +22,7 @@ import { UsrPerro } from "./usrperro.entity";
 @Table({ tableName: "perros" })
 export class Perro extends Model{
   @PrimaryKey
-  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 }) //! consultar si no conviene nueva migration en vez de manejarlo del modelo
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
   declare id: CreationOptional<string>; // este objeto de sequelize permite que no le pasemos el campo y que lo cree solo, los que no lo tienen debemos pasarlos
 
   @Column({ type: DataType.STRING })

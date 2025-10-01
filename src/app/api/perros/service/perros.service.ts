@@ -39,7 +39,6 @@ export class PerrosService {
           include: [
             {
               model: Vacuna,
-              limit: 1,
               order: [["fecha", "DESC"]],
               attributes: ["fecha"],
             },
