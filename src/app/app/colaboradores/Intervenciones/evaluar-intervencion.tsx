@@ -30,7 +30,7 @@ import { LoginContext } from "@/app/context/login-context";
 
 type Pathology = {
   id: string;
-  typePat: string
+  nombre: string
 }
 
 type PathologyResponse = {
@@ -49,7 +49,7 @@ export default function EvaluarIntervencion(){
     // const [expDogCards, setExpDogCard] = useState([0]);
     const context = useContext(LoginContext);
     const { interventionId } = useParams<{ interventionId?: string }>();
-    const id = interventionId ?? "167cd908-e062-4efd-ac47-5e770cdb8d3a";
+    const id = interventionId ?? "40022a98-73bc-44e8-9ea4-69319ab54c31";
 
 
     
@@ -62,73 +62,81 @@ export default function EvaluarIntervencion(){
     // }
 
     useEffect(()=> {
+
         const controller = new AbortController();
         const signal = controller.signal;
         let mounted = true;
 
-      const callApi = async () => {
-        try{
-          const token = context?.tokenJwt;
-          const baseHeaders: Record<string, string> = {
-            Accept: "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          };
+        const callApi = async () => {
+          try{
 
-          const response = await fetch( `/api/Intervencion/${id}` , {headers: baseHeaders});
-          if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
-          );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
+            const token = context?.tokenJwt;
+            
+            const response = await fetch(`/api/intervencion/${id}/pathologies`, {
+                      method: "GET",
+                      headers: {
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                    });
+            console.log(response)
 
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(`/api/Intervencion/${id}`, {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
+            if (response.status === 401) {
+                const resp2 = await fetch(
+                  new URL("/api/auth/refresh", BASE_API_URL),
+                  {
+                    method: "POST",
+                    headers: { Accept: "application/json" },
+                  }
                 );
-              }
+                
+                if (resp2.ok) {
+                  const refreshBody = (await resp2.json().catch(() => null)) as {
+                    accessToken?: string;
+                  } | null;
 
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json")) {
-                console.warn("Intervencion retry: unexpected content-type", ct2);
-                if (mounted && !signal.aborted) setPathologys([]);
-                return;
-              }
+                  const newToken = refreshBody?.accessToken ?? null;
+                  if (newToken) {
+                    context?.setToken(newToken);
+                    const retryResp = await fetch(`/api/intervencion/${id}/pathologies`, {
+                      method: "GET",
+                      headers: {
+                        Accept: "application/json",
+                        Authorization: `Bearer ${newToken}`,
+                      },
+                    });
+                      console.log(retryResp) //!
+                    if (!retryResp.ok) {
+                      const txt = await retryResp.text().catch(() => "");
+                      throw new Error(
+                        `API ${retryResp.status}: ${retryResp.statusText}${
+                          txt ? ` - ${txt}` : ""
+                        }`
+                      );
+                    }
 
-              const body2 = (await retryResp.json()) as PathologyResponse;
-              const pathologysData = Array.isArray(body2?.data) ? body2.data : [];
-              if (mounted && !signal.aborted) setPathologys(pathologysData);
-              return;
+                    const ct2 = retryResp.headers.get("content-type") ?? "";
+                    if (!ct2.includes("application/json")) {
+                      console.warn("Intervencion retry: unexpected content-type", ct2);
+                      if (mounted && !signal.aborted) setPathologys([]);
+                      return;
+                    }
+                    const vemos = await retryResp.json()
+                    console.log(vemos)
+                    const body2 = (await retryResp.json()) as PathologyResponse;
+                    const pathologysData = Array.isArray(body2?.data) ? body2.data : [];
+                    if (mounted && !signal.aborted) setPathologys(pathologysData);
+                    return;
 
-            }
+                  }
+                }
           }
-        }
-        if (!response.ok) {
-        const txt = await response.text().catch(() => "");
-        console.error("Intervencion fetch failed:", response.status, txt);
-        if (mounted && !signal.aborted) setPathologys([]); // fallback
-        return;
-      }
+            if (!response.ok) {
+            const txt = await response.text().catch(() => "");
+            console.error("Intervencion fetch failed:", response.status, txt);
+            if (mounted && !signal.aborted) setPathologys([]); // fallback
+            return;
+          }
 
       const ct = response.headers.get("content-type") ?? "";
       if (!ct.includes("application/json")) {
@@ -139,6 +147,7 @@ export default function EvaluarIntervencion(){
 
       const datos = (await response.json().catch(() => null)) as PathologyResponse | null;
       const pathologysData = Array.isArray(datos?.data) ? datos.data : [];
+      console.log(datos)
       if (mounted && !signal.aborted) setPathologys(pathologysData);
     } catch (err) {
       if ((err as any)?.name === "AbortError") {
@@ -289,7 +298,7 @@ export default function EvaluarIntervencion(){
                       ) : (
                         pathologys.map((pat) => (
                           <SelectItem key={pat.id} value={String(pat.id)}>
-                            {pat.typePat}
+                            {pat.nombre}
                           </SelectItem>
                         ))
                       )}

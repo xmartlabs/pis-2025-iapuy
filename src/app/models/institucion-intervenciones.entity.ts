@@ -4,6 +4,7 @@ import {
   DeletedAt,
   ForeignKey,
   Model,
+  PrimaryKey,
   Table,
   UpdatedAt,
 } from "sequelize-typescript";
@@ -12,10 +13,13 @@ import { Intervencion } from "./intervencion.entity";
 
 @Table({ tableName: "institucion-intervenciones" })
 export class InstitucionIntervencion extends Model {
+  
+  @PrimaryKey
   @ForeignKey(() => Institucion)
   @Column
   declare institucionId: string;
 
+  @PrimaryKey
   @ForeignKey(() => Intervencion)
   @Column
   declare intervencionId: string;

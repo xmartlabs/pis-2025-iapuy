@@ -24,6 +24,19 @@ export class IntervencionController {
 
   /* eslint-enable */
 
+  async getPathologies(id: string){
+    try {
+      const pathologies = await this.intervencionService.findAllPathologiesbyId(id);
+      return pathologies;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: 500 }
+      );
+    }
+  }
   
   async evaluateIntervention(request: NextRequest, id: string) {
     const formData = await request.formData();

@@ -10,7 +10,7 @@ import { Vacuna } from "@/app/models/vacuna.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import { Patologia } from "@/app/models/patologia.entity";
-import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 
 import { Gasto } from "@/app/models/gastos.entity";
 import type { ModelStatic, Model } from "sequelize";

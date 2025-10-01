@@ -9,8 +9,37 @@ import { EvaluateInterventionDTO } from "../dtos/evaluate-intervention.dto";
 import sequelize from "@/lib/database";
 import { Paciente } from "@/app/models/pacientes.entity";
 import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+import { Patologia } from "@/app/models/patologia.entity";
 
 export class IntervencionService {
+
+  async findAllPathologiesbyId(id: string) {
+    try{
+        const relation = await InstitucionIntervencion.findOne({
+        where: { intervencionId: id }
+        });
+        if(relation){
+          const institutionId = relation.institucionId;
+          const pathologiesRelation = await InstitucionPatologias.findAll({
+            where: { institucionId : institutionId }
+          });
+          const pathologies = await Promise.all(
+            pathologiesRelation.map((rel) =>
+              Patologia.findByPk(rel.patologiaId, {
+                attributes: ["id", "nombre"]
+              })
+            )
+          );
+
+          return pathologies
+        }
+    }catch (error) {
+      throw error
+    }
+  }
+
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Intervencion>> {
