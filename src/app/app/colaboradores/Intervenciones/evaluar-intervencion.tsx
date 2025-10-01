@@ -176,7 +176,6 @@ export default function EvaluarIntervencion(){
     mounted = false;
     controller.abort();
   };
-// Dependencias: reconsulta si cambia el id o el token
 }, []);
 
 
@@ -212,10 +211,10 @@ export default function EvaluarIntervencion(){
 
 
 
-const onSubmit = (values: FormValues) => {
-  // values.patients: Array<{ name: string; age: number; pathology: string; feeling?: ... }>
-  console.log(values);
-};
+    const onSubmit = (values: FormValues) => {
+      // values.patients: Array<{ name: string; age: number; pathology: string; feeling?: ... }>
+      console.log(values);
+    };
 
 
 
@@ -265,41 +264,38 @@ const onSubmit = (values: FormValues) => {
                   Patología
                 </Label>
                 <Select
-  onValueChange={(val: string) => {
-    // mapear valor de fallback a undefined si hace falta
-    if (val === "__none") {
-      field.onChange(undefined);
-      return;
-    }
-    field.onChange(val);
-  }}
-  value={typeof field.value === "string" ? field.value : ""}
->
-  <SelectTrigger
-    className="w-full !h-[48px] rounded-[6px] border-2 border-[#CBD2E0] bg-white"
-    aria-labelledby={`patients.${index}.pathology`}
-  >
-    <SelectValue placeholder={pathologys.length ? "Seleccionar" : "Cargando..."} />
-  </SelectTrigger>
+                  onValueChange={(val: string) => {
+                    if (val === "__none") {
+                      field.onChange(undefined);
+                      return;
+                    }
+                    field.onChange(val);
+                  }}
+                  value={typeof field.value === "string" ? field.value : ""}
+                >
+                  <SelectTrigger
+                    className="w-full !h-[48px] rounded-[6px] border-2 border-[#CBD2E0] bg-white"
+                    aria-labelledby={`patients.${index}.pathology`}
+                  >
+                    <SelectValue placeholder={pathologys.length ? "Seleccionar" : "Cargando..."} />
+                  </SelectTrigger>
 
-  <SelectContent>
-    <SelectGroup>
-      {pathologys.length === 0 ? (
-        // value distinto de "" y disabled para que no rompa y no sea seleccionable
-        <SelectItem value="__none" disabled>
-          No hay patologías
-        </SelectItem>
-      ) : (
-        pathologys.map((pat) => (
-          // asegurar que sea string
-          <SelectItem key={pat.id} value={String(pat.id)}>
-            {pat.typePat}
-          </SelectItem>
-        ))
-      )}
-    </SelectGroup>
-  </SelectContent>
-</Select>
+                  <SelectContent>
+                    <SelectGroup>
+                      {pathologys.length === 0 ? (
+                        <SelectItem value="__none" disabled>
+                          No hay patologías
+                        </SelectItem>
+                      ) : (
+                        pathologys.map((pat) => (
+                          <SelectItem key={pat.id} value={String(pat.id)}>
+                            {pat.typePat}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
               </FormItem>
 
