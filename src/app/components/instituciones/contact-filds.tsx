@@ -12,7 +12,7 @@ export const contactsSchema = z.object({
 
 export const mainSchema = z.object({
   name: z.string().min(1, { message: "El nombre es obligatorio" }),
-  Pathologies: z.string().optional(),
+  Pathologies: z.array(z.string()),
 });
 
 export const FormSchema = z.object({

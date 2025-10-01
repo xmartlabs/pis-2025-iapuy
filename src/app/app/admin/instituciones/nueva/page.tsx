@@ -3,6 +3,7 @@ import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import {X}from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { z } from "zod";
 import ContactFields, {FormSchema } from "@/app/components/instituciones/contact-filds";
@@ -14,14 +15,17 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import React from "react";
+import { Badge } from "@/components/ui/badge";
 
 export default function NewDog() {
+  const [tempValue, setTempValue] = React.useState("");
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       main: {
         name: "",
-        Pathologies: "",
+        Pathologies: [],
       },
       contacts: [
         { name: "", contact: "" }
@@ -66,18 +70,53 @@ export default function NewDog() {
                 </FormItem>
                 )}
             />
-
             <FormField
-                control={form.control}
-                name="main.Pathologies"
-                render={({ field }) => (
-                <FormItem className="flex-1">
+              control={form.control}
+              name="main.Pathologies"
+              render={({ field }) => {
+                const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (tempValue.trim() !== "") {
+                      field.onChange([...(field.value || []), tempValue.trim()]);
+                      setTempValue("");
+                    }
+                  }
+                };
+                const handleRemove = (index: number) => {
+                  const newValues = [...(field.value || [])];
+                  newValues.splice(index, 1);
+                  field.onChange(newValues);
+                };
+                return (
+                  <FormItem className="flex-1">
                     <FormLabel>Patologías</FormLabel>
                     <FormControl>
-                    <Input {...field} />
+                      <div className="flex flex-wrap gap-2 items-center  px-2 py-1 min-h-[40px]">
+                        {field.value?.map((p: string, i: number) => (
+                          <div key={i} className="flex items-center gap-0 !bg-[#5B9B40] border border-gray-300 rounded-full pt-0.5 pr-2.5 pb-0.5 pl-2.5">
+                            <Badge className="px-0 !bg-[#5B9B40]">
+                              <span className="h-4 font-sans font-semibold text-xs leading-4 tracking-normal text-white">
+                                {p}
+                              </span>
+                            </Badge>
+                            <X
+                              className="w-4 h-4 cursor-pointer text-white"
+                              onClick={() => { handleRemove(i); }}
+                            />
+                          </div>
+                        ))}
+                        <Input
+                          value={tempValue}
+                          onChange={(e) => { setTempValue(e.target.value); }}
+                          onKeyDown={handleKeyDown}
+                          className="flex-1 min-w-[60px] border-none p-0 focus:ring-0"
+                        />
+                      </div>
                     </FormControl>
-                </FormItem>
-                )}
+                  </FormItem>
+                );
+              }}
             />
             </div>
             <div className="mt-4 flex flex-wrap gap-4">
