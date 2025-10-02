@@ -39,7 +39,7 @@ export default function ListadoIntervenciones() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [reload, setReload] = useState(false);
+  const [reload] = useState(false);
 
   const context = useContext(LoginContext);
   const router = useRouter();

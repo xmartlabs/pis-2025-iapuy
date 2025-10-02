@@ -16,10 +16,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "ID is required" }, { status: 400 });
         }
         const res = await intervencionController.getInterventionByDogId(pagination, id);
-        console.log(res);
         return NextResponse.json(res);
     } catch (error) {
-        console.log(error);
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }

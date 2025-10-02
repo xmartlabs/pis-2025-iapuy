@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -36,7 +35,7 @@ export default function HistorialIntervenciones() {
     const [size] = useState<number>(3);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
-    const [reload, setReload] = useState(false);
+    const [reload] = useState(false);
 
     const context = useContext(LoginContext);
     const router = useRouter();
@@ -173,7 +172,6 @@ export default function HistorialIntervenciones() {
 
         fetchIntervenciones(id, page, size, controller.signal)
             .then((res) => {
-                console.log(`interventions ${res.data}`);
                 if (res) {
                     setIntervention(res.data);
                     setTotalPages(res.totalPages ?? 1);

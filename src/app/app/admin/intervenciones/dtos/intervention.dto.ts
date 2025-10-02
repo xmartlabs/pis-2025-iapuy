@@ -8,7 +8,7 @@ export class InterventionDto {
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
-  institucions: InstitutionDto;
+  Institucions: InstitutionDto;
   pairsQuantity: number;
   status: string;
   createdAt?: Date;
@@ -40,7 +40,7 @@ export class InterventionDto {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.deletedAt = deletedAt;
-    this.institucions = institucions;
+    this.Institucions = institucions;
     this.pairsQuantity = pairsQuantity;
     this.status = status;
   }
