@@ -22,9 +22,10 @@ export async function GET(request: NextRequest) {
 
 /* eslint-enable */
 
-export async function PUT( request: NextRequest , { params }: { params: { id: string } }){
+export async function PUT( request: NextRequest , { params }: { params: Promise<{ id: string }> }){
   try {
-    const intervention = await intervencionController.evaluateIntervention(request, params.id);
+    const { id } = await params;
+    const intervention = await intervencionController.evaluateIntervention(request, id);
     return NextResponse.json(intervention, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {
