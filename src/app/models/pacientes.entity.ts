@@ -36,13 +36,13 @@ export class Paciente extends Model{
   @ForeignKey(() => Patologia)
       // eslint-disable-next-line new-cap
   @Column({ type: DataType.STRING })
-  declare patologiaId: CreationOptional<string>;
+  declare patologia_id: CreationOptional<string>;
 
 // eslint-disable-next-line new-cap
   @ForeignKey(() => Intervencion)
       // eslint-disable-next-line new-cap
   @Column({ type: DataType.STRING })
-  declare intervencionId: string;
+  declare intervencion_id: string;
 
 // eslint-disable-next-line new-cap
   @Column({ type: DataType.ENUM('buena', 'mala', 'regular') })

@@ -1,3 +1,4 @@
+/* eslint-disable */ 
 export type Experience = 'buena' | 'mala' | 'regular';
 
 export interface PatientDTO {

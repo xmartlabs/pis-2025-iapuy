@@ -6,8 +6,10 @@ import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones
 import { Institucion } from "@/app/models/institucion.entity";
 import { Intervencion } from "@/app/models/intervencion.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+import { Paciente } from "@/app/models/pacientes.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { Perro } from "@/app/models/perro.entity";
+import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
@@ -36,6 +38,8 @@ const sequelize = new Sequelize({
     Patologia,
     InstitucionPatologias,
     InstitucionIntervencion,
+    Paciente,
+    PerroExperiencia
   ],
   logging: false,
   define: {

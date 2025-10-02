@@ -113,8 +113,8 @@ export class IntervencionService {
           {
             nombre: patient.name,
             edad: patient.age,
-            patologiaId: patient.pathology_id,
-            intervencionId: id,
+            patologia_id: patient.pathology_id,
+            intervencion_id: id,
             experiencia: patient.experience
           },{ transaction }
         )
