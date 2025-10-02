@@ -4,10 +4,13 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-
+const uruguayPhoneRegex = /^(09\d{7}|[2-7]\d{7})$/;
 export const contactsSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
-  contact: z.string().min(1, "Una forma de contacto es obligatoria"),
+  contact: z.union([
+    z.string().min(1, "Una forma de contacto es obligatoria").email("Debe ser un correo o telefono o celular"),
+    z.string().min(1, "Una forma de contacto es obligatoria").regex(uruguayPhoneRegex, "Debe ser un correo o telefono o celular"),
+  ]),
 });
 
 export const mainSchema = z.object({

@@ -3,10 +3,12 @@ import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {X}from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { z } from "zod";
 import ContactFields, {FormSchema } from "@/app/components/instituciones/contact-filds";
+import { LoginContext } from "@/app/context/login-context";
 import {
   Form,
   FormField,
@@ -15,11 +17,12 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import React from "react";
+import React, { useContext } from "react";
 import { Badge } from "@/components/ui/badge";
 
 export default function NewDog() {
   const [tempValue, setTempValue] = React.useState("");
+  const context = useContext(LoginContext);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -36,8 +39,64 @@ export default function NewDog() {
     control: form.control,
     name: "contacts",
   });
-  const handleFormSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Data enviada:", data);
+  const handleFormSubmit = async(data: z.infer<typeof FormSchema>) => {
+    try{
+      const res=await fetch("/api/instituciones",{
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${context?.tokenJwt}`, 
+        },
+        body:JSON.stringify({
+          nombre:data.main.name,
+          patologias:data.main.Pathologies,
+          referentes: (data.contacts ?? []).map(c => ({
+            nombre: c.name,
+            contacto: c.contact
+          }))
+        })
+      });
+      if (res.ok){
+        toast.success("Institucion creada con exito",{
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#DEEBD9",
+            border: "1px solid #BDD7B3",
+            color: "#121F0D",
+          },
+        });
+      }else if(res.status===409){
+        toast.error(`Ya existe la institucion ${data.main.name}`,{
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#cfaaaaff",
+            border: "1px solid #ec0909ff",
+            color: "#ec0909ff",
+          },
+        });
+      }else{
+        toast.error("Ocurrio un error inesperado",{
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#cfaaaaff",
+            border: "1px solid #ec0909ff",
+            color: "#ec0909ff",
+          },
+        });
+      };
+    }catch(error){
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
   };
 
   return (
