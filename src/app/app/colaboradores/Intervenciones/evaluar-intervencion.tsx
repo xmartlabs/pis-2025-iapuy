@@ -22,6 +22,8 @@ import { Plus, Upload } from 'lucide-react';
 import { useEffect, useState, useContext } from "react";
 import { useParams } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
+import { Minus } from "lucide-react";
+
 
 //!const searchParams = useSearchParams();
 
@@ -30,8 +32,14 @@ type Pathology = {
   nombre: string
 }
 
+type Dog = {
+  id: string;
+  nombre: string;
+}
+
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
+
 
 
 const BASE_API_URL = (
@@ -42,20 +50,11 @@ const BASE_API_URL = (
 
 export default function EvaluarIntervencion(){
     const [pathologys, setPathologys] = useState<Pathology[]>([]);
+    const [dogs, setDogs] = useState<Dog[]>([]);
     const [patientsCards, setPatientCard] = useState([0]);
     const context = useContext(LoginContext);
     const { interventionId } = useParams<{ interventionId?: string }>();
-    const id = interventionId ?? "69616880-a5f2-4c59-92be-c8480ead6517";
-    const dogs = [
-      { id: "p1111111", name: "Firulais" },
-      { id: "p2222222", name: "Luna" },
-      { id: "p3333333", name: "Rocco" },
-    ];
-
-
-    const addPatCard = () =>{
-      setPatientCard((prev) => [...prev, prev.length]); 
-    }
+    const id = interventionId ?? "a1111111-1111-1111-1111-111111111111";
 
     useEffect(()=> {
       const callApi = async () => {
@@ -119,10 +118,80 @@ export default function EvaluarIntervencion(){
       });
     }, []);
 
+    useEffect(()=> {
+      const callApi = async () => {
+        try{
+          const token = context?.tokenJwt;
+          const baseHeaders: Record<string, string> = {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          };
+          const response = await fetch(`/api/Intervencion/${id}/dogs`, { headers: baseHeaders });
+          if (response.status === 401) {
+            const resp2 = await fetch(
+              new URL("/api/auth/refresh", BASE_API_URL),
+                {
+                  method: "POST",
+                  headers: { Accept: "application/json" },
+                }
+            ); 
+            if (resp2.ok) {
+              const refreshBody = (await resp2.json().catch(() => null)) as {
+                accessToken?: string;
+              } | null;
+              const newToken = refreshBody?.accessToken ?? null;
+              if (newToken) {
+                context?.setToken(newToken);
+                const retryResp = await fetch(`/api/Intervencion/${id}/dogs`, {
+                  method: "GET",
+                  headers: {
+                    Accept: "application/json",
+                    Authorization: `Bearer ${newToken}`,
+                  },
+                });
+                if (!retryResp.ok) {
+                  const txt = await retryResp.text().catch(() => "");
+                  throw new Error(
+                    `API ${retryResp.status}: ${retryResp.statusText}${
+                      txt ? ` - ${txt}` : ""
+                    }`
+                  );
+                }
+                const ct2 = retryResp.headers.get("content-type") ?? "";
+                if (!ct2.includes("application/json")) 
+                  throw new Error("Expected JSON response");
+
+                const body2 = await retryResp.json() as Dog[];
+                setDogs(body2);
+
+                return
+              }
+            }
+          }
+          const datos = (await response.json()) as Dog[];
+          const pathologysData = datos ?? [];
+          setDogs(pathologysData);
+        } catch (err) {
+          reportError(err);
+        }
+      };
+      callApi().catch((err) => {
+        reportError(err);
+      });
+    }, []);
+
     const patientsSchema = z.object({
       name: z.string().min(1, "Nombre requerido"),
-      age: z.number().int().min(0, "Edad inválida").max(200, "Edad inválida"),
-      pathology: z.string().min(1, "Seleccionar patología"),
+      age: z
+        .string()
+        .refine((val) => /^\d+$/.test(val), {
+          message: "Solo se permiten números enteros",
+        })
+        .transform((val) => Number(val))
+        .refine((val) => val >= 0 && val <= 200, {
+          message: "Edad inválida",
+        }),
+      pathology: z.string().optional(),
       feeling: z.enum(["good", "regular", "bad"]).optional(),
     });
     
@@ -150,15 +219,17 @@ export default function EvaluarIntervencion(){
 
     const form = useForm<FormValues>({
       resolver: zodResolver(FormSchema) as unknown as Resolver<FormValues>,
+      mode: "onSubmit",
+      shouldFocusError: false,
       defaultValues: {
-        patients: [{ name: "", age: 0, pathology: "", feeling: undefined }],
-        dogs: [{ feelingDog : undefined }],
+        patients: [{ name: "", age: "", pathology: "", feeling: "good" }],
+        dogs: [{ feelingDog : "good" }],
         photos: undefined,
         driveLink: "",
-      },
+      } as unknown as FormValues,
     });
 
-    const { control, register } = form;
+    const { control } = form;
     useFieldArray({
       control,
       name: "patients",
@@ -203,7 +274,7 @@ export default function EvaluarIntervencion(){
 
         formData.append("driveLink", data.driveLink ?? "");
 
-        const res = await fetch("/api/intervencion",{
+        const res = await fetch(`/api/Intervencion/${id}`,{
           method: "PUT",
           headers: {
             Authorization: `Bearer ${context?.tokenJwt}`
@@ -226,13 +297,76 @@ export default function EvaluarIntervencion(){
           throw new Error(`Error ${res.status}: ${txt}`);
         }
 
-        const datares = await res.json();
-        console.log("✅ Envío exitoso:", datares);
+        const datares  = await res.json();
+        console.log("Envío exitoso:", datares);
 
       } catch (error) {
             reportError(error);
       }
     }
+
+  const addPatCard = () => {
+    const newIndex = patientsCards.length;
+
+    setPatientCard((prev) => [...prev, newIndex]);
+
+    const currentPatients = form.getValues("patients") ?? [];
+    const newPatient = {
+      name: "",
+      age: "",
+      pathology: "",
+      feeling: "good",
+    };
+    const updatedPatients = [...currentPatients, newPatient];
+    form.setValue("patients", updatedPatients as FormValues["patients"]);
+
+
+    form.clearErrors([
+      `patients.${newIndex}.name`,
+      `patients.${newIndex}.age`,
+      `patients.${newIndex}.pathology`,
+      `patients.${newIndex}.feeling`,
+    ]);
+  };
+
+
+  const removePatientCard = (index: number) => {
+      if (patientsCards.length > 1) {
+        const updatedCards = [...patientsCards];
+        updatedCards.splice(index, 1);
+        setPatientCard(updatedCards);
+
+        const currentPatients = form.getValues("patients") ?? [];
+        const updatedPatients = [...currentPatients];
+        updatedPatients.splice(index, 1);
+        form.setValue("patients", updatedPatients);
+
+        form.clearErrors([
+          `patients.${index}.name`,
+          `patients.${index}.age`,
+          `patients.${index}.pathology`,
+          `patients.${index}.feeling`,
+        ]);
+      }
+  };
+
+  // const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (!files) return;
+
+  //   const fileArray = Array.from(files);
+
+  //   if (fileArray.length > 2) {
+  //     form.setError("photos", {
+  //       type: "manual",
+  //       message: "Solo se pueden adjuntar hasta 2 fotos.",
+  //     });
+  //     return;
+  //   }
+
+  //   form.clearErrors("photos");
+  //   form.setValue("photos", fileArray);
+  // };
 
 
 
@@ -245,7 +379,7 @@ export default function EvaluarIntervencion(){
         <div className="flex gap-4">
           {patientsCards.map((_, index) => (
             <Card key = {index} className="
-              w-[510px] max-w-full sm:h-[325px]
+              w-[510px] max-w-full
               rounded-[20px]
               p-6    
               bg-[#F7F9FC]
@@ -254,21 +388,21 @@ export default function EvaluarIntervencion(){
             "
             >
                 <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                  <div className="w-[462px] flex gap-[24px] h-[72px]">
+                  <div className="w-[462px] flex gap-[24px] min-h-[72px]">
                     <FormField
                       control={form.control}
                       name={`patients.${index}.name`}
                       render={({ field }) => (
-                        <FormItem className="w-[327px] h-[72px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                        <FormItem className="w-[327px] min-h-[72px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
                           <Label htmlFor={`patients.${index}.name`} className="text-sm h-[16px] leading-[20px]">Nombre</Label>
                           <FormControl>
                             <Input 
+                            {...field}
                               id={`patients.${index}.name`} 
-                              className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]" 
-                              {...field}
+                              className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"                 
                             />
                           </FormControl>
-                          <FormMessage/>
+                          {form.formState.touchedFields.patients?.[index]?.name && <FormMessage />}
                         </FormItem>
                       )}
                     />
@@ -276,68 +410,70 @@ export default function EvaluarIntervencion(){
                       control={form.control}
                       name={`patients.${index}.age`}
                       render={({ field }) => (
-                      <FormItem className="w-[111px] h-[72px] flex flex-col">
+                      <FormItem className="w-[111px] min-h-[72px] flex flex-col">
                         <Label htmlFor={`age-${index}`} className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">Edad</Label>
                         <FormControl>
                           <Input
-                            id={`patient-${index}-age`}
-                            type="number"
-                            className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"
                             {...field}
+                            id={`patient-${index}-age`}
+                            type="string"                           
+                            className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"
                           />
                         </FormControl>
-                        <FormMessage />
+                        {form.formState.touchedFields.patients?.[index]?.name && <FormMessage />}
                       </FormItem>
                     )}
                   />
                   </div>
-                  <FormField
-                    control={form.control}
-                    name={`patients.${index}.pathology`}
-                    render={({ field }) => (
-                      <FormItem className="w-[462px] sm:h-[72px] flex flex-col gap-[8px]">
-                        <Label
-                          htmlFor={`patients.${index}.pathology`}
-                          className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                          Patología
-                        </Label>
+                  {pathologys.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.pathology`}
+                      render={({ field }) => (
+                        <FormItem className="w-[462px] sm:h-[72px] flex flex-col gap-[8px]">
+                          <Label
+                            htmlFor={`patients.${index}.pathology`}
+                            className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                            Patología
+                          </Label>
 
-                        <Select
-                          onValueChange={(val: string) => {
-                            if (val === "__none") {
-                              field.onChange(undefined);
-                              return;
-                            }
-                            field.onChange(val);
-                          }}
-                          value={typeof field.value === "string" ? field.value : ""}
-                        >
-                          <SelectTrigger
-                            className="w-full !h-[48px] rounded-[6px] border-2 border-[#CBD2E0] bg-white"
-                            aria-labelledby={`patients.${index}.pathology`}
+                          <Select
+                            onValueChange={(val: string) => {
+                              if (val === "__none") {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              field.onChange(val);
+                            }}
+                            value={typeof field.value === "string" ? field.value : ""}
                           >
-                            <SelectValue placeholder="Seleccionar" />
-                          </SelectTrigger>
+                            <SelectTrigger
+                              className="w-full !h-[48px] rounded-[6px] border-2 border-[#CBD2E0] bg-white"
+                              aria-labelledby={`patients.${index}.pathology`}
+                            >
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
 
-                          <SelectContent>
-                            <SelectGroup>
-                              {pathologys.length > 0 ? (
-                                pathologys.map((pat) => (
-                                  <SelectItem key={pat.id} value={String(pat.id)}>
-                                    {pat.nombre}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="__none" disabled>
-                                  No hay patologías disponibles
-                                </SelectItem>
-                              )}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
+                            <SelectContent>
+                              <SelectGroup>
+                                {pathologys.map((pat) => (
+                                    <SelectItem key={pat.id} value={String(pat.id)}>
+                                      {pat.nombre}
+                                    </SelectItem>
+                                  ))
+                                }
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          {pathologys.length > 0 && form.formState.isSubmitted && !form.watch(`patients.${index}.pathology`) && (
+                            <p className="mt-1 text-sm text-red-500">
+                              Debes seleccionar una patología.
+                            </p>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 <FormLabel className="w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
                   ¿Cómo se sintió el paciente?
                 </FormLabel>
@@ -347,6 +483,7 @@ export default function EvaluarIntervencion(){
                   }
                   value = {form.watch(`patients.${index}.feeling`)}
                   className="w-[296px] h-[24px] flex items-center gap-[24px]"
+
                 >
                   <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
                     <RadioGroupItem value="good" id={`patient-${index}-good`} className="w-4 h-4" />
@@ -364,9 +501,21 @@ export default function EvaluarIntervencion(){
               </CardContent>
             </Card>
           ))}
-          <Button variant="secondary" size="icon"  onClick = {addPatCard} className="!w-[44px] !h-[44px] rounded-[6px] !p-[12px] border-3 border-[#2D3648] bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-            <Plus className="w-[20px] h-[20px]"/>
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button variant="secondary" size="icon"  onClick = {addPatCard} className="!w-[44px] !h-[44px] rounded-[6px] !p-[12px] border-3 border-[#2D3648] bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
+              <Plus className="w-[20px] h-[20px]"/>
+            </Button>
+            {patientsCards.length > 1 && (
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={() => { removePatientCard(patientsCards.length - 1); }}
+                className="!w-[44px] !h-[44px] rounded-[6px] !p-[12px] border-3 border-[#2D3648] bg-[#FFFFFF] flex items-center justify-center gap-[8px]"
+              >
+                <Minus className="w-[20px] h-[20px]" />
+              </Button>
+            )}
+          </div>
         </div>
         <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter" >
           Experiencias
@@ -385,7 +534,7 @@ export default function EvaluarIntervencion(){
             >
               <CardContent className="px-0 space-y-8 text-[#2D3648]">
                 <FormLabel className="w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                  ¿Cómo se sintió {dog.name}?
+                  ¿Cómo se sintió {dog.nombre}?
                 </FormLabel>
                 <RadioGroup 
                   onValueChange={(val)=>
@@ -436,6 +585,18 @@ export default function EvaluarIntervencion(){
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               aria-hidden="true"
             />
+            <div className="mt-2 space-y-1">
+              {/* {form.watch("photos")?.map((file, i) => (
+                <p key={i} className="text-sm text-[#2D3648]">
+                  {file.name}
+                </p>
+              ))}
+              {form.formState.errors.photos && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.photos.message}
+                </p>
+              )} */}
+            </div>
           </label>
           <div className="absolute top-[12px] left-[296px] w-[24px] h-[24px]">
             <Upload className="w-[24px] h-[24px]" />
