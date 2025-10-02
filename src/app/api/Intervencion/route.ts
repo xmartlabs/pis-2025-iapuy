@@ -27,12 +27,10 @@ export async function PUT( request: NextRequest , { params }: { params: { id: st
     const intervention = await intervencionController.evaluateIntervention(request, params.id);
     return NextResponse.json(intervention, { status: 201 });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error)
-    return NextResponse.json(
-      { error: 'Error al evaluar la intervención' },
-      { status: 500 }
-    );
-  }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+}
 }
 

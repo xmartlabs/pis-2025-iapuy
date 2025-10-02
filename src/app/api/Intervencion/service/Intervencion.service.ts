@@ -14,6 +14,8 @@ import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity"
 import { Patologia } from "@/app/models/patologia.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Perro } from "@/app/models/perro.entity";
+import fs from "fs";
+import path from "path";
 
 export class IntervencionService {
 
@@ -76,9 +78,31 @@ export class IntervencionService {
 
       const intervention = await Intervencion.findByPk(id, { transaction });
       if (!intervention) throw new Error("Intervention not found");
-      if (body.pictures && body.pictures.length > 0){
-        intervention.fotosUrls = body.pictures;
+      
+      const picturesUrls: string[] = [];
+      if (body.pictures && body.pictures.length > 0) {
+        const uploadDir = path.join(process.cwd(), "public","interventionsPictures", id);
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        for (const file of body.pictures) {
+          if (file.size > 15 * 1024 * 1024) {
+            throw new Error(`El archivo ${file.name} excede el tamaño máximo permitido el cual es de 15MB`);
+          }
+          if (!file.type.startsWith("image/")) {
+            throw new Error(`El archivo ${file.name} no es una imagen válida`);
+          }
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = path.join(uploadDir, fileName);
+          // eslint-disable-next-line no-await-in-loop
+          const buffer = Buffer.from(await file.arrayBuffer());
+          fs.writeFileSync(filePath, buffer);
+          picturesUrls.push(`/interventionsPictures/${id}/${fileName}`);
+        }
+        intervention.fotosUrls = picturesUrls;
       }
+
       if (body.driveLink){
         intervention.driveLink = body.driveLink;
       }

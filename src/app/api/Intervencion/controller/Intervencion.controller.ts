@@ -57,7 +57,7 @@ export class IntervencionController {
 
     const patients : PatientDTO[] = JSON.parse(formData.get("patients") as string) as unknown as PatientDTO[];
     const experiences : ExperiencePerroDTO[] = JSON.parse(formData.get("experiences") as string) as unknown as ExperiencePerroDTO[];
-    const pictures : string[] = JSON.parse(formData.get("photos") as string) as unknown as string[];
+    const pictures: File[] = formData.getAll("photos") as File[];
     const driveLink = (formData.get("driveLink") as string) ?? "";
 
     const body: EvaluateInterventionDTO = {

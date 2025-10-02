@@ -15,6 +15,6 @@ export interface ExperiencePerroDTO {
 export interface EvaluateInterventionDTO {
   patients: PatientDTO[];
   experiences: ExperiencePerroDTO[];
-  pictures : string[];
+  pictures : File[];
   driveLink : string;
 }
