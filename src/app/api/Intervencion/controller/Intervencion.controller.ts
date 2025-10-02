@@ -38,6 +38,20 @@ export class IntervencionController {
     }
   }
   
+  async getDogsFromIntervention(id: string){
+    try {
+      const dogs = await this.intervencionService.findAllDogsbyId(id);
+      return dogs;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: 500 }
+      );
+    }
+  }
+
   async evaluateIntervention(request: NextRequest, id: string) {
     const formData = await request.formData();
 
