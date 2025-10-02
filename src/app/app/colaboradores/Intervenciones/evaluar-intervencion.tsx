@@ -1,6 +1,6 @@
 "use client"
 
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel  } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage  } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Resolver } from "react-hook-form";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -30,6 +30,9 @@ type Pathology = {
   nombre: string
 }
 
+type ExperienceDog = "good" | "regular" | "bad";
+type ExperiencePat = "good" | "regular" | "bad" | undefined;
+
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -43,6 +46,12 @@ export default function EvaluarIntervencion(){
     const context = useContext(LoginContext);
     const { interventionId } = useParams<{ interventionId?: string }>();
     const id = interventionId ?? "69616880-a5f2-4c59-92be-c8480ead6517";
+    const dogs = [
+      { id: "p1111111", name: "Firulais" },
+      { id: "p2222222", name: "Luna" },
+      { id: "p3333333", name: "Rocco" },
+    ];
+
 
     const addPatCard = () =>{
       setPatientCard((prev) => [...prev, prev.length]); 
@@ -109,15 +118,32 @@ export default function EvaluarIntervencion(){
         reportError(err);
       });
     }, []);
-    const pacienteSchema = z.object({
+
+    const patientsSchema = z.object({
       name: z.string().min(1, "Nombre requerido"),
       age: z.number().int().min(0, "Edad inválida").max(200, "Edad inválida"),
       pathology: z.string().min(1, "Seleccionar patología"),
       feeling: z.enum(["good", "regular", "bad"]).optional(),
     });
+    
+    const dogsExpSchema = z.object({
+      dogId: z.string(),
+      feelingDog: z.enum(["good", "regular", "bad"])
+    })
+
+    const photosSchema = z 
+      .any()
+      .refine(
+        (files) => files instanceof FileList && files.length <= 2,
+        "Máximo 2 fotos"
+      );
 
     const FormSchema = z.object({
-      patients: z.array(pacienteSchema).min(1),
+      patients: z.array(patientsSchema).min(1),
+      dogs: z.array(dogsExpSchema).min(1),
+      photos: photosSchema.optional(),
+      driveLink: z.string().optional(),
+
     });
 
     type FormValues = z.infer<typeof FormSchema>;
@@ -126,20 +152,87 @@ export default function EvaluarIntervencion(){
       resolver: zodResolver(FormSchema) as unknown as Resolver<FormValues>,
       defaultValues: {
         patients: [{ name: "", age: 0, pathology: "", feeling: undefined }],
+        dogs: [{ feelingDog : undefined }],
+        photos: undefined,
+        driveLink: "",
       },
     });
 
-
-    const { control, register, handleSubmit } = form;
-    const { fields, append, remove } = useFieldArray({
+    const { control, register } = form;
+    useFieldArray({
       control,
       name: "patients",
     });
+    
+    // eslint-disable-next-line @typescript-eslint/consistent-return
+    async function onSubmit(data: FormValues ) {
+      try {
+        const mapFeeling = (f: "good" | "bad" | "regular"| undefined) => {
+          switch (f) {
+            case "good": return "buena";
+            case "bad": return "mala";
+            case "regular": return "regular";
+            default:
+              return undefined;
+          }
+        };
 
-    const onSubmit = (values: FormValues) => {
-      // values.patients: Array<{ name: string; age: number; pathology: string; feeling?: ... }>
-      console.log(values);
-    };
+        //transform data to match DTO
+        const patients = data.patients.map((p) => ({
+          name: p.name,
+          age: String(p.age), //? string
+          pathology_id: p.pathology,
+          experience:  mapFeeling(p.feeling),
+        }));
+
+        const experiences = (data.dogs ?? []).map((exp) => ({
+          perro_id: exp.dogId,
+          experiencia: mapFeeling(exp.feelingDog),
+        }));
+
+        const formData = new FormData();
+
+        formData.append("patients", JSON.stringify(patients));
+        formData.append("experiences", JSON.stringify(experiences));
+
+        if(data.photos && data.photos instanceof FileList){
+          Array.from(data.photos).slice(0,2).forEach((file) => {
+            formData.append("photos",file); //array de File
+          });
+        }
+
+        formData.append("driveLink", data.driveLink ?? "");
+
+        const res = await fetch("/api/intervencion",{
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${context?.tokenJwt}`
+          },
+          body: formData
+        });
+
+        if (res.status === 401) {
+          const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+              method: "POST",
+          });
+          if (resp2.ok) {
+            return onSubmit(data);
+          }
+          return;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Error ${res.status}: ${txt}`);
+        }
+
+        const datares = await res.json();
+        console.log("✅ Envío exitoso:", datares);
+
+      } catch (error) {
+            reportError(error);
+      }
+    }
 
 
 
@@ -162,23 +255,41 @@ export default function EvaluarIntervencion(){
             >
                 <CardContent className="px-0 space-y-8 text-[#2D3648]">
                   <div className="w-[462px] flex gap-[24px] h-[72px]">
-                    <FormItem className="w-[327px] h-[72px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                      <Label htmlFor={`patients.${index}.name`} className="text-sm h-[16px] leading-[20px]">Nombre</Label>
-                      <Input 
-                        id={`patients.${index}.name`} 
-                        className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]" 
-                        {...register(`patients.${index}.name` as const)}
-                      />
-                    </FormItem>
-                    <FormItem className="w-[111px] h-[72px] flex flex-col">
-                      <Label htmlFor={`age-${index}`} className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">Edad</Label>
-                      <Input 
-                        id={`patients.${index}.age`} 
-                        type="number" 
-                        className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]" 
-                        {...register(`patients.${index}.age` as const)}
-                      />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="w-[327px] h-[72px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                          <Label htmlFor={`patients.${index}.name`} className="text-sm h-[16px] leading-[20px]">Nombre</Label>
+                          <FormControl>
+                            <Input 
+                              id={`patients.${index}.name`} 
+                              className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]" 
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage/>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.age`}
+                      render={({ field }) => (
+                      <FormItem className="w-[111px] h-[72px] flex flex-col">
+                        <Label htmlFor={`age-${index}`} className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">Edad</Label>
+                        <FormControl>
+                          <Input
+                            id={`patient-${index}-age`}
+                            type="number"
+                            className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   </div>
                   <FormField
                     control={form.control}
@@ -230,18 +341,24 @@ export default function EvaluarIntervencion(){
                 <FormLabel className="w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
                   ¿Cómo se sintió el paciente?
                 </FormLabel>
-                <RadioGroup className="w-[296px] h-[24px] flex items-center gap-[24px]">
+                <RadioGroup 
+                  onValueChange={(val)=>
+                    { form.setValue(`patients.${index}.feeling`,val as ExperiencePat); }
+                  }
+                  value = {form.watch(`patients.${index}.feeling`)}
+                  className="w-[296px] h-[24px] flex items-center gap-[24px]"
+                >
                   <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                    <RadioGroupItem value="good" id="r1" className="w-4 h-4" />
-                    <Label htmlFor="r1" className="text-sm leading-[16px]">Buena</Label>
+                    <RadioGroupItem value="good" id={`patient-${index}-good`} className="w-4 h-4" />
+                    <Label htmlFor={`patient-${index}-good`} className="text-sm leading-[16px]">Buena</Label>
                   </div>
                   <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                    <RadioGroupItem value="regular" id="r2" className="w-4 h-4" />
-                    <Label htmlFor="r2" className="text-sm leading-[16px]">Regular</Label>
+                    <RadioGroupItem value="regular" id={`patient-${index}-regular`} className="w-4 h-4" />
+                    <Label htmlFor={`patient-${index}-regular`} className="text-sm leading-[16px]">Regular</Label>
                   </div>
                   <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                    <RadioGroupItem value="bad" id="r3"  className="w-4 h-4"/>
-                    <Label htmlFor="r3" className="text-sm leading-[16px]">Mala</Label>
+                    <RadioGroupItem value="bad" id={`patient-${index}-bad`}  className="w-4 h-4"/>
+                    <Label htmlFor={`patient-${index}-bad`} className="text-sm leading-[16px]">Mala</Label>
                   </div>
                 </RadioGroup>
               </CardContent>
@@ -255,36 +372,50 @@ export default function EvaluarIntervencion(){
           Experiencias
         </h3>
         <div className="flex gap-4">
-          {/* {patientsCards.map((_, index) => ( */}  {/*key = {index}*/}
-           <Card className=" 
-            w-[510px] max-w-full sm:h-[119px]
-            rounded-[20px]
-            p-6    
-            bg-[#F7F9FC]
-            border-0            
-            shadow-none              
-          "
-          >
-            <CardContent className="px-0 space-y-8 text-[#2D3648]">
-              <FormLabel className="w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                ¿Cómo se sintió [Nombre del perro]?
-              </FormLabel>
-              <RadioGroup className="w-[296px] h-[24px] flex items-center gap-[24px]">
-                <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                  <RadioGroupItem value="good" id="r1" className="w-4 h-4" />
-                  <Label htmlFor="r1" className="text-sm leading-[16px]">Buena</Label>
-                </div>
-                <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                  <RadioGroupItem value="regular" id="r2" className="w-4 h-4" />
-                  <Label htmlFor="r2" className="text-sm leading-[16px]">Regular</Label>
-                </div>
-                <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
-                  <RadioGroupItem value="bad" id="r3"  className="w-4 h-4"/>
-                  <Label htmlFor="r3" className="text-sm leading-[16px]">Mala</Label>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
+          {dogs.map((dog,index)=> (
+            <Card key= {dog.id} 
+            className=" 
+              w-[510px] max-w-full sm:h-[119px]
+              rounded-[20px]
+              p-6    
+              bg-[#F7F9FC]
+              border-0            
+              shadow-none              
+            "
+            >
+              <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                <FormLabel className="w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                  ¿Cómo se sintió {dog.name}?
+                </FormLabel>
+                <RadioGroup 
+                  onValueChange={(val)=>
+                    { form.setValue(`dogs.${index}.feelingDog`,val as ExperienceDog); }
+                  }
+                  value = {form.watch(`dogs.${index}.feelingDog`)}
+                  className="w-[296px] h-[24px] flex items-center gap-[24px]"
+                >
+                  <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
+                    <RadioGroupItem value="good" id={`good-${dog.id}`} className="w-4 h-4" />
+                    <Label htmlFor={`good-${dog.id}`} className="text-sm leading-[16px]">Buena</Label>
+                  </div>
+                  <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
+                    <RadioGroupItem value="regular" id={`regular-${dog.id}`} className="w-4 h-4" />
+                    <Label htmlFor={`regular-${dog.id}`} className="text-sm leading-[16px]">Regular</Label>
+                  </div>
+                  <div className="w-[83px] h-[24px] flex items-center gap-[12px]">
+                    <RadioGroupItem value="bad" id={`bad-${dog.id}`} className="w-4 h-4"/>
+                    <Label htmlFor={`bad-${dog.id}`} className="text-sm leading-[16px]">Mala</Label>
+                  </div>
+                </RadioGroup>
+
+                <input
+                   type="hidden"
+                  {...form.register(`dogs.${index}.dogId` as const)}
+                  value={dog.id}
+                />
+              </CardContent>
+            </Card>
+          ))}
         </div>
         <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter" >
           Fotos
@@ -299,8 +430,9 @@ export default function EvaluarIntervencion(){
             </span>
             <input
               id="picture"
-              name="picture"
               type="file"
+              multiple
+              {...form.register("photos")}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               aria-hidden="true"
             />
@@ -321,8 +453,8 @@ export default function EvaluarIntervencion(){
           </div>
           <FormControl>
             <Input
-              id="text"
               type="text"
+              {...form.register("driveLink")}
               className="w-[327px] h-[40px] rounded-[6px] !p-[12px] border-2 border-[#CBD2E0]"
             />
           </FormControl>
