@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { InstitucionesController } from "./controller/institucion.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
 
@@ -13,5 +13,28 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error(error);
     return new Response(undefined, { status: 400 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const institution = await institucionesController.createInstitution(
+      request
+    );
+    return NextResponse.json(institution, { status: 201 });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Ya existe una institucion")
+    ) {
+      return NextResponse.json(
+        { error: "Ya existe una institucion con el nombre elegido." },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

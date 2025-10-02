@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { InstitucionesService } from "../service/instituciones.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { type PaginationDto } from "@/lib/pagination/pagination.dto";
+import { type CreateInstitucionDTO } from "../dtos/create-institucion.dto";
 
 export class InstitucionesController {
   constructor(
@@ -17,5 +18,10 @@ export class InstitucionesController {
         { status: 500 }
       );
     }
+  }
+
+  async createInstitution(req: NextRequest) {
+    const body = (await req.json()) as unknown as CreateInstitucionDTO;
+    return this.institucionesService.create(body);
   }
 }

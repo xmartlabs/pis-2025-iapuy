@@ -17,12 +17,6 @@ export class Institucion extends Model {
   @Column
   declare nombre: string;
 
-  @Column
-  declare contacto: string;
-
-  @Column
-  declare telefono: string;
-
   @CreatedAt
   declare createdAt: Date;
 
