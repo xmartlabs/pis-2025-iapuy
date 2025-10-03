@@ -8,17 +8,17 @@ import Link from "next/link";
 import { AppSidebar } from "@/app/components/app-sidebar";
 import { LoginContext } from "@/app/context/login-context";
 import { useContext, useEffect } from "react";
-import type { TipoUsuario } from "@/app/page";
+import type { UserType } from "@/app/page";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger
- } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 type Props = Readonly<{ children: React.ReactNode }>;
 
 export default function LoginLayout({ children }: Props) {
@@ -33,8 +33,8 @@ export default function LoginLayout({ children }: Props) {
 
     interface JwtPayload {
       ci: string;
-      nombre: string;
-      tipo: TipoUsuario;
+      name: string;
+      type: UserType;
     }
 
     const tryRefresh = async (): Promise<void> => {
@@ -49,8 +49,8 @@ export default function LoginLayout({ children }: Props) {
           try {
             const decoded = jwtDecode<JwtPayload>(data.accessToken);
             context?.setToken(data.accessToken);
-            context?.setType(decoded.tipo);
-            context?.setUserName(decoded.nombre);
+            context?.setType(decoded.type);
+            context?.setUserName(decoded.name);
             context?.setCI(decoded.ci);
           } catch {
             context?.setToken(null);
@@ -100,9 +100,9 @@ export default function LoginLayout({ children }: Props) {
       context?.setToken(null);
       context?.setUserName(null);
       context?.setCI(null);
+      context?.setType(null);
 
       router.push("/");
-      context?.setType(null);
     } catch {
       // ignore logout errors for now
     }
@@ -131,26 +131,26 @@ export default function LoginLayout({ children }: Props) {
                 {iniciales}
               </div>
             </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="bottom"
-                align="end"
-                sideOffset={4}
-                className="border !border-[#BDD7B3]"
+            <DropdownMenuContent
+              side="bottom"
+              align="end"
+              sideOffset={4}
+              className="border !border-[#BDD7B3]"
+            >
+              <DropdownMenuItem asChild>
+                <Link href={"/app/perfil"}>Mi perfil</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>Perfil de [Nombre del perro]</DropdownMenuItem>
+              <DropdownMenuSeparator className="!border-[#BDD7B3]" />
+              <DropdownMenuItem
+                onClick={() => {
+                  handleLogout().catch(() => {});
+                }}
               >
-                <DropdownMenuItem asChild>
-                  <Link href={"/app/perfil"}>Mi perfil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>Perfil de [Nombre del perro]</DropdownMenuItem>
-                <DropdownMenuSeparator className="!border-[#BDD7B3]" />
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleLogout().catch(() => {});
-                  }}
-                >
-                  Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-          </DropdownMenu>          
+                Cerrar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <main className="!ml-8 !mt-[60px]">{children}</main>
       </SidebarInset>
