@@ -22,14 +22,13 @@ npx next build && docker compose up --build
 
 For local development we will setup the DB on Docker but run locally the Next application in order to take advantage of tools like hot reload to see changes on the code be reflected on real-time.
 Before pushing to the repo all changes should be testes dockerizing the whole application.
+
+### [Important]: Before doing any of the steps below generate the .env file within th root of the proyect
 ```shell
 docker compose up postgres -d
 ```
 ```shell
 npm run dev
-```
-
-
 ```
 
 ### Example .env file
@@ -44,17 +43,6 @@ DB_NAME=[name for db]
 JWT_SECRET=ba1b46dcbd266376.......
 
 ENVIROMENT=dev
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

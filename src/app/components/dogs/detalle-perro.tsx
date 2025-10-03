@@ -8,7 +8,7 @@ import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import { LoginContext } from "@/app/context/login-context";
 import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb"
-import {TipoUsuario} from "@/app/page"
+import {UserType} from "@/app/page"
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -106,11 +106,11 @@ export default function DetallePerro() {
   if (!context?.userType){
     return null;
   }
-  const userType:TipoUsuario=context?.userType
+  const userType:UserType=context?.userType
   return (
     <>
       <div className="w-full">
-        {userType === TipoUsuario.Administrador && (
+        {userType === UserType.Administrator && (
           <CustomBreadCrumb
             link={["/app/admin/perros/listado", "Perros"]}
             current={infoPerro.nombre}
@@ -125,7 +125,7 @@ export default function DetallePerro() {
             {infoPerro.nombre}
           </h1>
           <div className="flex gap-2">
-            {userType === TipoUsuario.Administrador && (
+            {userType === UserType.Administrator && (
             <Button
               variant="outline"
               className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"

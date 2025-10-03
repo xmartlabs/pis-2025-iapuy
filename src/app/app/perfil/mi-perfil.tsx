@@ -52,7 +52,7 @@ export default function DetallePersona() {
         return null;
       }
 
-      const url = new URL(`/api/users/${userCi}`, BASE_API_URL);
+      const url = new URL(`/api/users/profile`, BASE_API_URL);
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
