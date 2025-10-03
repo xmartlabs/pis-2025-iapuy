@@ -20,12 +20,24 @@ import {
 } from "@/components/ui/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Funnel } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import NuevaInstervencion from "../nueva/page";
+import { Button } from "@/components/ui/button";
+import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
+
+const statuses = ["Pendiente", "Finalizada", "Suspendida"];
+
+function formatMonthYear(ts: string | number | Date) {
+  const d = new Date(ts);
+  const monthShort = d
+    .toLocaleString("es-ES", { month: "short" })
+    .replace(".", "");
+  const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
+  return `${monthCap} ${d.getFullYear()}`;
+}
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -33,6 +45,7 @@ const BASE_API_URL = (
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -188,8 +201,25 @@ export default function ListadoIntervenciones() {
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
-        }
-      })
+
+          try {
+            const map = new Map<string, number>();
+            res.data.forEach((it) => {
+              const d = new Date(it.timeStamp);
+              if (isNaN(d.getTime())) return;
+              const key = formatMonthYear(d);
+              const monthStart = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+              if (!map.has(key)) map.set(key, monthStart);
+            });
+            const sorted = Array.from(map.entries())
+              .sort((a, b) => b[1] - a[1])
+              .map((e) => e[0]);
+            setAvailableMonths(sorted);
+          } catch (e) {
+            setAvailableMonths([]);
+          }
+         }
+       })
       .catch(() => {})
       .finally(() => {
         setLoading(false);
@@ -200,15 +230,34 @@ export default function ListadoIntervenciones() {
     };
   }, [page, size, search, reload, fetchIntervenciones]);
 
+  // opcional: manejar cambios de selección desde el dropdown
+  const onFilterSelectionChange = (
+    monthsSelected: string[],
+    statusesSelected: string[],
+  ) => {
+    // Por ahora no hacemos nada; si en el futuro queremos filtrar
+    // la lista por estos valores, podemos actualizar `search` o
+    // reiniciar la página aquí.
+    // console.log('filter changed', monthsSelected, statusesSelected);
+  };
+
   return (
     <div className=" max-w-[92%]">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
         <h1
-          className="text-5xl font-bold tracking-tight leading-[1.2] tracking-[0.01em]"
+          className="text-5xl font-bold tracking-tight leading-[1.2]"
           style={{ fontFamily: "Inter, sans-serif" }}
         >
           Intervenciones
         </h1>
+        <Button className="flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-sm transition-colors duration-200 hover:bg-gray-100">
+          <Plus className="w-5 h-5 mr-2" />
+          <span style={{ fontFamily: "Inter, sans-serif" }}>
+            Agregar intervención
+          </span>
+        </Button>
+      </div>
+      <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -220,14 +269,11 @@ export default function ListadoIntervenciones() {
             className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
           />
         </div>
-        <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <NuevaInstervencion />
-        </div>
-      </div>
-      <div className="flex justify-end mb-2 p-3">
-        <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <Funnel className="w-[20px] h-[20px] "></Funnel>
-        </div>
+        <FilterDropdown
+          months={availableMonths}
+          statuses={statuses}
+          onSelectionChangeAction={onFilterSelectionChange}
+        />
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
