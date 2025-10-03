@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dog } from "lucide-react";
+import { Dog, Plus } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { RegistrarPerro } from "./registrar-perro";
@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import type { PerroDTO } from "./DTOS/perro.dto";
 import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
+import { Button } from "@/components/ui/button";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -33,6 +34,7 @@ export default function ListadoPerrosTable() {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [reload, setReload] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const context = useContext(LoginContext);
   const router = useRouter();
@@ -210,7 +212,14 @@ export default function ListadoPerrosTable() {
 
         <div className="flex items-start gap-4">
           <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
-          <RegistrarPerro reload={reload} setReload={setReload} />
+          <Button
+            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
+            onClick={(e) => { e.preventDefault(); setOpen(true); }}
+          >
+            <Plus size={16} />
+            Agregar perro
+          </Button>
+          <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} />
         </div>
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">

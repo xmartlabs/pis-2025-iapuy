@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
   try {
     const res = await jwtVerify(token, secret);
 
-    if (res.payload.tipo === "Colaborador") {
+    if (res.payload.type === "Colaborador") {
       if (
         pathname.startsWith("/api/intervencines") ||
         //pathname.startsWith("/api/gastos")||
