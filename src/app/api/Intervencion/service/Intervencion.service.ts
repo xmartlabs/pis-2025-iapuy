@@ -123,8 +123,8 @@ export class IntervencionService {
       await Promise.all(body.experiences.map((dogExperience) =>
         PerroExperiencia.create(
           {
-            perroId : dogExperience.perro_id,
-            intervencionId : id,
+            perro_id : dogExperience.perro_id,
+            intervencion_id : id,
             experiencia : dogExperience.experiencia
           },{ transaction }
         )

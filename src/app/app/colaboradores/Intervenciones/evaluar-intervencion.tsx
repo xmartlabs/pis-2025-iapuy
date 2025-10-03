@@ -54,7 +54,7 @@ export default function EvaluarIntervencion(){
     const [patientsCards, setPatientCard] = useState([0]);
     const context = useContext(LoginContext);
     const { interventionId } = useParams<{ interventionId?: string }>();
-    const id = interventionId ?? "3ac73ee5-8f8e-4e0e-a15a-fc36b74701e2";
+    const id = interventionId ?? "8426ad74-8ca1-413f-acc2-5b43b0445280";
 
     useEffect(()=> {
       const callApi = async () => {

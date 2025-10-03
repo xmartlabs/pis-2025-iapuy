@@ -28,13 +28,13 @@ export class PerroExperiencia extends Model{
   @ForeignKey(() => Perro)
       // eslint-disable-next-line new-cap
   @Column({ type: DataType.STRING })
-  declare perroId: CreationOptional<string>;
+  declare perro_id: CreationOptional<string>;
 
 // eslint-disable-next-line new-cap
   @ForeignKey(() => Intervencion)
       // eslint-disable-next-line new-cap
   @Column({ type: DataType.STRING })
-  declare intervencionId: string;
+  declare intervencion_id: string;
 
 // eslint-disable-next-line new-cap
   @Column({ type: DataType.ENUM('buena', 'mala', 'regular') })
