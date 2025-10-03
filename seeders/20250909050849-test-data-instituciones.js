@@ -23,18 +23,18 @@ module.exports = {
       },
     ]);
 
-    await queryInterface.bulkInsert("contactos-institucion", [
+    await queryInterface.bulkInsert("institutionContacts", [
       {
-        nombre: "María Gómez",
-        contacto: "099123456",
-        institucionId: inst1,
+        name: "María Gómez",
+        contact: "099123456",
+        institutionId: inst1,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        nombre: "Juan Pérez",
-        contacto: "092987654",
-        institucionId: inst2,
+        name: "Juan Pérez",
+        contact: "092987654",
+        institutionId: inst2,
         createdAt: new Date(),
         updatedAt: new Date(),
       }

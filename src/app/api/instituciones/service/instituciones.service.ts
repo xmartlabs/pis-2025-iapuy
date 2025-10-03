@@ -4,11 +4,10 @@ import { type PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { type PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
-import { type CreateInstitucionDTO } from "../dtos/create-institucion.dto";
-import { ContactoInstitucion } from "@/app/models/contacto-institucion.entity";
-const { v4: uuidv4 } = require("uuid");
+import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
+import { InstitutionContact } from "@/app/models/institution-contact.entity";
 
-export class InstitucionesService {
+export class InstitutionsService {
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Institucion>> {
@@ -29,28 +28,26 @@ export class InstitucionesService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async create(institutionDTO: CreateInstitucionDTO): Promise<Institucion> {
+  async create(institutionDTO: CreateInstitutionDTO): Promise<Institucion> {
     const existe =
       (await Institucion.findOne({
-        where: { nombre: institutionDTO.nombre },
+        where: { nombre: institutionDTO.name },
       })) !== null;
     if (existe) {
       throw new Error("Ya existe una institucion con el nombre elegido.");
     }
-    const int1 = uuidv4();
-    const institucion: Institucion = await Institucion.create({
-      id: int1,
-      nombre: institutionDTO.nombre,
+    const institution: Institucion = await Institucion.create({
+      nombre: institutionDTO.name,
     });
     await Promise.all(
-      institutionDTO.referentes.map((referente) =>
-        ContactoInstitucion.create({
-          nombre: referente.nombre,
-          contacto: referente.contacto,
-          institucionId: institucion.id,
+      institutionDTO.institutionContacts.map((referente) =>
+        InstitutionContact.create({
+          name: referente.name,
+          contact: referente.contact,
+          institutionId: institution.id,
         })
       )
     );
-    return institucion;
+    return institution;
   }
 }

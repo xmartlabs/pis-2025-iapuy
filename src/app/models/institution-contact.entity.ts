@@ -11,8 +11,8 @@ import {
 } from "sequelize-typescript";
 import { Institucion } from "./institucion.entity";
 
-@Table({ tableName: "contactos-institucion" })
-export class ContactoInstitucion extends Model {
+@Table({ tableName: "institutionContacts" })
+export class InstitutionContact extends Model {
   @PrimaryKey
   @Column({
     type: DataType.UUID,
@@ -21,14 +21,14 @@ export class ContactoInstitucion extends Model {
   declare id: string;
 
   @Column
-  declare nombre: string;
+  declare name: string;
 
   @Column
-  declare contacto: string;
+  declare contact: string;
 
   @ForeignKey(() => Institucion)
   @Column
-  declare institucionId: string;
+  declare institutionId: string;
 
   @CreatedAt
   declare createdAt: Date;

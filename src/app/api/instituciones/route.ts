@@ -1,15 +1,15 @@
 import { initDatabase } from "@/lib/init-database";
 import { type NextRequest, NextResponse } from "next/server";
-import { InstitucionesController } from "./controller/institucion.controller";
+import { InstitutionsController } from "./controller/institution.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
 
-const institucionesController = new InstitucionesController();
+const institutionsController = new InstitutionsController();
 await initDatabase();
 
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-    return institucionesController.getInstituciones(pagination);
+    return institutionsController.getInstitutions(pagination);
   } catch (error) {
     console.error(error);
     return new Response(undefined, { status: 400 });
@@ -18,9 +18,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const institution = await institucionesController.createInstitution(
-      request
-    );
+    const institution = await institutionsController.createInstitution(request);
     return NextResponse.json(institution, { status: 201 });
   } catch (error) {
     if (

@@ -1,7 +1,7 @@
-import { type ReferenteInstitucionDTO } from "./referente-institucion.dto";
+import { type InstitutionContactDTO } from "./institution-contact.dto";
 
-export class CreateInstitucionDTO {
-  declare nombre: string;
-  declare patologias: Array<string>;
-  declare referentes: Array<ReferenteInstitucionDTO>;
+export class CreateInstitutionDTO {
+  declare name: string;
+  declare pathologies: Array<string>;
+  declare institutionContacts: Array<InstitutionContactDTO>;
 }

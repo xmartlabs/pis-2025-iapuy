@@ -12,7 +12,7 @@ import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
-import { ContactoInstitucion } from "@/app/models/contacto-institucion.entity";
+import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { Sequelize } from "sequelize-typescript";
 
 const sequelize = new Sequelize({
@@ -37,7 +37,7 @@ const sequelize = new Sequelize({
     Patologia,
     InstitucionPatologias,
     InstitucionIntervencion,
-    ContactoInstitucion,
+    InstitutionContact,
   ],
   logging: false,
   define: {

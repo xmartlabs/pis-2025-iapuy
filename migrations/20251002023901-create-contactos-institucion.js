@@ -3,22 +3,22 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await queryInterface.createTable("contactos-institucion", {
+    await queryInterface.createTable("institutionContacts", {
       id: {
         type: Sequelize.UUID,
         allowNull: false,
         primaryKey: true,
         defaultValue: Sequelize.literal("uuid_generate_v4()"),
       },
-      nombre: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      contacto: {
+      contact: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      institucionId: {
+      institutionId: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -57,6 +57,6 @@ module.exports = {
       allowNull: false,
       defaultValue: false,
     });
-    await queryInterface.dropTable("contactos-institucion");
+    await queryInterface.dropTable("InstitutionContacts");
   }
 };
