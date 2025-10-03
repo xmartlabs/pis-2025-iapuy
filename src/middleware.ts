@@ -26,9 +26,9 @@ export async function middleware(req: NextRequest) {
     if (res.payload.tipo === "Colaborador") {
       if (
         pathname.startsWith("/api/intervencines") ||
-        pathname.startsWith("/api/gastos")||
+        //pathname.startsWith("/api/gastos")||
         (pathname.startsWith("/api/users/") && pathname.endsWith("/perros"))||
-         pathname.startsWith("/api/perros")||
+         pathname.startsWith("/api/perros/detalles")||
          pathname.startsWith("/api/registros-sanidad")
       ) {
         return NextResponse.next();

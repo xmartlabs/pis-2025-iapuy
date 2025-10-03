@@ -37,7 +37,6 @@ export default function DetallePerro() {
   const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
   const [isOpenError, setIsOpenError] = useState(false);
   const context = useContext(LoginContext);
-  
   const fetchDetallesPerro = useCallback(
     async (id: string): Promise<ApiResponse> => {
       const token = context?.tokenJwt;
@@ -126,13 +125,14 @@ export default function DetallePerro() {
             {infoPerro.nombre}
           </h1>
           <div className="flex gap-2">
+            {userType === TipoUsuario.Administrador && (
             <Button
               variant="outline"
               className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
             >
               <Pencil className="w-4 h-4" />
               Editar
-            </Button>
+            </Button>)}
             <RegistroSanidad />
           </div>
         </div>
