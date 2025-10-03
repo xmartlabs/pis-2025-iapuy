@@ -26,6 +26,9 @@ export async function middleware(req: NextRequest) {
     if (res.payload.type === "Colaborador") {
       if (
         pathname.startsWith("/api/intervencines") ||
+        (pathname.startsWith("/api/users/") && pathname.endsWith("/perros")) ||
+        pathname.startsWith("/api/perros/detalles") ||
+        pathname.startsWith("/api/registros-sanidad") ||
         pathname.startsWith("/api/gastos") ||
         pathname.startsWith("/api/users/profile")
       ) {

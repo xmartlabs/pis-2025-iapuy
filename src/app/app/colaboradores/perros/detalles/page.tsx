@@ -1,7 +1,6 @@
 import DetallePerro from "@/app/components/dogs/detalle-perro";
-import HistorialSanidad from "@/app/components/dogs/historial-sanidad";
 import HistorialIntervenciones from "@/app/components/dogs/historial-intervenciones";
-import EliminarPerro from "@/app/components/dogs/eliminar-perro";
+import HistorialSanidad from "@/app/components/dogs/historial-sanidad";
 
 export default function PantallaPerros() {
   return (
@@ -9,7 +8,6 @@ export default function PantallaPerros() {
       <DetallePerro />
       <HistorialIntervenciones />
       <HistorialSanidad />
-      <EliminarPerro />
     </div>
   );
 }
