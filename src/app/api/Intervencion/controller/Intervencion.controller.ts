@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { IntervencionService } from "../service/Intervencion.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { IntervencionService } from "../service/intervencion.service";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 
 export class IntervencionController {
   constructor(

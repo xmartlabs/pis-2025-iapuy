@@ -1,5 +1,3 @@
-/* eslint-disable check-file/folder-naming-convention */
-/* eslint-disable check-file/filename-naming-convention */
 import { Intervencion } from "@/app/models/intervencion.entity";
 import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
