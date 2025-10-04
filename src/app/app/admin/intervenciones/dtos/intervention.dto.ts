@@ -8,7 +8,7 @@ export class InterventionDto {
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
-  Institucions: InstitutionDto;
+  Institucions: InstitutionDto[];
   pairsQuantity: number;
   status: string;
   createdAt?: Date;
@@ -16,7 +16,7 @@ export class InterventionDto {
   deletedAt?: Date;
 
   constructor(
-    institucions: InstitutionDto,
+    institucions: InstitutionDto[],
     id: string,
     timeStamp: Date,
     cost: number,

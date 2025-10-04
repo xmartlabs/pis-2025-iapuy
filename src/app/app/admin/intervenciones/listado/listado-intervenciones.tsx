@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable */
 
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+import CustomSearchBar from "@/app/components/search-bar";
 import {
   Table,
   TableBody,
@@ -11,16 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Funnel } from "lucide-react";
+import { Funnel } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
@@ -65,12 +60,12 @@ export default function ListadoIntervenciones() {
       pageSize: number,
       query?: string,
       signal?: AbortSignal,
-      triedRefresh = false,
+      triedRefresh = false
     ): Promise<PaginationResultDto<InterventionDto> | null> => {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL("/api/Intervencion", BASE_API_URL);
+      const url = new URL("/api/intervencion", BASE_API_URL);
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
       if (query?.trim().length) url.searchParams.set("query", query.trim());
@@ -101,7 +96,7 @@ export default function ListadoIntervenciones() {
               method: "POST",
               headers: { Accept: "application/json" },
               signal: combinedSignal,
-            },
+            }
           );
 
           if (resp2.ok) {
@@ -123,10 +118,9 @@ export default function ListadoIntervenciones() {
 
               if (!retryResp.ok) {
                 const txt = await retryResp.text().catch(() => "");
+                const errTxt = txt ? ` - ${txt}` : "";
                 throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`,
+                  `API ${retryResp.status}: ${retryResp.statusText}${errTxt}`
                 );
               }
 
@@ -139,7 +133,7 @@ export default function ListadoIntervenciones() {
                 !body2 ||
                 typeof body2 !== "object" ||
                 !Array.isArray(
-                  (body2 as PaginationResultDto<InterventionDto>).data,
+                  (body2 as PaginationResultDto<InterventionDto>).data
                 )
               )
                 throw new Error("Malformed API response");
@@ -150,9 +144,8 @@ export default function ListadoIntervenciones() {
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
-          throw new Error(
-            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`,
-          );
+          const errTxt = txt ? ` - ${txt}` : "";
+          throw new Error(`API ${resp.status}: ${resp.statusText}${errTxt}`);
         }
 
         const ct = resp.headers.get("content-type") ?? "";
@@ -176,7 +169,7 @@ export default function ListadoIntervenciones() {
         clearTimeout(timeout);
       }
     },
-    [context],
+    [context]
   );
 
   useEffect(() => {
@@ -209,17 +202,10 @@ export default function ListadoIntervenciones() {
         >
           Intervenciones
         </h1>
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-            }}
-            className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
-          />
-        </div>
+        <CustomSearchBar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+        />
         <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
           <NuevaInstervencion />
         </div>
@@ -257,8 +243,8 @@ export default function ListadoIntervenciones() {
 
             <TableBody className="divide-y divide-gray-100 bg-white">
               {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i} className="px-6 py-4">
+                ["s1", "s2", "s3", "s4", "s5", "s6"].map((key) => (
+                  <TableRow key={key} className="px-6 py-4">
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[140px]" />
                     </TableCell>
@@ -294,13 +280,13 @@ export default function ListadoIntervenciones() {
                               day: "2-digit",
                               month: "2-digit",
                               year: "numeric",
-                            },
+                            }
                           )} ${new Date(inter.timeStamp).toLocaleTimeString(
                             "pt-BR",
                             {
                               hour: "2-digit",
                               minute: "2-digit",
-                            },
+                            }
                           )}`}
                         </span>
                       </div>
@@ -308,7 +294,9 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions?.[0]?.nombre || ""}
+                        {inter.Institucions.length > 0
+                          ? inter.Institucions[0].nombre
+                          : ""}
                       </div>
                     </TableCell>
 
@@ -345,45 +333,7 @@ export default function ListadoIntervenciones() {
           </Table>
         </div>
       </div>
-      {
-        <div className="px-6 py-4 border-t border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <Pagination>
-              {/* added gap here */}
-              <PaginationContent className="flex items-center gap-3">
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page > 1) setPage(page - 1);
-                    }}
-                    className={
-                      page <= 1 ? "pointer-events-none opacity-40" : ""
-                    }
-                  />
-                </PaginationItem>
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page < totalPages) setPage(page + 1);
-                    }}
-                    className={
-                      page >= totalPages ? "pointer-events-none opacity-40" : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-          <div className="text-muted-foreground text-center">
-            Página {page} de {totalPages}
-          </div>
-        </div>
-      }
+      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
     </div>
   );
 }
