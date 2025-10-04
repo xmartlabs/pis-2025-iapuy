@@ -1,9 +1,10 @@
+import React, { Suspense } from "react";
 import RegistroSanidad from "../registrar-sanidad";
 
-export default function registrarSanidad() {
+export default function RegistrarSanidadPage() {
   return (
-    <>
-      <RegistroSanidad/>
-    </>
+    <Suspense fallback={<div>Cargando...</div>}>
+      <RegistroSanidad />
+    </Suspense>
   );
 }

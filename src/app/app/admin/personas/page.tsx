@@ -1,3 +1,5 @@
+'use client'
+
 import DetallePersona from "./detalle/page";
 import ListadoPersonas from "./listado/page";
 

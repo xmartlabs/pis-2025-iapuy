@@ -1,4 +1,4 @@
-import { IntervencionService } from "../service/Intervencion.service";
+import { IntervencionService } from "../service/intervencion.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 
 export class IntervencionController {
@@ -6,9 +6,12 @@ export class IntervencionController {
     private readonly intervencionService: IntervencionService = new IntervencionService()
   ) {}
   async getIntervenciones(pagination: PaginationDto) {
-      return await this.intervencionService.findAll(pagination);
+    return await this.intervencionService.findAll(pagination);
   }
   async getInterventionByDogId(pagination: PaginationDto, dogId: string) {
-      return await this.intervencionService.findInterventionByDogId(pagination, dogId);
+    return await this.intervencionService.findInterventionByDogId(
+      pagination,
+      dogId
+    );
   }
 }

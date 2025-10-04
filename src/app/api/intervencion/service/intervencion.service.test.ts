@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { IntervencionService } from "./Intervencion.service";
+import { IntervencionService } from "./intervencion.service";
 import { Intervencion } from "@/app/models/intervencion.entity";
 import { Op } from "sequelize";
 
@@ -15,7 +16,7 @@ vi.mock("@/lib/pagination/transform", () => ({
 }));
 
 describe("IntervencionService", () => {
-  let service: IntervencionService;
+  let service: any = undefined;
 
   beforeEach(() => {
     service = new IntervencionService();
