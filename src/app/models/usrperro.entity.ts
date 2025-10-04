@@ -2,6 +2,7 @@
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -12,12 +13,13 @@ import {
 import { User } from "./user.entity";
 import { Intervencion } from "./intervencion.entity";
 import { Perro } from "./perro.entity";
+import type { CreationOptional } from "sequelize";
 
 @Table({ tableName: "usrperros" })
 export class UsrPerro extends Model {
   @PrimaryKey
-  @Column
-  declare id: string;
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+  declare id: CreationOptional<string>;
 
   @ForeignKey(() => User)
   @Column
