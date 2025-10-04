@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 
 import { RegistrarPerro } from "../../perros/registrar-perro";
 
-const BASE_API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+
 
 const formSchema = z.object({
     nombre: z.stringFormat("nombre", /^[\p{L}]+(?:\s+[\p{L}]+)+$/u, {
@@ -109,13 +109,13 @@ export default function Formulario() {
         async function fetchPerrosOptions(): Promise<void> {
             const controller = new AbortController();
             const timeout = setTimeout(() => { controller.abort(); }, 10000);
-            const url = new URL("/api/perros?size=-1", BASE_API_URL);
+            const url = `/api/perros?size=-1`;
 
             try {
                 const token = context?.tokenJwt ?? undefined;
 
                 const doFetch = async (authToken?: string) => {
-                    const resp = await fetch(url.toString(), {
+                    const resp = await fetch(url, {
                         method: "GET",
                         headers: {
                             Accept: "application/json",
@@ -129,7 +129,7 @@ export default function Formulario() {
                 let resp = await doFetch(token);
 
                 if (resp.status === 401) {
-                    const refreshResp = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+                    const refreshResp = await fetch("/api/auth/refresh", {
                         method: "POST",
                         headers: { Accept: "application/json" },
                         signal: controller.signal,
@@ -195,7 +195,7 @@ export default function Formulario() {
 
         try {
             const token = context?.tokenJwt ?? undefined;
-            const url = new URL("/api/users", BASE_API_URL);
+            const url = `/api/users`;
 
             const doPost = async (authToken?: string) => await fetch(url.toString(), {
                 method: "POST",
@@ -213,7 +213,7 @@ export default function Formulario() {
 
             // Si expira (401), refrescá y reintentá
             if (res.status === 401) {
-                const refreshResp = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+                const refreshResp = await fetch("/api/auth/refresh", {
                     method: "POST",
                     headers: { Accept: "application/json" },
                     signal: controller.signal,

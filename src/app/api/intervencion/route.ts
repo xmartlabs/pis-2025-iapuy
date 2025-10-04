@@ -1,6 +1,6 @@
 import { initDatabase } from "@/lib/init-database";
-import { IntervencionController } from "./controller/Intervencion.controller";
-import { NextRequest } from "next/server";
+import { IntervencionController } from "./controller/intervencion.controller";
+import type { NextRequest } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
 
 const intervencionController = new IntervencionController();

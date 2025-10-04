@@ -21,9 +21,7 @@ import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { Button } from "@/components/ui/button";
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 export default function ListadoPerrosTable() {
   const [perros, setPerros] = useState<PerroDTO[]>([]);
@@ -65,10 +63,11 @@ export default function ListadoPerrosTable() {
     const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
     const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-    const url = new URL("/api/perros", BASE_API_URL);
-    url.searchParams.set("page", String(p));
-    url.searchParams.set("size", String(s));
-    if (query?.trim().length) url.searchParams.set("query", query.trim());
+  const qs = new URLSearchParams();
+  qs.set("page", String(p));
+  qs.set("size", String(s));
+  if (query?.trim().length) qs.set("query", query.trim());
+  const url = `/api/perros?${qs.toString()}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -90,7 +89,7 @@ export default function ListadoPerrosTable() {
       });
 
       if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+  const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
           headers: { Accept: "application/json" },
           signal: combinedSignal,

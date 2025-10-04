@@ -59,9 +59,7 @@ type dataPerro = {
   duenioId?: string;
 };
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 interface AgregarPerroProps {
   reload: boolean;
@@ -103,7 +101,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         const response = await fetch("/api/users", { headers: baseHeaders });
         if (response.status === 401) {
           const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
+            "/api/auth/refresh",
             {
               method: "POST",
               headers: { Accept: "application/json" },
@@ -210,7 +208,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       });
 
       if (res.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+  const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
           headers: { Accept: "application/json" },
         });

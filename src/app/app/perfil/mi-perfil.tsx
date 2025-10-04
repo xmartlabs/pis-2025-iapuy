@@ -25,9 +25,7 @@ type UserData = CreateUserDto & {
   esAdmin?: boolean;
 };
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 export default function DetallePersona() {
   const context = useContext(LoginContext);
@@ -52,7 +50,7 @@ export default function DetallePersona() {
         return null;
       }
 
-      const url = new URL(`/api/users/profile`, BASE_API_URL);
+  const url = `/api/users/profile`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -74,14 +72,11 @@ export default function DetallePersona() {
         });
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
+          const resp2 = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            signal: combinedSignal,
+          });
 
           if (resp2.ok) {
             const refreshBody = (await resp2.json().catch(() => null)) as {
