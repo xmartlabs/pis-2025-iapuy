@@ -26,8 +26,9 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { AlertCircleIcon, MinusIcon, PlusIcon } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import InterventionRow from "@/app/app/admin/intervenciones/nueva/intervention-row";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -94,12 +95,15 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function NewIntervention() {
   const [error, setError] = useState<string | null>(null);
+  const [institution, setInstitution] = useState<string | null>(null);
   const [institutions, setInstitutions] = useState<Array<Institution> | null>(
     null
   );
   const context = useContext(LoginContext);
   const router = useRouter();
   const interventionTypes = ["Educativa", "Recreativa", "Terapeutica"];
+  const [repeatedIntervention, setRepeatedIntervention] =
+    useState<InterventionDto | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -203,9 +207,10 @@ export default function NewIntervention() {
     [context]
   );
   const onSubmit = async (values: FormValues) => {
+    setRepeatedIntervention(null);
+    setInstitution(values.institution);
     try {
       const token = context?.tokenJwt;
-
       if (!context) {
         toast("Error: Contexto de autenticación no disponible", {
           description:
@@ -226,23 +231,26 @@ export default function NewIntervention() {
       const backendData = {
         timeStamp: combinedDateTime.toISOString(),
         pairsQuantity: values.pairQuantity,
-        tipo: values.type.toLowerCase(),
-        institucion: values.institution,
+        type: values.type.toLowerCase(),
+        institution: values.institution,
         description: values.description,
-        costo: 0,
+        cost: 0,
         fotosUrls: [],
         estado: "pendiente",
       };
+      const interventions = await fetchInterventionsByInstitution(
+        values.institution
+      );
+
       for (const intervention of interventions?.data ?? []) {
+        const interventionDate = new Date(intervention.timeStamp);
         if (
-          new Date(intervention.timeStamp).getTime() ===
-            combinedDateTime.getTime() &&
-          new Date(intervention.timeStamp).getDate() ===
-            combinedDateTime.getDate()
+          interventionDate.getTime() === combinedDateTime.getTime() &&
+          interventionDate.getDate() === combinedDateTime.getDate() &&
+          interventionDate.getMonth() === combinedDateTime.getMonth() &&
+          interventionDate.getFullYear() === combinedDateTime.getFullYear()
         ) {
-          setError(
-            "Ya existe una intervención para esa institución en la misma fecha y hora."
-          );
+          setRepeatedIntervention(intervention);
           return;
         }
       }
@@ -295,10 +303,7 @@ export default function NewIntervention() {
           errorText || `Error ${response.status}: ${response.statusText}`
         );
       }
-      const interventions = await fetchInterventionsByInstitution(
-        values.institution
-      );
-
+      setInstitution(null);
       toast("Intervención creada con éxito", {
         description: "La intervención ha sido creada exitosamente.",
       });
@@ -422,9 +427,21 @@ export default function NewIntervention() {
   return (
     <div className="mr-[20px]">
       {error && <p className="text-red-500 text-center">{error}</p>}
-      <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+      {repeatedIntervention !== null && institution !== null && (
+        <div className="grid border border-red-500 rounded-md p-2 w-full">
+          <div className="flex">
+            <AlertCircleIcon className="text-red-500 mr-1" />{" "}
+            <p className="text-red-500"> Posible intervención duplicada: </p>
+          </div>
+          <InterventionRow
+            intervention={repeatedIntervention}
+            institution={institution}
+          />
+        </div>
+      )}
+      <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
-          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
+          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Nueva Intervención
@@ -434,6 +451,7 @@ export default function NewIntervention() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+
             form
               .handleSubmit(onSubmit)()
               .catch((err) => {
@@ -444,33 +462,36 @@ export default function NewIntervention() {
           }}
           className="w-full"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fecha*</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="hour"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hora*</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha*</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hour"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hora*</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="pairQuantity"
@@ -515,7 +536,7 @@ export default function NewIntervention() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <FormField
               control={form.control}
               name="type"
@@ -526,8 +547,8 @@ export default function NewIntervention() {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <FormControl>
-                      <SelectTrigger>
+                    <FormControl className="w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione el tipo" />
                       </SelectTrigger>
                     </FormControl>
@@ -555,8 +576,8 @@ export default function NewIntervention() {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <FormControl>
-                      <SelectTrigger>
+                    <FormControl className="w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione una institución" />
                       </SelectTrigger>
                     </FormControl>
@@ -584,6 +605,8 @@ export default function NewIntervention() {
                 </FormItem>
               )}
             />
+          </div>
+          <div>
             <FormField
               control={form.control}
               name="description"
@@ -591,7 +614,11 @@ export default function NewIntervention() {
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <textarea
+                      {...field}
+                      className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md"
+                      rows={4}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -599,7 +626,7 @@ export default function NewIntervention() {
             />
           </div>
 
-          <div className="flex justify-start items-center">
+          <div className="flex justify-start items-center mt-2">
             <Button
               type="submit"
               className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"

@@ -4,6 +4,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
 import { Institucion } from "@/app/models/institucion.entity";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { Op } from "sequelize";
 
 export class InterventionService {
@@ -28,8 +29,28 @@ export class InterventionService {
   }
 
   async create(request: CreateInterventionDto): Promise<Intervention> {
-    return await Intervention.create({
-      ...request,
+    const institution = await Institucion.findOne({
+      where: { nombre: request.institution },
     });
+
+    if (!institution) {
+      throw new Error(
+        `Institution with name "${request.institution}" not found`
+      );
+    }
+    const intervention = await Intervention.create({
+      timeStamp: request.timeStamp,
+      costo: request.cost,
+      tipo: request.type,
+      pairsQuantity: request.pairsQuantity,
+      description: request.description,
+    });
+
+    await InstitucionIntervencion.create({
+      institucionId: institution.id,
+      intervencionId: intervention.id,
+    });
+
+    return intervention;
   }
 }

@@ -1,4 +1,4 @@
-import { Intervencion } from "@/app/models/intervention.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { User } from "@/app/models/user.entity";
@@ -27,7 +27,7 @@ export class PerrosService {
           include: [
             {
               attributes: ["id"],
-              model: Intervencion,
+              model: Intervention,
               where: {},
               required: true,
             },

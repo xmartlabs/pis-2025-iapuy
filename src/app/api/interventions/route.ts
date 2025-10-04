@@ -11,14 +11,11 @@ export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
     const res = await interventionController.getIntervenciones(pagination);
-    console.log(res.data[0]);
     return NextResponse.json(res);
   } catch (error) {
     if (error instanceof Error) {
-      console.log(error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    console.log("otro error");
     return NextResponse.json(
       { error: "Hubo un error desconocido" },
       { status: 500 }

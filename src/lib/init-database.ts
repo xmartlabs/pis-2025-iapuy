@@ -14,6 +14,7 @@ import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 
 import { Gasto } from "@/app/models/gastos.entity";
 import type { ModelStatic, Model } from "sequelize";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -78,6 +79,31 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervention, User)) {
     Intervention.belongsToMany(User, {
       through: Acompania,
+      foreignKey: "id",
+    });
+  }
+  if (!hasAssociation(Intervention, Institucion)) {
+    Intervention.belongsToMany(Institucion, {
+      through: InstitucionIntervencion,
+      foreignKey: "intervencionId",
+      otherKey: "institucionId",
+    });
+  }
+  if (!hasAssociation(Intervention, Perro)) {
+    Intervention.hasMany(UsrPerro, {
+      foreignKey: "intervencionId",
+    });
+  }
+};
+
+const registerInstitucionIntervencionAssociations = () => {
+  if (!hasAssociation(InstitucionIntervencion, Institucion)) {
+    InstitucionIntervencion.belongsTo(Institucion, {
+      foreignKey: "institucionId",
+    });
+  }
+  if (!hasAssociation(InstitucionIntervencion, Intervention)) {
+    InstitucionIntervencion.belongsTo(Intervention, {
       foreignKey: "intervencionId",
     });
   }
@@ -152,6 +178,7 @@ export async function initDatabase(): Promise<void> {
     registerIntervencionAssociations();
     registerRegistroSanidadAssociations();
     registerInstitucionAssociations();
+    registerInstitucionIntervencionAssociations();
     registerGastoAssociations();
 
     initialized = true;
