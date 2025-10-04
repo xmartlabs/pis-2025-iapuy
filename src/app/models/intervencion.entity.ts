@@ -26,10 +26,10 @@ export class Intervencion extends Model {
   @Column({ type: DataType.NUMBER })
   declare costo: number;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare status: string;
 
-  @Column
+  @Column({ type: DataType.NUMBER })
   declare pairsQuantity?: number;
 
   @Column({
