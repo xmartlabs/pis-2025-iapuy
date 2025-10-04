@@ -7,7 +7,7 @@ import { extractPagination } from "@/lib/pagination/extraction";
 const perrosController = new PerrosController();
 await initDatabase();
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) { 
   try {
     const pagination = await extractPagination(request);
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const dog = await perrosController.createPerro(request);
     return NextResponse.json(dog, { status: 201 });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
