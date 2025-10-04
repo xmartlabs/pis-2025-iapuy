@@ -30,7 +30,8 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/api/registros-sanidad") ||
         pathname.startsWith("/api/gastos") ||
         pathname.startsWith("/api/users/profile") ||
-        pathname.startsWith("/api/perros/interventions")
+        pathname.startsWith("/api/perros/interventions") ||
+        pathname.startsWith("/api/intervencion")
       ) {
         return NextResponse.next();
       }

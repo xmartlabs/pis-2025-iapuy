@@ -9,9 +9,16 @@ import type { PayloadForUser } from "../../users/service/user.service";
 
 export class IntervencionService {
   async findAll(
-    pagination: PaginationDto
+    pagination: PaginationDto,
+    payload: PayloadForUser
   ): Promise<PaginationResultDto<Intervencion>> {
     const result = await Intervencion.findAndCountAll({
+      where:
+        payload.type === "Administrador"
+          ? undefined
+          : {
+              userId: payload.ci,
+            },
       include: [
         {
           model: Institucion,

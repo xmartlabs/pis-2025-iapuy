@@ -19,7 +19,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import NuevaInstervencion from "../nueva/page";
+import NuevaInstervencion from "../app/admin/intervenciones/nueva/page";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);

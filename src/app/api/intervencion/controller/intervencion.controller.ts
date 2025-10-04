@@ -6,8 +6,8 @@ export class IntervencionController {
   constructor(
     private readonly intervencionService: IntervencionService = new IntervencionService()
   ) {}
-  async getIntervenciones(pagination: PaginationDto) {
-    return await this.intervencionService.findAll(pagination);
+  async getIntervenciones(pagination: PaginationDto, payload: PayloadForUser) {
+    return await this.intervencionService.findAll(pagination, payload);
   }
   async getInterventionByDogId(
     pagination: PaginationDto,

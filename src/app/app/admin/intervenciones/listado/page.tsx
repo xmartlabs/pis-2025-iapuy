@@ -1,4 +1,4 @@
-import ListadoIntervenciones from "./listado-intervenciones";
+import ListadoIntervenciones from "../../../../components/listado-intervenciones";
 
 export default function PantallaIntervenciones() {
   return <ListadoIntervenciones />;
