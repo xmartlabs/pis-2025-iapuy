@@ -10,7 +10,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Intervencion } from "./intervention.entity";
+import { Intervention } from "./intervention.entity";
 
 export type EstadoGasto = "no pagado" | "pagado";
 
@@ -24,7 +24,7 @@ export class Gasto extends Model {
   @Column
   declare userId: string;
 
-  @ForeignKey(() => Intervencion)
+  @ForeignKey(() => Intervention)
   @Column
   declare intervencionId: string;
 

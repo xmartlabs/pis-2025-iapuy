@@ -5,4 +5,5 @@ export class CreateInterventionDto {
   declare timestamp: Date;
   declare cost: number;
   declare type: TipoIntervention;
+  declare pairQuantity: number;
 }

@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    return await interventionController.createIntervencion(request);
+    const intervention = await interventionController.createIntervencion(request);
+    return NextResponse.json(intervention, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

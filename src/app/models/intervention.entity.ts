@@ -16,25 +16,37 @@ export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 @Table({ tableName: "intervenciones" })
 export class Intervention extends Model {
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
   declare id: string;
 
-  @Column
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+  })
   declare timeStamp: Date;
 
   @Column
   declare costo: number;
 
-  @Column
-  declare pairsQuantity?: number;
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  declare pairsQuantity: number;
 
   @Column({
     type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
+    allowNull: false,
     validate: {
       isIn: [["educativa", "recreativa", "terapeutica"]],
     },
   })
   declare tipo: TipoIntervention;
+  @Column
+  declare description: string;
 
   @Column
   declare post_evaluacion?: string;

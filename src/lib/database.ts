@@ -4,7 +4,7 @@ import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { Gasto } from "@/app/models/gastos.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { Institucion } from "@/app/models/institucion.entity";
-import { Intervencion } from "@/app/models/intervention.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 import { Patologia } from "@/app/models/patologia.entity";
 import { Perro } from "@/app/models/perro.entity";
@@ -23,7 +23,7 @@ const sequelize = new Sequelize({
   dialect: "postgres",
   models: [
     User,
-    Intervencion,
+    Intervention,
     Acompania,
     Gasto,
     Perro,

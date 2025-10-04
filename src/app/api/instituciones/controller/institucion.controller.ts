@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { InstitucionesService } from "../service/instituciones.service";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 
 export class InstitucionesController {
   constructor(
@@ -17,5 +17,9 @@ export class InstitucionesController {
         { status: 500 }
       );
     }
+  }
+  async getInstitutionsSimple() {
+    const institutions = await this.institucionesService.findAllSimple();
+    return institutions;
   }
 }

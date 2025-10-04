@@ -9,7 +9,7 @@ export class InterventionService {
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Intervention>> {
-    const result = await Intervencion.findAndCountAll({
+    const result = await Intervention.findAndCountAll({
       include: [
         {
           model: User,

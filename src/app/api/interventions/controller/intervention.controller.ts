@@ -23,6 +23,6 @@ export class InterventionController {
   async createIntervencion(request: Request) {
     const interventionData: CreateInterventionDto =
       (await request.json()) as CreateInterventionDto;
-    return this.interventionService.create(interventionData);
+    return await this.interventionService.create(interventionData);
   }
 }

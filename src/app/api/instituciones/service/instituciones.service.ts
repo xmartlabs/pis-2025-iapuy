@@ -25,4 +25,15 @@ export class InstitucionesService {
 
     return getPaginationResultFromModel(pagination, result);
   }
+
+  async findAllSimple(): Promise<Array<{ id: string; name: string }>> {
+    const result = await Institucion.findAll({
+      attributes: ["id", "nombre"],
+    });
+
+    return result.map((institucion) => ({
+      id: institucion.id,
+      name: institucion.nombre,
+    }));
+  }
 }
