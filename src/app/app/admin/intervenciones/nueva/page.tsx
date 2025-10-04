@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { set, z } from "zod";
 import { useContext, useCallback, useEffect, useState } from "react";
 import { LoginContext } from "@/app/context/login-context";
+import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import {
   Form,
   FormControl,
@@ -26,6 +27,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
 import { MinusIcon, PlusIcon } from "lucide-react";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -90,7 +92,7 @@ const institutionSchema = z.object({
 type Institution = z.infer<typeof institutionSchema>;
 type FormValues = z.infer<typeof formSchema>;
 
-export default function NuevaIntervencion() {
+export default function NewIntervention() {
   const [error, setError] = useState<string | null>(null);
   const [institutions, setInstitutions] = useState<Array<Institution> | null>(
     null
@@ -110,7 +112,96 @@ export default function NuevaIntervencion() {
       description: "",
     },
   });
+  const fetchInterventionsByInstitution = useCallback(
+    async (
+      institutionName: string,
+      signal?: AbortSignal,
+      triedRefresh = false
+    ): Promise<PaginationResultDto<InterventionDto> | null> => {
+      const url = new URL("/api/interventions", BASE_API_URL);
+      url.searchParams.set("query", institutionName);
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
+
+      try {
+        const token = context?.tokenJwt;
+
+        if (!token) {
+          throw new Error("No authentication token available");
+        }
+
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        };
+
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
+          signal: combinedSignal,
+        });
+
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(
+            new URL("/api/auth/refresh", BASE_API_URL),
+            {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              signal: combinedSignal,
+            }
+          );
+
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              return await fetchInterventionsByInstitution(
+                institutionName,
+                signal,
+                true
+              );
+            }
+          }
+        }
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as unknown;
+        if (
+          !body ||
+          !Array.isArray((body as PaginationResultDto<InterventionDto>).data)
+        )
+          throw new Error("Malformed API response");
+
+        return body as PaginationResultDto<InterventionDto>;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    [context]
+  );
   const onSubmit = async (values: FormValues) => {
     try {
       const token = context?.tokenJwt;
@@ -142,7 +233,19 @@ export default function NuevaIntervencion() {
         fotosUrls: [],
         estado: "pendiente",
       };
-
+      for (const intervention of interventions?.data ?? []) {
+        if (
+          new Date(intervention.timeStamp).getTime() ===
+            combinedDateTime.getTime() &&
+          new Date(intervention.timeStamp).getDate() ===
+            combinedDateTime.getDate()
+        ) {
+          setError(
+            "Ya existe una intervención para esa institución en la misma fecha y hora."
+          );
+          return;
+        }
+      }
       const url = new URL("/api/interventions", BASE_API_URL);
 
       const doPost = async (authToken: string) => {
@@ -192,6 +295,10 @@ export default function NuevaIntervencion() {
           errorText || `Error ${response.status}: ${response.statusText}`
         );
       }
+      const interventions = await fetchInterventionsByInstitution(
+        values.institution
+      );
+
       toast("Intervención creada con éxito", {
         description: "La intervención ha sido creada exitosamente.",
       });
@@ -202,7 +309,6 @@ export default function NuevaIntervencion() {
       });
     }
   };
-
   const fetchInstitutions = useCallback(
     async (
       signal?: AbortSignal,
@@ -284,6 +390,7 @@ export default function NuevaIntervencion() {
     },
     [context]
   );
+
   useEffect(() => {
     if (!context?.tokenJwt) {
       setError("Usuario no autenticado. Por favor, inicie sesión.");
