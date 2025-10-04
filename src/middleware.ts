@@ -25,18 +25,19 @@ export async function middleware(req: NextRequest) {
 
     if (res.payload.type === "Colaborador") {
       if (
-        pathname.startsWith("/api/intervencines") ||
         (pathname.startsWith("/api/users/") && pathname.endsWith("/perros")) ||
         pathname.startsWith("/api/perros/detalles") ||
         pathname.startsWith("/api/registros-sanidad") ||
         pathname.startsWith("/api/gastos") ||
-        pathname.startsWith("/api/users/profile")
+        pathname.startsWith("/api/users/profile") ||
+        pathname.startsWith("/api/perros/interventions") ||
+        pathname.startsWith("/api/intervencion")
       ) {
         return NextResponse.next();
       }
       return NextResponse.json(
         { error: "No tiene permisos para acceder a esta ruta" },
-        { status: 500 }
+        { status: 401 }
       );
     }
 
