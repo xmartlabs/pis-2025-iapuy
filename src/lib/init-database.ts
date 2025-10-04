@@ -87,18 +87,21 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervencion, User)) {
     Intervencion.belongsToMany(User, {
       through: Acompania,
+      as: "Users",
       foreignKey: "intervencionId",
     });
   }
   if (!hasAssociation(Intervencion, Institucion)) {
     Intervencion.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
+      as: "Institucions",
       foreignKey: "intervencionId",
       otherKey: "institucionId",
     });
   }
   if (!hasAssociation(Intervencion, Perro)) {
     Intervencion.hasMany(UsrPerro, {
+      as: "UsrPerros",
       foreignKey: "intervencionId",
     });
   }
@@ -107,6 +110,7 @@ const registerIntervencionAssociations = () => {
 const registerInstitucionIntervencionAssociations = () => {
   if (!hasAssociation(InstitucionIntervencion, Institucion)) {
     InstitucionIntervencion.belongsTo(Institucion, {
+      as: "Institution",
       foreignKey: "institucionId",
     });
   }

@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable */
 
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import CustomSearchBar from "@/app/components/search-bar";
@@ -21,10 +20,6 @@ import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import NuevaInstervencion from "../nueva/page";
-
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -65,7 +60,10 @@ export default function ListadoIntervenciones() {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL("/api/intervencion", BASE_API_URL);
+      const url = new URL(
+        "/api/intervencion",
+        (typeof window !== "undefined" && window.location?.origin) || ""
+      );
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
       if (query?.trim().length) url.searchParams.set("query", query.trim());
@@ -91,7 +89,10 @@ export default function ListadoIntervenciones() {
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
+            new URL(
+              "/api/auth/refresh",
+              (typeof window !== "undefined" && window.location?.origin) || ""
+            ),
             {
               method: "POST",
               headers: { Accept: "application/json" },
@@ -262,7 +263,7 @@ export default function ListadoIntervenciones() {
                     </TableCell>
                   </TableRow>
                 ))
-              ) : intervention.length > 0 ? (
+              ) : intervention && intervention.length > 0 ? (
                 intervention.map((inter) => (
                   <TableRow
                     key={inter.id}
@@ -294,8 +295,8 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions.length > 0
-                          ? inter.Institucions[0].nombre
+                        {inter.Institucions && inter.Institucions.length > 0
+                          ? inter.Institucions.map((i) => i.nombre).join(", ")
                           : ""}
                       </div>
                     </TableCell>

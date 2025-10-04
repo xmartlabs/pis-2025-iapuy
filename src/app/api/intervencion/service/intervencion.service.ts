@@ -14,6 +14,7 @@ export class IntervencionService {
       include: [
         {
           model: Institucion,
+          as: "Institucions",
           attributes: ["id", "nombre"],
           where: pagination.query
             ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
@@ -40,11 +41,14 @@ export class IntervencionService {
       include: [
         {
           model: UsrPerro,
-          where: { perroId: { [Op.eq]: dogId } },
+          as: "UsrPerros",
+          where: { perroId: dogId },
+          attributes: [],
           required: true,
         },
         {
           model: Institucion,
+          as: "Institucions",
           attributes: ["id", "nombre"],
           where: interventionWhere,
         },

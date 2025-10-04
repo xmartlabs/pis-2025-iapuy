@@ -27,10 +27,12 @@ export class RegistrosSanidadService {
       options.include = [
         {
           model: Perro,
+          as: "Perro",
           required: true,
           include: [
             {
               model: User,
+              as: "User",
               where: { ci: payload.ci },
               required: true,
             },
