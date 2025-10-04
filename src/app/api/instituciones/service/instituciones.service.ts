@@ -6,6 +6,7 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 
 export class InstitutionsService {
   async findAll(
@@ -40,13 +41,28 @@ export class InstitutionsService {
       nombre: institutionDTO.name,
     });
     await Promise.all(
-      institutionDTO.institutionContacts.map((referente) =>
+      institutionDTO.institutionContacts.map((contact) =>
         InstitutionContact.create({
-          name: referente.name,
-          contact: referente.contact,
+          name: contact.name,
+          contact: contact.contact,
           institutionId: institution.id,
         })
       )
+    );
+    await Promise.all(
+      institutionDTO.pathologies.map(async (name) => {
+        const [pathology] = await Patologia.findOrCreate({
+          where: { nombre: name },
+          defaults: { nombre: name },
+        });
+        await InstitucionPatologias.findOrCreate({
+          where: { institucionId: institution.id, patologiaId: pathology.id },
+          defaults: {
+            institucionId: institution.id,
+            patologiaId: pathology.id,
+          },
+        });
+      })
     );
     return institution;
   }

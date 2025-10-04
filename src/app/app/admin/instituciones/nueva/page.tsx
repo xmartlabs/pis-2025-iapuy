@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/form";
 import React, { useContext } from "react";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export default function Nueva() {
   const [tempValue, setTempValue] = React.useState("");
   const context = useContext(LoginContext);
+  const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -68,6 +70,7 @@ export default function Nueva() {
             color: "#121F0D",
           },
         });
+        router.push("/app/admin/instituciones/listado");
       } else if (res.status === 409) {
         toast.error(`Ya existe la institucion ${data.main.name}`, {
           duration: 5000,
