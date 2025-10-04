@@ -10,17 +10,27 @@ await initDatabase();
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-
-    return interventionController.getIntervenciones(pagination);
+    const res = await interventionController.getIntervenciones(pagination);
+    console.log(res.data[0]);
+    return NextResponse.json(res);
   } catch (error) {
-    console.error(error);
-    return new Response(undefined, { status: 400 });
+    if (error instanceof Error) {
+      console.log(error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    console.log("otro error");
+    return NextResponse.json(
+      { error: "Hubo un error desconocido" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const intervention = await interventionController.createIntervencion(request);
+    const intervention = await interventionController.createIntervencion(
+      request
+    );
     return NextResponse.json(intervention, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {

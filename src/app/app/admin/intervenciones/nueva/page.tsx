@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
+import { MinusIcon, PlusIcon } from "lucide-react";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
@@ -136,9 +137,10 @@ export default function NuevaIntervencion() {
         pairsQuantity: values.pairQuantity,
         tipo: values.type.toLowerCase(),
         institucion: values.institution,
-        descripcion: values.description,
+        description: values.description,
         costo: 0,
         fotosUrls: [],
+        estado: "pendiente",
       };
 
       const url = new URL("/api/interventions", BASE_API_URL);
@@ -190,6 +192,10 @@ export default function NuevaIntervencion() {
           errorText || `Error ${response.status}: ${response.statusText}`
         );
       }
+      toast("Intervención creada con éxito", {
+        description: "La intervención ha sido creada exitosamente.",
+      });
+      router.push("/app/admin/intervenciones/listado");
     } catch (err) {
       toast("Error creando intervención", {
         description: err instanceof Error ? err.message : String(err),
@@ -297,7 +303,7 @@ export default function NuevaIntervencion() {
       })
       .catch((err) => {
         if (err instanceof Error) {
-          setError(`Error al cargar las instituciones: ${err.message}`);
+          setError(`Error al cargar las instituciones`);
         } else {
           setError(
             "Error al cargar las instituciones. Verifique su conexión o autenticación."
@@ -307,7 +313,7 @@ export default function NuevaIntervencion() {
   }, [fetchInstitutions, context?.tokenJwt]);
 
   return (
-    <div>
+    <div className="mr-[20px]">
       {error && <p className="text-red-500 text-center">{error}</p>}
       <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
@@ -365,13 +371,36 @@ export default function NuevaIntervencion() {
                 <FormItem>
                   <FormLabel>Cantidad de duplas necesaria*</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(parseInt(e.target.value, 10) || 1);
-                      }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const newValue = Math.max(1, field.value - 1);
+                          field.onChange(newValue);
+                        }}
+                        disabled={field.value <= 1}
+                        aria-label="Disminuir cantidad"
+                      >
+                        <MinusIcon />
+                      </Button>
+                      <div className="flex items-center justify-center min-w-[3rem] h-10 px-3 py-2 text-sm border border-input bg-background rounded-md">
+                        {field.value}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const newValue = field.value + 1;
+                          field.onChange(newValue);
+                        }}
+                        aria-label="Aumentar cantidad"
+                      >
+                        <PlusIcon />
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -6,4 +6,5 @@ export class CreateInterventionDto {
   declare cost: number;
   declare type: TipoIntervention;
   declare pairQuantity: number;
+  declare description: string;
 }
