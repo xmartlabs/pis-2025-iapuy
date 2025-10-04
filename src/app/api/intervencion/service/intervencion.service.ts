@@ -5,6 +5,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
+import type { PayloadForUser } from "../../users/service/user.service";
 
 export class IntervencionService {
   async findAll(
@@ -30,7 +31,8 @@ export class IntervencionService {
 
   async findInterventionByDogId(
     pagination: PaginationDto,
-    dogId: string
+    dogId: string,
+    payload: PayloadForUser
   ): Promise<PaginationResultDto<Intervencion>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
@@ -41,8 +43,16 @@ export class IntervencionService {
       include: [
         {
           model: UsrPerro,
-          as: "UsrPerros",
-          where: { perroId: dogId },
+          as: "UsrPerroIntervention",
+          where:
+            payload.type === "Administrador"
+              ? {
+                  perroId: dogId,
+                }
+              : {
+                  perroId: dogId,
+                  userId: payload.ci,
+                },
           attributes: [],
           required: true,
         },

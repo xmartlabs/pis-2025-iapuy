@@ -101,7 +101,7 @@ const registerIntervencionAssociations = () => {
   }
   if (!hasAssociation(Intervencion, Perro)) {
     Intervencion.hasMany(UsrPerro, {
-      as: "UsrPerros",
+      as: "UsrPerroIntervention",
       foreignKey: "intervencionId",
     });
   }
