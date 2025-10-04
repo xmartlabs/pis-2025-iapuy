@@ -39,7 +39,7 @@ describe("AuthService - login", () => {
     const result = await service.login("fake", "wrong");
     expect(userServiceMock.findOneForAuth).toHaveBeenCalled();
     expect(result).toEqual({
-      error: "Credenciales invalidas",
+      error: "Credenciales inválidas",
       status: 401,
     });
   });
@@ -54,7 +54,7 @@ describe("AuthService - login", () => {
     const result = await service.login("123", "wrongpass");
     expect(userServiceMock.findOneForAuth).toHaveBeenCalled();
     expect(result).toEqual({
-      error: "Credenciales invalidas",
+      error: "Credenciales inválidas",
       status: 401,
     });
   });
@@ -69,7 +69,7 @@ describe("AuthService - login", () => {
     const { Hashing } = await import("@/lib/crypto/hash");
 
     (Hashing.verifyPassword as any).mockResolvedValue(true);
-    mockJwtSign.mockImplementation((payload) => "TOKEN-" + payload.tipo);
+    mockJwtSign.mockImplementation((payload) => "TOKEN-" + payload.type);
 
     const result = await service.login("123", "wrongpass");
     expect(result.status).toBe(200);
@@ -89,7 +89,7 @@ describe("AuthService - login", () => {
     const { Hashing } = await import("@/lib/crypto/hash");
 
     (Hashing.verifyPassword as any).mockResolvedValue(true);
-    mockJwtSign.mockImplementation((payload) => "TOKEN-" + payload.tipo);
+    mockJwtSign.mockImplementation((payload) => "TOKEN-" + payload.type);
 
     const result = await service.login("123", "wrongpass");
     expect(result.status).toBe(200);
@@ -113,8 +113,8 @@ describe("AuthService - refresh", () => {
   it("debe poder refrescar el access token", async () => {
     (jwt.verify as vi.Mock).mockReturnValue({
       ci: "123",
-      nombre: "Laura",
-      tipo: "Colaborador",
+      name: "Laura",
+      type: "Colaborador",
     });
 
     const result = service.refresh("valid-refresh-token");
@@ -125,7 +125,7 @@ describe("AuthService - refresh", () => {
       process.env.JWT_SECRET
     );
     expect(jwt.sign).toHaveBeenCalledWith(
-      { ci: "123", nombre: "Laura", tipo: "Colaborador" },
+      { ci: "123", name: "Laura", type: "Colaborador" },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
