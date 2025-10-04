@@ -17,13 +17,13 @@ export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
 @Table({ tableName: "intervenciones" })
 export class Intervencion extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING })
   declare id: string;
 
-  @Column
+  @Column({ type: DataType.DATE })
   declare timeStamp: Date;
 
-  @Column
+  @Column({ type: DataType.NUMBER })
   declare costo: number;
 
   @Column({
@@ -34,14 +34,14 @@ export class Intervencion extends Model {
   })
   declare tipo: TipoIntervencion;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare post_evaluacion?: string;
 
   @Column({ type: DataType.ARRAY(DataType.STRING) })
   declare fotosUrls: string[];
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @CreatedAt

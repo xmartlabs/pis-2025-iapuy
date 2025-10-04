@@ -22,15 +22,15 @@ export class UsrPerro extends Model {
   declare id: CreationOptional<string>;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Perro)
-  @Column
+  @Column({ type: DataType.STRING })
   declare perroId: string;
 
   @ForeignKey(() => Intervencion)
-  @Column
+  @Column({ type: DataType.STRING })
   declare intervencionId: string;
 
   @CreatedAt

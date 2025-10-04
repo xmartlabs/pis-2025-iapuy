@@ -2,6 +2,7 @@
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   Model,
@@ -14,11 +15,11 @@ import { Intervencion } from "./intervencion.entity";
 @Table({ tableName: "acompaniantes" })
 export class Acompania extends Model {
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Intervencion)
-  @Column
+  @Column({ type: DataType.STRING })
   declare intervencionId: string;
 
   @CreatedAt
