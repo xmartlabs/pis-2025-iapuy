@@ -22,7 +22,7 @@ import {
 import React, { useContext } from "react";
 import { Badge } from "@/components/ui/badge";
 
-export default function NewDog() {
+export default function Nueva() {
   const [tempValue, setTempValue] = React.useState("");
   const context = useContext(LoginContext);
   const form = useForm<z.infer<typeof FormSchema>>({
