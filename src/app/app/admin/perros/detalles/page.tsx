@@ -1,8 +1,8 @@
 import React, { Suspense } from "react";
-import DetallePerro from "./detalle-perro";
-import HistorialSanidad from "./historial-sanidad";
-import HistorialIntervenciones from "./historial-intervenciones";
-import EliminarPerro from "./eliminar-perro";
+import DetallePerro from "@/app/components/dogs/detalle-perro";
+import HistorialSanidad from "@/app/components/dogs/historial-sanidad";
+import HistorialIntervenciones from "@/app/components/dogs/historial-intervenciones";
+import EliminarPerro from "@/app/components/dogs/eliminar-perro";
 
 export default function PantallaPerros() {
   return (

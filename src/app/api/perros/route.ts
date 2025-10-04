@@ -7,7 +7,7 @@ import { extractPagination } from "@/lib/pagination/extraction";
 const perrosController = new PerrosController();
 await initDatabase();
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) { 
   try {
     const pagination = await extractPagination(request);
 

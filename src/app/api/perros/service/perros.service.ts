@@ -10,6 +10,7 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
+import type { PayloadForUser } from "../detalles/route";
 
 export class PerrosService {
   async findAll(
@@ -82,33 +83,23 @@ export class PerrosService {
   }
 
   async create(createPerroDto: CreatePerroDTO): Promise<Perro> {
-    const { nombre, descripcion, fortalezas, duenioId } =
-      createPerroDto as unknown as {
-        nombre: string;
-        descripcion?: string;
-        fortalezas?: string;
-        duenioId?: string;
-      };
-
-    const fortalezasVal = typeof fortalezas === "string" ? fortalezas : "";
-
-    return await Perro.create({
-      nombre,
-      descripcion,
-      fortalezas: fortalezasVal,
-      duenioId,
-    });
+    return await Perro.create({ ...createPerroDto });
   }
 
-  async findOne(id: string) {
-    const perro = await Perro.findOne({
-      where: { id },
+  async findOne(id: string, payload: PayloadForUser) {
+    const perro = await Perro.findByPk(id, {
       include: [
         {
           model: User,
           as: "User",
           attributes: ["ci", "nombre"],
-          required: true,
+          where:
+            payload.type === "Administrador"
+              ? undefined
+              : {
+                  ci: payload.ci,
+                },
+          required: payload.type !== "Administrador",
         },
       ],
     });
