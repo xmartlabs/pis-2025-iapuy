@@ -1,6 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { LoginContext } from "./login-context";
 import type { TipoUsuario } from "@/app/api/auth/service/auth.service";
 
@@ -13,20 +13,22 @@ export const LoginProvider = ({ children }: LoginProviderProps) => {
   const [tipoUsuario, setTipo] = useState<TipoUsuario | null>(null);
   const [nombreUsuario, setNombre] = useState<string | null>(null);
   const [ciUsuario, setCI] = useState<string | null>(null);
+
+  const value = useMemo(
+    () => ({
+      tokenJwt,
+      setToken,
+      tipoUsuario,
+      setTipo,
+      nombreUsuario,
+      setNombre,
+      ciUsuario,
+      setCI,
+    }),
+    [tokenJwt, tipoUsuario, nombreUsuario, ciUsuario]
+  );
+
   return (
-    <LoginContext.Provider
-      value={{
-        tokenJwt,
-        setToken,
-        tipoUsuario,
-        setTipo,
-        nombreUsuario,
-        setNombre,
-        ciUsuario,
-        setCI,
-      }}
-    >
-      {children}
-    </LoginContext.Provider>
+    <LoginContext.Provider value={value}>{children}</LoginContext.Provider>
   );
 };

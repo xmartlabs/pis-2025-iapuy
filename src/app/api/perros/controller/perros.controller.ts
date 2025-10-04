@@ -9,7 +9,7 @@ export class PerrosController {
     private readonly perrosService: PerrosService = new PerrosService()
   ) {}
 
-  async getPerros(pagination: PaginationDto) {
+  getPerros(pagination: PaginationDto) {
     return this.perrosService.findAll(pagination);
   }
 
