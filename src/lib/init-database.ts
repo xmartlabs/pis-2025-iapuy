@@ -22,12 +22,12 @@ const hasAssociation = (
   sourceModel: ModelStatic<Model<any, any>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   targetModel: ModelStatic<Model<any, any>>,
-  as?: string,
+  as?: string
 ): boolean => {
   const assocs = sourceModel.associations ?? {};
   if (as) return Boolean(assocs[as]);
   return Object.values(assocs).some(
-    (a) => (a as { target?: unknown }).target === targetModel,
+    (a) => (a as { target?: unknown }).target === targetModel
   );
 };
 
@@ -61,7 +61,10 @@ const registerPerroAssociations = () => {
     Perro.hasMany(UsrPerro, { foreignKey: "perroId", as: "UsrPerros" });
   }
   if (!hasAssociation(Perro, RegistroSanidad)) {
-    Perro.hasOne(RegistroSanidad, { foreignKey: "perroId", as: "RegistroSanidad" });
+    Perro.hasOne(RegistroSanidad, {
+      foreignKey: "perroId",
+      as: "RegistroSanidad",
+    });
   }
 };
 
@@ -70,7 +73,10 @@ const registerUsrPerroAssociations = () => {
     UsrPerro.belongsTo(User, { foreignKey: "userId", as: "User" });
   }
   if (!hasAssociation(UsrPerro, Intervencion)) {
-    UsrPerro.belongsTo(Intervencion, { foreignKey: "intervencionId", as: "Intervencion" });
+    UsrPerro.belongsTo(Intervencion, {
+      foreignKey: "intervencionId",
+      as: "Intervencion",
+    });
   }
   if (!hasAssociation(UsrPerro, Perro)) {
     UsrPerro.belongsTo(Perro, { foreignKey: "perroId", as: "Perro" });
@@ -81,7 +87,7 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervencion, User)) {
     Intervencion.belongsToMany(User, {
       through: Acompania,
-      foreignKey: "id",
+      foreignKey: "intervencionId",
     });
   }
   if (!hasAssociation(Intervencion, Institucion)) {
@@ -161,7 +167,11 @@ const registerInstitucionAssociations = () => {
 
 const registerGastoAssociations = () => {
   if (!hasAssociation(Gasto, User)) {
-    Gasto.belongsTo(User, { foreignKey: "userId", targetKey: "ci", as: "User" });
+    Gasto.belongsTo(User, {
+      foreignKey: "userId",
+      targetKey: "ci",
+      as: "User",
+    });
   }
   if (!hasAssociation(Gasto, Intervencion)) {
     Gasto.belongsTo(Intervencion, {
