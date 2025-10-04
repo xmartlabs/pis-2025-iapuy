@@ -10,7 +10,10 @@ export function POST() {
       expires: new Date(0),
     });
     return res;
-  } catch {
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal error" },
+      { status: 500 }
+    );
   }
 }

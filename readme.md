@@ -14,9 +14,9 @@
 ### Production
 
 On production we will be setting up the whole infrastructure with Docker containers, using the command:
-
+### [Important]: Before doing any of the steps below generate the .env file within th root of the proyect, also in the .env file the DB_HOST should be the local ip address in the network of the machine instead of localhost since during the build procces of the next js app it hits the db that will be running on the host machine, once the next js is built it will continue to use the docker network link instead.
 ```shell
-npx next build && docker compose up --build
+docker compose up postgres -d && docker compose up --build -d
 ```
 ### Local development
 
