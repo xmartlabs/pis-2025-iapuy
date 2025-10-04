@@ -56,7 +56,8 @@ export default function EvaluarIntervencion(){
   const [patientsCards, setPatientCard] = useState([0]);
   const context = useContext(LoginContext);
   const { interventionId } = useParams<{ interventionId?: string }>();
-  const id = interventionId ?? "2e2eadb2-4c01-4fbf-aa85-8ff14249e467";
+  //! Hardcoded id for testing (cambiar por id de tu base de datos son todas diferentes segun PC)
+  const id = interventionId ?? "8426ad74-8ca1-413f-acc2-5b43b0445280";
 
   useEffect(()=> {
     const callApi = async () => {
@@ -510,6 +511,7 @@ export default function EvaluarIntervencion(){
           ))}
           <div className="flex flex-row md:flex-col gap-2">
             <Button 
+            type="button"
             variant="secondary" 
             size="icon"  
             onClick = {addPatCard} 
@@ -518,6 +520,7 @@ export default function EvaluarIntervencion(){
             </Button>
             {patientsCards.length > 1 && (
               <Button
+                type="button"
                 variant="secondary"
                 size="icon"
                 onClick={() => { removePatientCard(patientsCards.length - 1); }}
