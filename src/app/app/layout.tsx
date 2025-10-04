@@ -8,10 +8,9 @@ import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
 import {DropDownMenu} from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
 import { useContext, useEffect } from "react";
-import type { TipoUsuario } from "@/app/page";
+import type { UserType } from "@/app/page";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-
 
 type Props = Readonly<{ children: React.ReactNode }>;
 
@@ -27,8 +26,8 @@ export default function LoginLayout({ children }: Props) {
 
     interface JwtPayload {
       ci: string;
-      nombre: string;
-      tipo: TipoUsuario;
+      name: string;
+      type: UserType;
     }
 
     const tryRefresh = async (): Promise<void> => {
@@ -43,8 +42,8 @@ export default function LoginLayout({ children }: Props) {
           try {
             const decoded = jwtDecode<JwtPayload>(data.accessToken);
             context?.setToken(data.accessToken);
-            context?.setType(decoded.tipo);
-            context?.setUserName(decoded.nombre);
+            context?.setType(decoded.type);
+            context?.setUserName(decoded.name);
             context?.setCI(decoded.ci);
           } catch {
             context?.setToken(null);
@@ -94,9 +93,9 @@ export default function LoginLayout({ children }: Props) {
       context?.setToken(null);
       context?.setUserName(null);
       context?.setCI(null);
+      context?.setType(null);
 
       router.push("/");
-      context?.setType(null);
     } catch {
       // ignore logout errors for now
     }

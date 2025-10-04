@@ -8,7 +8,13 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Hashing } from "@/lib/crypto/hash";
 import { Op } from "sequelize";
 import sequelize from "@/lib/database";
+import jwt from "jsonwebtoken";
 
+export interface PayloadForUser extends jwt.JwtPayload {
+  ci: string;
+  name: string;
+  type: string;
+}
 function normalizePerros(input: unknown): string[] {
   if (Array.isArray(input)) return input.map(String);
 
@@ -82,6 +88,13 @@ export class UserService {
 
   async findOneForAuth(ci: string): Promise<User | null> {
     return await User.findByPk(ci);
+  }
+
+  async findOneWithToken(token: string): Promise<User | null> {
+    const JWT_SECRET = process.env.JWT_SECRET!;
+
+    const payload = jwt.verify(token, JWT_SECRET) as unknown as PayloadForUser;
+    return await User.findByPk(payload.ci);
   }
 
   async create(request: CreateUserDto): Promise<string> {

@@ -26,6 +26,22 @@ export class UserController {
     return user;
   }
 
+  async getUserWithToken(req: NextRequest) {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+
+    const user = await this.userService.findOneWithToken(accessToken);
+
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+    return user;
+  }
+
   async createUser(request: NextRequest) {
     const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
     if (!usrData.ci || !usrData.password) {

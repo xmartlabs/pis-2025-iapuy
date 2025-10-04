@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {TipoUsuario} from "@/app/page"
+import {UserType} from "@/app/page"
 import { useState,useEffect,useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { 
@@ -49,8 +49,8 @@ export const DropDownMenu = (p:props)=>{
     if (!context?.userType) {
       return null;
     }
-    const type:TipoUsuario=context?.userType;
-    if (type===TipoUsuario.Administrador){
+    const type:UserType=context?.userType;
+    if (type===UserType.Administrator){
       urlDogs='/app/admin/perros/detalles';
     }else{
       urlDogs='/app/colaboradores/perros/detalles';

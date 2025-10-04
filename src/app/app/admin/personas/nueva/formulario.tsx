@@ -21,6 +21,8 @@ import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner"
 import { useRouter } from "next/navigation";
 
+import { RegistrarPerro } from "../../perros/registrar-perro";
+
 const BASE_API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 const formSchema = z.object({
@@ -100,6 +102,8 @@ export default function Formulario() {
     const context = useContext(LoginContext);
     const [listaPerros, setListaPerros] = useState<PerroOption[]>([]);
     const [showPassword, setShowPassword] = useState(false);
+    const [reload, setReload] = useState(false);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         async function fetchPerrosOptions(): Promise<void> {
@@ -180,7 +184,7 @@ export default function Formulario() {
             });
             setListaPerros([]);
         });
-    }, [context, router]);
+    }, [context, router, reload]);
 
     const onSubmit = async (values: FormValues) => {
         form.clearErrors();
@@ -258,6 +262,17 @@ export default function Formulario() {
             clearTimeout(timeout);
         }
     };
+     const handlePerroCreated = (p: { id: string; nombre: string }) => {
+        setListaPerros(prev => {
+        if (prev.some(o => o.value === p.id)) return prev;
+        return [...prev, { value: p.id, label: p.nombre }];
+        });
+
+        const current = form.getValues("perros") ?? [];
+        if (!current.includes(p.id)) {
+        form.setValue("perros", [...current, p.id], { shouldDirty: true, shouldValidate: true });
+        }
+  };
     return (
         <Form {...form}>
             <form
@@ -419,61 +434,68 @@ export default function Formulario() {
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="perros"
-                    render={({ field }) => {
-                        const noTiene = form.watch("noPerro") // true/false
-                        return (
-                            <FormItem>
-                                <FormLabel className={
-                                    `font-sans font-medium text-sm leading-5 ${(noTiene
-                                        ? "text-muted-foreground cursor-not-allowed opacity-60"
-                                        : "text-foreground")}`
-                                }>
-                                    Perro
-                                </FormLabel>
-                                <FormControl>
-                                    <MultiSelect
+                <div className="md:col-span-2">
+                    <div className="flex items-start gap-4 w-10/16">
+                        <div className="flex-1">
+                            <FormField
+                                control={form.control}
+                                name="perros"
+                                render={({ field }) => {
+                                const noTiene = form.watch("noPerro")
+                                return (
+                                    <FormItem>
+                                    <FormLabel className="font-sans font-medium text-sm leading-5">
+                                        Perro
+                                    </FormLabel>
+                                    <FormControl>
+                                        <MultiSelect
                                         options={listaPerros}
                                         selected={field.value ?? []}
                                         onChange={field.onChange}
                                         placeholder=""
                                         disabled={!!noTiene}
                                         createLabel="Agregar perro"
-                                        createHref="../perros/listado"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )
-                    }}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="noPerro"
-                    render={({ field }) => (
-                        <FormItem className="grid grid-cols-2 gap-2 p-0 mt-[12.5%] w-2/5 h-1/4 left-[-5%] relative">
-                            <FormControl>
-                                <Checkbox
-                                    className="relative left-[20%] top-[-100%]"
-                                    checked={field.value}
-                                    onCheckedChange={(v: boolean) => {
-                                        field.onChange(v)
-                                        if (v) {
+                                        onCreate={() => { setOpen(true); }}
+                                        className="min-w-[240px]"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )
+                                }}
+                            />
+                        </div>
+                        <div className="shrink-0">
+                            <FormField
+                                control={form.control}
+                                name="noPerro"
+                                render={({ field }) => (
+                                <FormItem>
+                                    {/* h-10 = misma altura que el input => centra verticalmente */}
+                                    <div className="flex items-center h-10 gap-2 mt-[22px]">
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={(v: boolean) => {
+                                            field.onChange(v)
+                                            if (v) {
                                             form.setValue("perros", [], { shouldValidate: true, shouldDirty: true })
-                                        }
-                                    }}
-                                />
-                            </FormControl>
-                            <FormLabel className="relative left-[-50%] top-[-100%]">No tiene</FormLabel>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                                            }
+                                        }}
+                                        />
+                                    </FormControl>
+                                    <span className="m-0 whitespace-nowrap text-sm">No tiene</span>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                </div>
                 <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
             </form>
+            <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} onCreated={handlePerroCreated} ownerRequired={false} ownerDisabled={true}/>
         </Form>
     );
 }
