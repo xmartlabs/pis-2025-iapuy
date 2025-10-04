@@ -50,7 +50,6 @@ module.exports = {
         timeStamp: new Date("2025-09-01T10:00:00Z"),
         costo: "1500.50",
         tipo: "educativa",
-        status: "Pendiente",
         post_evaluacion: "Evaluación positiva, asistentes comprometidos",
         fotosUrls: [
           "https://example.com/photo1.jpg",
@@ -66,7 +65,6 @@ module.exports = {
         timeStamp: new Date("2025-09-07T15:30:00Z"),
         costo: "200.00",
         tipo: "recreativa",
-        status: "Suspendida",
         post_evaluacion: null,
         fotosUrls: Sequelize.literal("ARRAY[]::text[]"),
         userId: "22222222",
