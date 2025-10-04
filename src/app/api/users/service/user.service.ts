@@ -37,6 +37,7 @@ export class UserService {
       include: [
         {
           model: Intervencion,
+          as: "Intervenciones",
         },
         {
           model: Perro,

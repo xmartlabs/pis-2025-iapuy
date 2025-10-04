@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { PerrosController } from "../controller/perros.controller";
 import { initDatabase } from "@/lib/init-database";
 
+await initDatabase();
 const perrosController = new PerrosController();
 
 export async function GET(request: NextRequest) {
@@ -14,8 +15,6 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    await initDatabase();
-
     const data = await perrosController.getPerro(id);
     if (data.status === 200) {
       return NextResponse.json(
@@ -27,9 +26,9 @@ export async function GET(request: NextRequest) {
       { perro: null, error: data.error },
       { status: data.status }
     );
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { perro: null, error: "Internal error" },
+      { perro: null, error: error instanceof Error ? error.message : "Internal error" },
       { status: 500 }
     );
   }
