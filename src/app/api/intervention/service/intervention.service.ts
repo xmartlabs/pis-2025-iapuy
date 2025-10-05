@@ -8,6 +8,7 @@ import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
+import sequelize from "@/lib/database";
 
 export class InterventionService {
   async findAll(
@@ -78,30 +79,45 @@ export class InterventionService {
     });
     return getPaginationResultFromModel(pagination, result);
   }
+
   async create(request: CreateInterventionDto): Promise<Intervention> {
     const institution = await Institucion.findOne({
       where: { nombre: request.institution },
     });
-
     if (!institution) {
       throw new Error(
         `Institution with name "${request.institution}" not found`
       );
     }
-    const intervention = await Intervention.create({
-      timeStamp: request.timeStamp,
-      costo: request.cost,
-      tipo: request.type,
-      pairsQuantity: request.pairsQuantity,
-      description: request.description,
-      status: request.state,
-    });
+    const transaction = await sequelize.transaction();
 
-    await InstitucionIntervencion.create({
-      institucionId: institution.id,
-      intervencionId: intervention.id,
-    });
+    try {
+      const intervention = await Intervention.create(
+        {
+          timeStamp: request.timeStamp,
+          costo: request.cost,
+          tipo: request.type,
+          pairsQuantity: request.pairsQuantity,
+          description: request.description,
+          status: request.state,
+        },
+        { transaction }
+      );
 
-    return intervention;
+      await InstitucionIntervencion.create(
+        {
+          institucionId: institution.id,
+          intervencionId: intervention.id,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+
+      return intervention;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }
