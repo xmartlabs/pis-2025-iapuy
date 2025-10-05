@@ -7,6 +7,7 @@ import { Op } from "sequelize";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
+import sequelize from "@/lib/database";
 
 export class InstitutionsService {
   async findAll(
@@ -31,40 +32,52 @@ export class InstitutionsService {
   }
 
   async create(institutionDTO: CreateInstitutionDTO): Promise<Institucion> {
-    const existe =
-      (await Institucion.findOne({
-        where: { nombre: institutionDTO.name },
-      })) !== null;
-    if (existe) {
-      throw new Error("Ya existe una institucion con el nombre elegido.");
-    }
-    const institution: Institucion = await Institucion.create({
-      nombre: institutionDTO.name,
-    });
-    await Promise.all(
-      institutionDTO.institutionContacts.map((contact) =>
-        InstitutionContact.create({
-          name: contact.name,
-          contact: contact.contact,
-          institutionId: institution.id,
+    return await sequelize.transaction(async (t) => {
+      const existe =
+        (await Institucion.findOne({
+          where: { nombre: institutionDTO.name },
+          transaction: t,
+        })) !== null;
+      if (existe) {
+        throw new Error("Ya existe una institucion con el nombre elegido.");
+      }
+
+      const institution: Institucion = await Institucion.create(
+        {
+          nombre: institutionDTO.name,
+        },
+        { transaction: t }
+      );
+      await Promise.all(
+        institutionDTO.institutionContacts.map((contact) =>
+          InstitutionContact.create(
+            {
+              name: contact.name,
+              contact: contact.contact,
+              institutionId: institution.id,
+            },
+            { transaction: t }
+          )
+        )
+      );
+      await Promise.all(
+        institutionDTO.pathologies.map(async (name) => {
+          const [pathology] = await Patologia.findOrCreate({
+            where: { nombre: name },
+            defaults: { nombre: name },
+            transaction: t,
+          });
+          await InstitucionPatologias.findOrCreate({
+            where: { institucionId: institution.id, patologiaId: pathology.id },
+            defaults: {
+              institucionId: institution.id,
+              patologiaId: pathology.id,
+            },
+            transaction: t,
+          });
         })
-      )
-    );
-    await Promise.all(
-      institutionDTO.pathologies.map(async (name) => {
-        const [pathology] = await Patologia.findOrCreate({
-          where: { nombre: name },
-          defaults: { nombre: name },
-        });
-        await InstitucionPatologias.findOrCreate({
-          where: { institucionId: institution.id, patologiaId: pathology.id },
-          defaults: {
-            institucionId: institution.id,
-            patologiaId: pathology.id,
-          },
-        });
-      })
-    );
-    return institution;
+      );
+      return institution;
+    });
   }
 }
