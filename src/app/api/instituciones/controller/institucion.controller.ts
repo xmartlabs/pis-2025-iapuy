@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { InstitutionsService } from "../service/instituciones.service";
+import { InstitucionesService } from "../service/instituciones.service";
 import { type PaginationDto } from "@/lib/pagination/pagination.dto";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
 
-export class InstitutionsController {
+export class InstitucionesController {
   constructor(
-    private readonly institutionsService: InstitutionsService = new InstitutionsService()
+    private readonly institutionsService: InstitucionesService = new InstitucionesService()
   ) {}
   async getInstitutions(pagination: PaginationDto) {
     try {

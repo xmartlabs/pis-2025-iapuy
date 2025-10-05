@@ -9,7 +9,7 @@ import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 import sequelize from "@/lib/database";
 
-export class InstitutionsService {
+export class InstitucionesService {
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Institucion>> {

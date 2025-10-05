@@ -4,7 +4,7 @@ import { Institucion } from "@/app/models/institucion.entity";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
-import { InstitutionsService } from "./instituciones.service";
+import { InstitucionesService } from "./instituciones.service";
 
 vi.mock("@/app/models/institucion.entity", () => ({
   Institucion: {
@@ -32,7 +32,7 @@ describe("InstitutionService", () => {
   let service: any = undefined;
 
   beforeEach(() => {
-    service = new InstitutionsService();
+    service = new InstitucionesService();
     vi.clearAllMocks();
   });
 

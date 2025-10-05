@@ -1,9 +1,9 @@
 import { initDatabase } from "@/lib/init-database";
 import { type NextRequest, NextResponse } from "next/server";
-import { InstitutionsController } from "./controller/institution.controller";
+import { InstitucionesController } from "./controller/institucion.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
 
-const institutionsController = new InstitutionsController();
+const institutionsController = new InstitucionesController();
 await initDatabase();
 
 export async function GET(request: NextRequest) {
