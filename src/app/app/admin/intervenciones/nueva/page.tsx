@@ -122,7 +122,7 @@ export default function NewIntervention() {
       signal?: AbortSignal,
       triedRefresh = false
     ): Promise<PaginationResultDto<InterventionDto> | null> => {
-      const url = new URL("/api/interventions", BASE_API_URL);
+      const url = new URL("/api/intervention", BASE_API_URL);
       url.searchParams.set("query", institutionName);
 
       const controller = new AbortController();
@@ -236,7 +236,7 @@ export default function NewIntervention() {
         description: values.description,
         cost: 0,
         fotosUrls: [],
-        estado: "pendiente",
+        state: "pendiente",
       };
       if (!retrying) {
         const interventions = await fetchInterventionsByInstitution(
@@ -257,7 +257,7 @@ export default function NewIntervention() {
           }
         }
       }
-      const url = new URL("/api/interventions", BASE_API_URL);
+      const url = new URL("/api/intervention", BASE_API_URL);
 
       const doPost = async (authToken: string) => {
         const headers = {
@@ -312,10 +312,8 @@ export default function NewIntervention() {
       });
       setRetrying(false);
       router.push("/app/admin/intervenciones/listado");
-    } catch (err) {
-      toast("Error creando intervención", {
-        description: err instanceof Error ? err.message : String(err),
-      });
+    } catch {
+      toast("Error creando intervención");
     }
   };
   const fetchInstitutions = useCallback(

@@ -8,4 +8,5 @@ export class CreateInterventionDto {
   declare pairsQuantity: number;
   declare description: string;
   declare institution: string;
+  declare state: string;
 }

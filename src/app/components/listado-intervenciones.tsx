@@ -61,7 +61,7 @@ export default function ListadoIntervenciones() {
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
       const url = new URL(
-        "/api/intervencion",
+        "/api/intervention",
         (typeof window !== "undefined" && window.location?.origin) || ""
       );
       url.searchParams.set("page", String(p));
@@ -295,9 +295,13 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions && inter.Institucions.length > 0
-                          ? inter.Institucions.map((i) => i.nombre).join(", ")
-                          : ""}
+                        {
+                          (
+                            inter as InterventionDto & {
+                              Institucions: Array<{ nombre: string }>;
+                            }
+                          ).Institucions?.[0]?.nombre
+                        }
                       </div>
                     </TableCell>
 

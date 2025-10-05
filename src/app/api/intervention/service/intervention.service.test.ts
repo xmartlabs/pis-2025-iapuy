@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { IntervencionService } from "./intervencion.service";
+import { InterventionService } from "./intervention.service";
 import { Intervention } from "@/app/models/intervention.entity";
 import { Op } from "sequelize";
 
@@ -23,7 +23,7 @@ describe("IntervencionService", () => {
   let service: any = undefined;
 
   beforeEach(() => {
-    service = new IntervencionService();
+    service = new InterventionService();
     vi.clearAllMocks();
   });
 

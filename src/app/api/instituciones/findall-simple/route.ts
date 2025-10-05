@@ -10,6 +10,7 @@ export async function GET() {
     const institutions = await institucionesController.getInstitutionsSimple();
     return NextResponse.json(institutions);
   } catch (error) {
+    console.log(error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }

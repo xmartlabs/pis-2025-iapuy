@@ -99,7 +99,7 @@ const registerIntervencionAssociations = () => {
       otherKey: "institucionId",
     });
   }
-  if (!hasAssociation(Intervention, Perro)) {
+  if (!hasAssociation(Intervention, UsrPerro, "UsrPerroIntervention")) {
     Intervention.hasMany(UsrPerro, {
       as: "UsrPerroIntervention",
       foreignKey: "intervencionId",
