@@ -280,7 +280,7 @@ export default function DetallePersona() {
           </Alert>
         </div>
 
-        <div className="flex justify-start items-center">
+        <div className="flex justify-start items-center hidden">
           <Button
             asChild
             className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
