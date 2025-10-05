@@ -219,7 +219,7 @@ export default function ListadoIntervenciones() {
                 .sort((a, b) => b[1] - a[1])
                 .map((e) => e[0]);
               setAvailableMonths(sorted);
-            } catch (e) {
+            } catch {
               setAvailableMonths([]);
             }
           }
@@ -298,14 +298,13 @@ export default function ListadoIntervenciones() {
                 <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
-                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                </TableHead>
+                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 bg-white">
               {loading ? (
-                ["s1", "s2", "s3", "s4", "s5", "s6"].map((key) => (
+                ["s1", "s2", "s3", "s4", "s5", "s6", "s7"].map((key) => (
                   <TableRow key={key} className="px-6 py-4">
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[140px]" />
@@ -321,6 +320,9 @@ export default function ListadoIntervenciones() {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[48px] ml-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[40px]" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -377,13 +379,13 @@ export default function ListadoIntervenciones() {
                       </div>
                     </TableCell>
                     <TableCell className="w-[40px] mr-0">
-                      <ArrowRight/>
+                      <ArrowRight />
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
+                  <TableCell colSpan={6} className="h-36 px-6 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <p className="text-sm text-muted-foreground">
                         {search

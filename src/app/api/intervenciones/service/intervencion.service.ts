@@ -42,7 +42,7 @@ export class IntervencionService {
     statuses: string | null
   ): Promise<PaginationResultDto<Intervencion>> {
     const whereBase: Record<string, unknown> =
-      payload.type === "Administrador"
+      payload.type === "Administrador" || payload.type === "Colaborador"
         ? {}
         : {
             userId: payload.ci,

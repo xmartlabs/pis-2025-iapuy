@@ -24,7 +24,12 @@ export async function GET(request: NextRequest) {
     const months = request.nextUrl.searchParams.get("months");
     const statuses = request.nextUrl.searchParams.get("statuses");
 
-    const res = await intervencionController.getIntervenciones(pagination, payload, months, statuses,);
+    const res = await intervencionController.getIntervenciones(
+      pagination,
+      payload,
+      months,
+      statuses
+    );
 
     return NextResponse.json(res);
   } catch (error) {
