@@ -3,7 +3,8 @@
 
 import { initDatabase } from "@/lib/init-database";
 import {NextResponse} from "next/server";
-import { IntervencionController } from "../../controller/Intervencion.controller";
+import { IntervencionController } from "../../controller/intervencion.controller";
+
 
 const interventionController = new IntervencionController();
 await initDatabase();

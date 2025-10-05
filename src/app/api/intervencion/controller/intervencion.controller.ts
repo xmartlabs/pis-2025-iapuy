@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { NextRequest, NextResponse } from "next/server";
-import { IntervencionService } from "../service/Intervencion.service";
+import { IntervencionService } from "../service/intervencion.service";
 import { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { EvaluateInterventionDTO, ExperiencePerroDTO, PatientDTO } from "../dtos/evaluate-intervention.dto";
 
