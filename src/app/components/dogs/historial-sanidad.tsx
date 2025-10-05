@@ -13,13 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LoginContext } from "@/app/context/login-context";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import CustomPagination from "../pagination";
 
 export default function HistorialSanidad() {
@@ -158,14 +151,14 @@ export default function HistorialSanidad() {
                       <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            className="shrink-0 p-1"
+                            className="shrink-0 p-1 hidden"
                             onClick={() => {
                               setIsOpenEdit(true);
                             }}
                           >
                             <Pencil />
                           </button>
-                          <button className="shrink-0 p-1">
+                          <button className="shrink-0 p-1 hidden">
                             <Trash2 />
                           </button>
                         </div>
