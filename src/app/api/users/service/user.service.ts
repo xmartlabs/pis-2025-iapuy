@@ -8,7 +8,13 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Hashing } from "@/lib/crypto/hash";
 import { Op } from "sequelize";
 import sequelize from "@/lib/database";
+import jwt from "jsonwebtoken";
 
+export interface PayloadForUser extends jwt.JwtPayload {
+  ci: string;
+  name: string;
+  type: string;
+}
 function normalizePerros(input: unknown): string[] {
   if (Array.isArray(input)) return input.map(String);
 
@@ -16,7 +22,7 @@ function normalizePerros(input: unknown): string[] {
 
   if (typeof input === "string") {
     try {
-      const parsed : unknown = JSON.parse(input);
+      const parsed: unknown = JSON.parse(input);
       if (Array.isArray(parsed)) return parsed.map(String);
       return input ? [input] : [];
     } catch {
@@ -37,6 +43,7 @@ export class UserService {
       include: [
         {
           model: Intervencion,
+          as: "Intervenciones",
         },
         {
           model: Perro,
@@ -70,9 +77,25 @@ export class UserService {
       ],
     });
   }
+  async findDogIdsByUser(duenioId: string): Promise<Perro[]> {
+
+    const Perros = await Perro.findAll({
+      where: { duenioId },
+      attributes: ["id","nombre"],
+    });
+
+    return Perros;
+  }
 
   async findOneForAuth(ci: string): Promise<User | null> {
     return await User.findByPk(ci);
+  }
+
+  async findOneWithToken(token: string): Promise<User | null> {
+    const JWT_SECRET = process.env.JWT_SECRET!;
+
+    const payload = jwt.verify(token, JWT_SECRET) as unknown as PayloadForUser;
+    return await User.findByPk(payload.ci);
   }
 
   async create(request: CreateUserDto): Promise<string> {
@@ -85,11 +108,14 @@ export class UserService {
     const transaction = await sequelize.transaction();
 
     const perros = normalizePerros(createUserDto.perros);
-    try{
+    try {
       const esAdmin = createUserDto.rol === "admin";
-      const usr = await User.create({ ...createUserDto, esAdmin }, { transaction });
+      const usr = await User.create(
+        { ...createUserDto, esAdmin },
+        { transaction }
+      );
       await Promise.all(
-      perros.map(async (perro) => {
+        perros.map(async (perro) => {
           const p = await Perro.findOne({ where: { id: perro } });
           if (p) {
             await p.update({ duenioId: createUserDto.ci }, { transaction });
@@ -98,10 +124,9 @@ export class UserService {
       );
 
       await transaction.commit();
-      
+
       return usr.ci;
-    }
-    catch (error){
+    } catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -116,9 +141,9 @@ export class UserService {
     return await user.update(updateData);
   }
 
-  async delete(username: string): Promise<boolean> {
+  async delete(ci: string): Promise<boolean> {
     const deleted = await User.destroy({
-      where: { username },
+      where: { ci },
     });
 
     return deleted > 0;

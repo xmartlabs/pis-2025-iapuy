@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import { useState, useMemo } from "react";
 import { LoginContext } from "./login-context";
-import type { TipoUsuario } from "@/app/api/auth/service/auth.service";
+import type { UserType } from "@/app/api/auth/service/auth.service";
 
 interface LoginProviderProps {
   children: ReactNode;
@@ -10,7 +10,7 @@ interface LoginProviderProps {
 
 export const LoginProvider = ({ children }: LoginProviderProps) => {
   const [tokenJwt, setToken] = useState<string | null>(null);
-  const [userType, setType] = useState<TipoUsuario | null>(null);
+  const [userType, setType] = useState<UserType | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userCI, setCI] = useState<string | null>(null);
 

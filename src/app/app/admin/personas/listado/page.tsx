@@ -15,16 +15,15 @@ import {
 } from "@/app/components/ui/table";
 import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
+import { useRouter } from "next/navigation";
 
-type PerroSummary = { id?: string, nombre?: string };
+type PerroSummary = { id?: string; nombre?: string };
 type UserRowBase = {
   [key: string]: string | number | boolean | null | undefined;
 };
 type UserRow = UserRowBase & { perros?: PerroSummary[] };
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 export default function ListadoPersonas() {
   const context = useContext(LoginContext);
@@ -34,6 +33,7 @@ export default function ListadoPersonas() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
+  const router = useRouter();
 
   // Debounce para la búsqueda
   useEffect(() => {
@@ -56,10 +56,11 @@ export default function ListadoPersonas() {
     const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
     const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-    const url = new URL("/api/users", BASE_API_URL);
-    url.searchParams.set("page", String(p));
-    url.searchParams.set("size", String(s));
-    url.searchParams.set("query", String(search));
+  const qs = new URLSearchParams();
+  qs.set("page", String(p));
+  qs.set("size", String(s));
+  qs.set("query", String(search));
+  const url = `/api/users?${qs.toString()}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -81,7 +82,7 @@ export default function ListadoPersonas() {
       });
 
       if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+  const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
           headers: { Accept: "application/json" },
           signal: combinedSignal,
@@ -107,7 +108,8 @@ export default function ListadoPersonas() {
             if (!retryResp.ok) {
               const txt = await retryResp.text().catch(() => "");
               throw new Error(
-                `API ${retryResp.status}: ${retryResp.statusText}${txt ? ` - ${txt}` : ""
+                `API ${retryResp.status}: ${retryResp.statusText}${
+                  txt ? ` - ${txt}` : ""
                 }`
               );
             }
@@ -169,7 +171,7 @@ export default function ListadoPersonas() {
           setTotalPages(res.totalPages ?? 1);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
 
     return () => {
       controller.abort();
@@ -204,7 +206,10 @@ export default function ListadoPersonas() {
           </h1>
         </div>
         <div className="flex justify-start sm:justify-end items-center">
-          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
+          <CustomSearchBar
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+          />
           <Button
             asChild
             className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
@@ -224,10 +229,11 @@ export default function ListadoPersonas() {
                 {columnHeader.map((head, index) => (
                   <TableHead
                     key={head}
-                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${index >= 3 && head !== "Perro"
-                      ? "hidden sm:table-cell"
-                      : ""
-                      }`}
+                    className={`text-sm font-medium sm:w-[186px] leading-6 medium h-[56px] px-2 sm:px-4 ${
+                      index >= 3 && head !== "Perro"
+                        ? "hidden sm:table-cell"
+                        : ""
+                    }`}
                   >
                     {head === "Cédula de identidad" ? (
                       <span className="sm:hidden">C.I</span>
@@ -246,15 +252,22 @@ export default function ListadoPersonas() {
             <TableBody>
               {users && users.length > 0 ? (
                 users.map((user, i) => (
-                  <TableRow key={i}>
+                  <TableRow
+                    key={i}
+                    onClick={() => {
+                      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                      router.push(`/app/admin/personas/detalle?ci=${user.ci}`);
+                    }}
+                  >
                     {Object.keys(columnToAttribute).map((column, index) => {
                       const attribute = columnToAttribute[column];
                       const value = user[attribute];
                       return (
                         <TableCell
                           key={column}
-                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${index >= 3 ? "hidden sm:table-cell" : ""
-                            }`}
+                          className={`h-[48px] px-2 sm:px-4 sm:w-[186px] ${
+                            index >= 3 ? "hidden sm:table-cell" : ""
+                          }`}
                         >
                           <div
                             className="truncate"
@@ -278,16 +291,16 @@ export default function ListadoPersonas() {
                       <div className="truncate">
                         {Array.isArray(user.perros) && user.perros.length > 0
                           ? user.perros.map((p, index) =>
-                            p?.nombre ? (
-                              <Link
-                                key={index}
-                                href={`/app/admin/perros/detalles?id=${p.id}`}
-                                className="!underline hover:text-blue-800 mr-2 text-sm"
-                              >
-                                {p.nombre}
-                              </Link>
-                            ) : null
-                          )
+                              p?.nombre ? (
+                                <Link
+                                  key={index}
+                                  href={`/app/admin/perros/detalles?id=${p.id}`}
+                                  className="!underline hover:text-blue-800 mr-2 text-sm"
+                                >
+                                  {p.nombre}
+                                </Link>
+                              ) : null
+                            )
                           : "No tiene"}
                       </div>
                     </TableCell>
@@ -303,7 +316,11 @@ export default function ListadoPersonas() {
             </TableBody>
           </Table>
           {totalPages > 1 && (
-            <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+            <CustomPagination
+              page={page}
+              totalPages={totalPages}
+              setPage={setPage}
+            />
           )}
         </div>
       </div>

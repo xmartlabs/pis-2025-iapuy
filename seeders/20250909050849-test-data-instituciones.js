@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     // Create instituciones
     const inst1 = uuidv4();
     const inst2 = uuidv4();
@@ -64,7 +64,6 @@ module.exports = {
         timeStamp: new Date("2025-01-10T14:30:00"),
         costo: 1200,
         tipo: "educativa",
-        status: "Pendiente",
         post_evaluacion: "Mejor concentración en clase",
         fotosUrls: ["foto1.jpg", "foto2.jpg"], // Postgres array
         createdAt: new Date(),
@@ -75,7 +74,6 @@ module.exports = {
         timeStamp: new Date("2025-02-05T09:00:00"),
         costo: 800,
         tipo: "recreativa",
-        status: "Finalizada",
         post_evaluacion: "Mayor interacción social",
         fotosUrls: ["foto3.jpg"],
         createdAt: new Date(),
@@ -86,7 +84,6 @@ module.exports = {
         timeStamp: new Date("2025-02-20T11:00:00"),
         costo: 1500,
         tipo: "terapeutica",
-        status: "Suspendida",
         post_evaluacion: "Reducción de síntomas de ansiedad",
         fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),
@@ -167,7 +164,7 @@ module.exports = {
     ]);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("institucion-intervenciones", null, {});
     await queryInterface.bulkDelete("institucion-patologias", null, {});
     await queryInterface.bulkDelete("intervenciones", null, {});

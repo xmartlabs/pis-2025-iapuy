@@ -2,6 +2,7 @@ import { PerrosService } from "../service/perros.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
 import type { NextRequest } from "next/server";
+import type { PayloadForUser } from "../detalles/route";
 
 
 export class PerrosController {
@@ -18,8 +19,8 @@ export class PerrosController {
     return this.perrosService.create(body);
 
   }
-  async getPerro(id: string) {
-    return await this.perrosService.findOne(id);
+  async getPerro(id: string, payload: PayloadForUser) {
+    return await this.perrosService.findOne(id, payload);
   }
 
   async deletePerro(id: string): Promise<boolean> {

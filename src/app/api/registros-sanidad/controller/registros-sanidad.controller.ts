@@ -2,16 +2,18 @@ import type { NextRequest } from "next/server";
 import { RegistrosSanidadService } from "../service/registro-sanidad.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto"
+import type { PayloadForUser } from "../../perros/detalles/route";
 
 export class RegistrosSanidadController {
   constructor(
     private readonly registrosSanidadService: RegistrosSanidadService = new RegistrosSanidadService(),
   ) { }
 
-  async getRegistrosSanidad(pagination: PaginationDto, id: string) {
+  async getRegistrosSanidad(pagination: PaginationDto, id: string, payload: PayloadForUser) {
     return await this.registrosSanidadService.findAll(
       pagination,
       id,
+      payload
     );
   }
 
