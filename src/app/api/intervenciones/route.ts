@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
     const payload = jwt.decode(accessToken) as PayloadForUser;
 
     const pagination = await extractPagination(request);
-    const res = await intervencionController.getIntervenciones(pagination, payload);
+
+    const months = request.nextUrl.searchParams.get("months");
+    const statuses = request.nextUrl.searchParams.get("statuses");
+
+    const res = await intervencionController.getIntervenciones(pagination, payload, months, statuses,);
 
     return NextResponse.json(res);
   } catch (error) {

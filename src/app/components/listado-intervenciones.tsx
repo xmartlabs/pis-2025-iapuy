@@ -33,10 +33,6 @@ function formatMonthYear(ts: string | number | Date) {
   return `${monthCap} ${d.getFullYear()}`;
 }
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
-
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
@@ -47,6 +43,8 @@ export default function ListadoIntervenciones() {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [reload] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
   const context = useContext(LoginContext);
   const router = useRouter();
@@ -84,6 +82,10 @@ export default function ListadoIntervenciones() {
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
       if (query?.trim().length) url.searchParams.set("query", query.trim());
+      if (selectedMonths && selectedMonths.length)
+        url.searchParams.set("months", selectedMonths.join(","));
+      if (selectedStatuses && selectedStatuses.length)
+        url.searchParams.set("statuses", selectedStatuses.join(","));
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -187,7 +189,7 @@ export default function ListadoIntervenciones() {
         clearTimeout(timeout);
       }
     },
-    [context]
+    [context, selectedMonths, selectedStatuses]
   );
 
   useEffect(() => {
@@ -199,24 +201,30 @@ export default function ListadoIntervenciones() {
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
-          try {
-            const map = new Map<string, number>();
-            res.data.forEach((it) => {
-              const d = new Date(it.timeStamp);
-              if (isNaN(d.getTime())) return;
-              const key = formatMonthYear(d);
-              const monthStart = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-              if (!map.has(key)) map.set(key, monthStart);
-            });
-            const sorted = Array.from(map.entries())
-              .sort((a, b) => b[1] - a[1])
-              .map((e) => e[0]);
-            setAvailableMonths(sorted);
-          } catch (e) {
-            setAvailableMonths([]);
+          if (availableMonths.length === 0) {
+            try {
+              const map = new Map<string, number>();
+              res.data.forEach((it) => {
+                const d = new Date(it.timeStamp);
+                if (isNaN(d.getTime())) return;
+                const key = formatMonthYear(d);
+                const monthStart = new Date(
+                  d.getFullYear(),
+                  d.getMonth(),
+                  1
+                ).getTime();
+                if (!map.has(key)) map.set(key, monthStart);
+              });
+              const sorted = Array.from(map.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map((e) => e[0]);
+              setAvailableMonths(sorted);
+            } catch (e) {
+              setAvailableMonths([]);
+            }
           }
-         }
-       })
+        }
+      })
       .catch(() => {})
       .finally(() => {
         setLoading(false);
@@ -225,17 +233,15 @@ export default function ListadoIntervenciones() {
     return () => {
       controller.abort();
     };
-  }, [page, size, search, reload, fetchIntervenciones]);
+  }, [page, size, search, reload, fetchIntervenciones, availableMonths.length]);
 
-  // opcional: manejar cambios de selección desde el dropdown
   const onFilterSelectionChange = (
     monthsSelected: string[],
-    statusesSelected: string[],
+    statusesSelected: string[]
   ) => {
-    // Por ahora no hacemos nada; si en el futuro queremos filtrar
-    // la lista por estos valores, podemos actualizar `search` o
-    // reiniciar la página aquí.
-    // console.log('filter changed', monthsSelected, statusesSelected);
+    setSelectedMonths(monthsSelected);
+    setSelectedStatuses(statusesSelected);
+    setPage(1);
   };
 
   return (
@@ -247,14 +253,14 @@ export default function ListadoIntervenciones() {
         >
           Intervenciones
         </h1>
-      <div className="flex justify-end mb-2 p-3">
-        <Button className="flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-sm transition-colors duration-200 hover:bg-gray-100">
-          <Plus className="w-5 h-5 mr-2" />
-          <span style={{ fontFamily: "Inter, sans-serif" }}>
-            Agregar intervención
-          </span>
-        </Button>
-      </div>
+        <div className="flex justify-end mb-2 p-3">
+          <Button className="flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-sm transition-colors duration-200 hover:bg-gray-100">
+            <Plus className="w-5 h-5 mr-2" />
+            <span style={{ fontFamily: "Inter, sans-serif" }}>
+              Agregar intervención
+            </span>
+          </Button>
+        </div>
       </div>
       <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
         <CustomSearchBar
@@ -264,6 +270,8 @@ export default function ListadoIntervenciones() {
         <FilterDropdown
           months={availableMonths}
           statuses={statuses}
+          initialSelectedMonths={selectedMonths}
+          initialSelectedStatuses={selectedStatuses}
           onSelectionChangeAction={onFilterSelectionChange}
         />
       </div>

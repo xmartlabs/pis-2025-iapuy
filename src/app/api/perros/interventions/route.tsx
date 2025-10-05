@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import { IntervencionController } from "@/app/api/intervencion/controller/intervencion.controller";
+import { IntervencionController } from "@/app/api/intervenciones/controller/intervencion.controller";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
