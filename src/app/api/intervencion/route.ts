@@ -2,7 +2,7 @@
 
 
 import { initDatabase } from "@/lib/init-database";
-import { IntervencionController } from "./controller/Intervencion.controller";
+import { IntervencionController } from "./controller/intervencion.controller"
 import { NextRequest , NextResponse} from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
 

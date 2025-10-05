@@ -22,14 +22,12 @@ export class IntervencionController {
     }
   }
 
-  /* eslint-enable */
 
   async getPathologies(id: string){
     try {
       const pathologies = await this.intervencionService.findAllPathologiesbyId(id);
       return pathologies;
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error);
       return NextResponse.json(
         { error: "Internal Server Error" },
@@ -43,7 +41,6 @@ export class IntervencionController {
       const dogs = await this.intervencionService.findAllDogsbyId(id);
       return dogs;
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error);
       return NextResponse.json(
         { error: "Internal Server Error" },
