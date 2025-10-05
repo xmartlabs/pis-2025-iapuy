@@ -120,7 +120,7 @@ export default function DetallePerro() {
             {userType === UserType.Administrator && (
               <Button
                 variant="outline"
-                className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
+                className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50 hidden"
               >
                 <Pencil className="w-4 h-4" />
                 Editar
