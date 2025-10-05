@@ -7,8 +7,8 @@ import Link from "next/link";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import { LoginContext } from "@/app/context/login-context";
 import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
-import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb"
-import {UserType} from "@/app/page"
+import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
+import { UserType } from "@/app/page";
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -46,13 +46,10 @@ export default function DetallePerro() {
       };
       const triedRefresh = false;
 
-      const resp = await fetch(
-        `/api/perros/detalles?id=${id}`,
-        {
-          method: "GET",
-          headers: baseHeaders,
-        },
-      );
+      const resp = await fetch(`/api/perros/detalles?id=${id}`, {
+        method: "GET",
+        headers: baseHeaders,
+      });
       if (!resp.ok && !triedRefresh && resp.status === 401) {
         const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
@@ -66,26 +63,21 @@ export default function DetallePerro() {
           const newToken = refreshBody?.accessToken ?? null;
           if (newToken) {
             context?.setToken(newToken);
-            const retryResp = await fetch(
-              `/api/perros/detalles?id=${id}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
+            const retryResp = await fetch(`/api/perros/detalles?id=${id}`, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${newToken}`,
               },
-            );
+            });
 
-            return (await retryResp.json()) as Promise<
-              Promise<ApiResponse>
-            >;
+            return (await retryResp.json()) as Promise<Promise<ApiResponse>>;
           }
         }
       }
       return (await resp.json()) as Promise<ApiResponse>;
     },
-    [context],
+    [context]
   );
 
   const searchParams = useSearchParams();
@@ -103,10 +95,10 @@ export default function DetallePerro() {
         setIsOpenError(true);
       });
   }, [id]);
-  if (!context?.userType){
+  if (!context?.userType) {
     return null;
   }
-  const userType:UserType=context?.userType
+  const userType: UserType = context?.userType;
   return (
     <>
       <div className="w-full">
@@ -126,13 +118,14 @@ export default function DetallePerro() {
           </h1>
           <div className="flex gap-2">
             {userType === UserType.Administrator && (
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
-            >
-              <Pencil className="w-4 h-4" />
-              Editar
-            </Button>)}
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
+              >
+                <Pencil className="w-4 h-4" />
+                Editar
+              </Button>
+            )}
             <RegistroSanidad />
           </div>
         </div>
@@ -140,9 +133,7 @@ export default function DetallePerro() {
         <div className="space-y-4 text-[#121F0D]">
           <Dato
             titulo="DUEÑO"
-            valor={
-              infoPerro.duenioNombre ? (infoPerro.duenioNombre) : ""
-            }
+            valor={infoPerro.duenioNombre ? infoPerro.duenioNombre : ""}
           />
           <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
           <Dato titulo="FUERTES" valor={infoPerro.fortalezas} />

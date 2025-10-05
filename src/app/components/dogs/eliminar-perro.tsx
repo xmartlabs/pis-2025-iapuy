@@ -125,32 +125,31 @@ export default function EliminarPerro() {
             >
               ×
             </button>
-            <div className="flex flex-col items-center">
-              <Trash2 className="w-10 h-10 text-red-500 mb-2" />
-              <h2 className="text-2xl font-semibold mb-2 text-gray-800 text-center">
-                ¿Seguro que desea eliminar al perro?
+            <div className="flex flex-col">
+              <h2
+                className="text-lg font-semibold mb-2 text-gray-800"
+                style={{ fontFamily: "Archivo, sans-serif" }}
+              >
+                ¿Eliminar perro?
               </h2>
-              <p className="text-gray-500 mb-6 text-center">
-                Esta acción no se puede deshacer.
-              </p>
-              <div className="flex gap-3 w-full justify-center">
-                <Button
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium shadow transition"
-                  onClick={() => {
-                    setIsConfirmOpen(false);
-                    handleDelete().catch(() => { });
-                  }}
-                >
-                  Confirmar
-                </Button>
+              <div className="flex gap-3 w-full justify-between mt-4">
                 <Button
                   variant="outline"
-                  className="px-6 py-2 rounded-lg font-medium border-gray-300 hover:bg-gray-100 transition"
+                  className="px-6 py-2 rounded-lg font-medium border-gray-300 hover:bg-gray-100 transition text-red-600 sm:h-10"
                   onClick={() => {
                     setIsConfirmOpen(false);
                   }}
                 >
-                  Cancelar
+                  No, cancelar
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium shadow transition sm:h-10"
+                  onClick={() => {
+                    setIsConfirmOpen(false);
+                    handleDelete().catch(() => {});
+                  }}
+                >
+                  Si, eliminar
                 </Button>
               </div>
             </div>
