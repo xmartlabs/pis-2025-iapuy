@@ -1,4 +1,4 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
@@ -11,8 +11,8 @@ export class IntervencionService {
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser
-  ): Promise<PaginationResultDto<Intervencion>> {
-    const result = await Intervencion.findAndCountAll({
+  ): Promise<PaginationResultDto<Intervention>> {
+    const result = await Intervention.findAndCountAll({
       where:
         payload.type === "Administrador"
           ? undefined
@@ -40,12 +40,12 @@ export class IntervencionService {
     pagination: PaginationDto,
     dogId: string,
     payload: PayloadForUser
-  ): Promise<PaginationResultDto<Intervencion>> {
+  ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
       : {};
 
-    const result = await Intervencion.findAndCountAll({
+    const result = await Intervention.findAndCountAll({
       where: interventionWhere,
       include: [
         {

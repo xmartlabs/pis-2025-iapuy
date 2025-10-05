@@ -23,7 +23,6 @@ function normalizePerros(input: unknown): string[] {
   if (typeof input === "string") {
     try {
       const parsed: unknown = JSON.parse(input);
-      const parsed: unknown = JSON.parse(input);
       if (Array.isArray(parsed)) return parsed.map(String);
       return input ? [input] : [];
     } catch {
@@ -108,18 +107,12 @@ export class UserService {
 
     const perros = normalizePerros(createUserDto.perros);
     try {
-    try {
       const esAdmin = createUserDto.rol === "admin";
       const usr = await User.create(
         { ...createUserDto, esAdmin },
         { transaction }
       );
-      const usr = await User.create(
-        { ...createUserDto, esAdmin },
-        { transaction }
-      );
       await Promise.all(
-        perros.map(async (perro) => {
         perros.map(async (perro) => {
           const p = await Perro.findOne({ where: { id: perro } });
           if (p) {
@@ -130,9 +123,7 @@ export class UserService {
 
       await transaction.commit();
 
-
       return usr.ci;
-    } catch (error) {
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -156,4 +147,3 @@ export class UserService {
     return deleted > 0;
   }
 }
-

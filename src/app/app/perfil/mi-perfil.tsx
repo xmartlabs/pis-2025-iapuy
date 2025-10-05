@@ -25,8 +25,6 @@ type UserData = CreateUserDto & {
   esAdmin?: boolean;
 };
 
-
-
 export default function DetallePersona() {
   const context = useContext(LoginContext);
   const [user, setUser] = useState<UserData | null>(null);
@@ -50,7 +48,7 @@ export default function DetallePersona() {
         return null;
       }
 
-  const url = `/api/users/profile`;
+      const url = `/api/users/profile`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {

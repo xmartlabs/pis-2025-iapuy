@@ -17,7 +17,7 @@ export class IntervencionController {
     return await this.intervencionService.findInterventionByDogId(
       pagination,
       dogId,
-      payload,
+      payload
     );
   }
 }
