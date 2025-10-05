@@ -14,10 +14,10 @@ import {
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Edit3Icon } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import { Button } from "@/components/ui/button";
 import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
@@ -48,6 +48,11 @@ export default function ListadoIntervenciones() {
 
   const context = useContext(LoginContext);
   const router = useRouter();
+
+  const pathname = usePathname();
+
+  const isAdmin: boolean =
+    context?.user?.role === "admin" || (pathname ?? "").includes("/admin");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -283,9 +288,15 @@ export default function ListadoIntervenciones() {
                 className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
                 style={{ fontFamily: "Roboto, sans-serif" }}
               >
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Fecha y hora
-                </TableHead>
+                {isAdmin ? (
+                  <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                    Fecha y hora
+                  </TableHead>
+                ) : (
+                  <TableHead className="w-[100px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                    Fecha y hora
+                  </TableHead>
+                )}
                 <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Organizacion
                 </TableHead>
@@ -298,7 +309,13 @@ export default function ListadoIntervenciones() {
                 <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
-                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
+                {isAdmin ? (
+                  <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
+                ) : (
+                  <TableHead className="w-[100px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                    Acciones
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
 
@@ -378,9 +395,30 @@ export default function ListadoIntervenciones() {
                         {inter.status || ""}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
-                    </TableCell>
+                    {isAdmin ? (
+                      <TableCell className="w-[40px] mr-0">
+                        <ArrowRight />
+                      </TableCell>
+                    ) : inter.status !== "Suspendida" ? (
+                      <TableCell className="w-[40px] mr-0">
+                        <Button className="bg-[#2D3648] h-6">
+                          {inter.status === "Pendiente" && (
+                            <>
+                              <Edit3Icon />
+                              Inscribir
+                            </>
+                          )}
+                          {inter.status === "Finalizada" && (
+                            <>
+                              <Plus />
+                              Agregar info
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                    ) : (
+                      <TableCell className="w-[40px] mr-0"></TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
