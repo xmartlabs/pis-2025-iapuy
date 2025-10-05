@@ -14,7 +14,7 @@ import {
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
@@ -298,6 +298,8 @@ export default function ListadoIntervenciones() {
                 <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
+                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -373,6 +375,9 @@ export default function ListadoIntervenciones() {
                       <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
                         {inter.status || ""}
                       </div>
+                    </TableCell>
+                    <TableCell className="w-[40px] mr-0">
+                      <ArrowRight/>
                     </TableCell>
                   </TableRow>
                 ))
