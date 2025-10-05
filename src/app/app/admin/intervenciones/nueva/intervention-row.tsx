@@ -1,6 +1,5 @@
 import {
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableHeader,
@@ -35,9 +34,9 @@ export default function InterventionRow({
                 .getMinutes()
                 .toString()
                 .padStart(2, "0")}`}</TableCell>
-
-              <TableCell>{intervention.tipo}</TableCell>
               <TableCell>{institution}</TableCell>
+              <TableCell>{intervention.tipo}</TableCell>
+
               <TableCell>{intervention.pairsQuantity}</TableCell>
             </TableRow>
           </TableHeader>

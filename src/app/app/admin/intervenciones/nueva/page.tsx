@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { set, z } from "zod";
+import { z } from "zod";
 import { useContext, useCallback, useEffect, useState } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
@@ -85,12 +85,11 @@ const formSchema = z
     }
   });
 
-const institutionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
+type Institution = {
+  id: string;
+  name: string;
+};
 
-type Institution = z.infer<typeof institutionSchema>;
 type FormValues = z.infer<typeof formSchema>;
 
 export default function NewIntervention() {
@@ -104,6 +103,7 @@ export default function NewIntervention() {
   const interventionTypes = ["Educativa", "Recreativa", "Terapeutica"];
   const [repeatedIntervention, setRepeatedIntervention] =
     useState<InterventionDto | null>(null);
+  const [retrying, setRetrying] = useState<boolean>(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -238,20 +238,23 @@ export default function NewIntervention() {
         fotosUrls: [],
         estado: "pendiente",
       };
-      const interventions = await fetchInterventionsByInstitution(
-        values.institution
-      );
+      if (!retrying) {
+        const interventions = await fetchInterventionsByInstitution(
+          values.institution
+        );
 
-      for (const intervention of interventions?.data ?? []) {
-        const interventionDate = new Date(intervention.timeStamp);
-        if (
-          interventionDate.getTime() === combinedDateTime.getTime() &&
-          interventionDate.getDate() === combinedDateTime.getDate() &&
-          interventionDate.getMonth() === combinedDateTime.getMonth() &&
-          interventionDate.getFullYear() === combinedDateTime.getFullYear()
-        ) {
-          setRepeatedIntervention(intervention);
-          return;
+        for (const intervention of interventions?.data ?? []) {
+          const interventionDate = new Date(intervention.timeStamp);
+          if (
+            interventionDate.getTime() === combinedDateTime.getTime() &&
+            interventionDate.getDate() === combinedDateTime.getDate() &&
+            interventionDate.getMonth() === combinedDateTime.getMonth() &&
+            interventionDate.getFullYear() === combinedDateTime.getFullYear()
+          ) {
+            setRepeatedIntervention(intervention);
+            setRetrying(true);
+            return;
+          }
         }
       }
       const url = new URL("/api/interventions", BASE_API_URL);
@@ -307,6 +310,7 @@ export default function NewIntervention() {
       toast("Intervención creada con éxito", {
         description: "La intervención ha sido creada exitosamente.",
       });
+      setRetrying(false);
       router.push("/app/admin/intervenciones/listado");
     } catch (err) {
       toast("Error creando intervención", {
@@ -439,6 +443,7 @@ export default function NewIntervention() {
           />
         </div>
       )}
+
       <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
