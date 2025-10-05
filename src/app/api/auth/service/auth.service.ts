@@ -27,12 +27,11 @@ export class AuthService {
     await initDatabase();
 
     const user = await this.userService.findOneForAuth(ci);
-    if (
-      user === undefined ||
-      user === null ||
-      !(await Hashing.verifyPassword(password, user.password))
-    ) {
-      return { error: "Credenciales inválidas", status: 401 };
+    if (!user) {
+      return { error: "Este usuario no existe", status: 401 };
+    }
+    if (!(await Hashing.verifyPassword(password, user.password))) {
+      return { error: "Credenciales inválidas", status: 402 };
     }
     const userCI = user.ci;
     const userName = user.nombre;
