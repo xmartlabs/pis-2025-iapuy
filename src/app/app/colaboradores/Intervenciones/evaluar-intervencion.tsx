@@ -67,7 +67,7 @@ export default function EvaluarIntervencion(){
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch(`/api/Intervencion/${id}/pathologies`, { headers: baseHeaders });
+        const response = await fetch(`/api/intervencion/${id}/pathologies`, { headers: baseHeaders });
         if (response.status === 401) {
           const resp2 = await fetch(
             new URL("/api/auth/refresh", BASE_API_URL),
@@ -83,7 +83,7 @@ export default function EvaluarIntervencion(){
             const newToken = refreshBody?.accessToken ?? null;
             if (newToken) {
               context?.setToken(newToken);
-              const retryResp = await fetch(`/api/Intervencion/${id}/pathologies`, {
+              const retryResp = await fetch(`/api/intervencion/${id}/pathologies`, {
                 method: "GET",
                 headers: {
                   Accept: "application/json",
@@ -129,7 +129,7 @@ export default function EvaluarIntervencion(){
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch(`/api/Intervencion/${id}/dogs`, { headers: baseHeaders });
+        const response = await fetch(`/api/intervencion/${id}/dogs`, { headers: baseHeaders });
         if (response.status === 401) {
           const resp2 = await fetch(
             new URL("/api/auth/refresh", BASE_API_URL),
@@ -145,7 +145,7 @@ export default function EvaluarIntervencion(){
             const newToken = refreshBody?.accessToken ?? null;
             if (newToken) {
               context?.setToken(newToken);
-              const retryResp = await fetch(`/api/Intervencion/${id}/dogs`, {
+              const retryResp = await fetch(`/api/intervencion/${id}/dogs`, {
                 method: "GET",
                 headers: {
                   Accept: "application/json",
@@ -294,7 +294,7 @@ export default function EvaluarIntervencion(){
 
       formData.append("driveLink", data.driveLink ?? "");
 
-      const res = await fetch(`/api/Intervencion/${id}`,{
+      const res = await fetch(`/api/intervencion/${id}`,{
         method: "PUT",
         headers: {
           Authorization: `Bearer ${context?.tokenJwt}`
