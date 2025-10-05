@@ -21,14 +21,20 @@ export class PerrosService {
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
       include: [
-        { model: User, attributes: ["ci", "nombre"] },
+        {
+          model: User,
+          as: "User",
+          attributes: ["ci", "nombre"],
+        },
         {
           model: UsrPerro,
+          as: "UsrPerros",
           attributes: ["id"],
           include: [
             {
               attributes: ["id"],
               model: Intervencion,
+              as: "Intervencion",
               where: {},
               required: true,
             },
@@ -36,11 +42,12 @@ export class PerrosService {
         },
         {
           model: RegistroSanidad,
+          as: "RegistroSanidad",
           attributes: ["id"],
           include: [
             {
               model: Vacuna,
-              limit: 1,
+              as: "Vacunas",
               order: [["fecha", "DESC"]],
               attributes: ["fecha"],
             },
@@ -84,6 +91,7 @@ export class PerrosService {
       include: [
         {
           model: User,
+          as: "User",
           attributes: ["ci", "nombre"],
           where:
             payload.type === "Administrador"
@@ -95,9 +103,11 @@ export class PerrosService {
         },
       ],
     });
+
     if (perro === null) {
       return { error: "Perro no encontrado", status: 404 };
     }
+
     if (!perro.User) {
       return {
         error: "Error en datos del perro: Dueño no encontrado",
@@ -111,7 +121,6 @@ export class PerrosService {
       perro.descripcion,
       perro.fortalezas,
       perro.duenioId,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
       perro.User.nombre,
       perro.deletedAt
     );

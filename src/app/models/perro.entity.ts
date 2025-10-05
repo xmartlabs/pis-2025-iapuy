@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -11,19 +12,17 @@ import {
 } from "sequelize-typescript";
 
 import {
-  InferAttributes,
-  InferCreationAttributes,
   type CreationOptional
 } from "sequelize"
+import { Sequelize } from "sequelize";
 
 import { User } from "./user.entity";
 import { UsrPerro } from "./usrperro.entity";
 
-// eslint-disable-next-line new-cap
 @Table({ tableName: "perros" })
 export class Perro extends Model{
   @PrimaryKey
-  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 }) //! consultar si no conviene nueva migration en vez de manejarlo del modelo
+  @Column({ type: DataType.STRING, defaultValue: Sequelize.literal("uuid_generate_v4()") })
   declare id: CreationOptional<string>; // este objeto de sequelize permite que no le pasemos el campo y que lo cree solo, los que no lo tienen debemos pasarlos
 
   @Column({ type: DataType.STRING })
@@ -35,7 +34,6 @@ export class Perro extends Model{
   @Column({ type: DataType.STRING })
   declare fortalezas: string;
 
-  // eslint-disable-next-line new-cap
   @ForeignKey(() => User)
   @Column({ type: DataType.STRING })
   declare duenioId: string;
@@ -50,5 +48,5 @@ export class Perro extends Model{
   declare deletedAt: CreationOptional<Date>;
 
   declare UsrPerros?: UsrPerro[];
-  declare User?: User;
+  declare User: User;
 }

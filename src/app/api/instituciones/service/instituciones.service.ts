@@ -19,6 +19,7 @@ export class InstitutionsService {
       include: [
         {
           model: Patologia,
+          as: "Patologias",
         },
       ],
       limit: pagination.size,

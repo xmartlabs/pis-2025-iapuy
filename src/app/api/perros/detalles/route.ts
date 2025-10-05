@@ -4,6 +4,7 @@ import { PerrosController } from "../controller/perros.controller";
 import { initDatabase } from "@/lib/init-database";
 import jwt from "jsonwebtoken";
 
+await initDatabase();
 const perrosController = new PerrosController();
 export interface PayloadForUser extends jwt.JwtPayload {
   ci: string;
@@ -44,9 +45,9 @@ export async function GET(request: NextRequest) {
       { perro: null, error: data.error },
       { status: data.status }
     );
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { perro: null, error: "Internal error" },
+      { perro: null, error: error instanceof Error ? error.message : "Internal error" },
       { status: 500 }
     );
   }

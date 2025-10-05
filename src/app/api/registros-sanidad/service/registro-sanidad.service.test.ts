@@ -7,6 +7,7 @@ import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
 import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PayloadForUser } from "../../perros/detalles/route";
 
 vi.mock("@/app/models/registro-sanidad.entity", () => ({
   RegistroSanidad: { create: vi.fn(), findAndCountAll: vi.fn(), findOne: vi.fn() },
@@ -27,6 +28,7 @@ vi.mock("@/lib/database", () => ({ default: { transaction: vi.fn() } }));
 describe("RegistrosSanidadService", () => {
   // eslint-disable-next-line init-declarations
   let service: RegistrosSanidadService;
+  const adminPayload: PayloadForUser = { ci: "123", name: "test", type: "Administrador" } as PayloadForUser;
 
   beforeEach(() => {
     service = new RegistrosSanidadService();
@@ -37,8 +39,7 @@ describe("RegistrosSanidadService", () => {
 
   const transactionMock = vi
     .fn()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, require-await
-    .mockImplementation(async (cb: (t: string) => Promise<unknown>) => cb("transaction"));
+    .mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
   sequelize.transaction = transactionMock;
 
   const registroCreateMock = vi.fn().mockResolvedValue({ id: "1" }) as unknown as typeof RegistroSanidad.create;
@@ -54,7 +55,6 @@ describe("RegistrosSanidadService", () => {
   };
 
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   await service.create(dto as CreateRegistrosSanidadDTO);
 
 
@@ -71,8 +71,7 @@ describe("RegistrosSanidadService", () => {
 
 
   it("should create a banio registro", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, require-await
-    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => cb("transaction"));
+  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
     sequelize.transaction = transactionMock;
 
     const registroCreateMock = vi.fn().mockResolvedValue({ id: 2 }) as unknown as typeof RegistroSanidad.create;
@@ -88,8 +87,7 @@ describe("RegistrosSanidadService", () => {
       fecha: "20-09-2025",
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await service.create(dto as CreateRegistrosSanidadDTO);
+  await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(transactionMock).toHaveBeenCalled();
     expect(registroCreateMock).toHaveBeenCalledWith(
@@ -104,8 +102,7 @@ describe("RegistrosSanidadService", () => {
 
 
   it("should create a vacuna registro", async () => {
-     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, require-await
-    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => cb("transaction"));
+  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
     sequelize.transaction = transactionMock;
 
     const registroCreateMock = vi.fn().mockResolvedValue({ id: 3 }) as unknown as typeof RegistroSanidad.create;
@@ -122,8 +119,7 @@ describe("RegistrosSanidadService", () => {
       carneVacunas: "CV123" as unknown as Buffer<ArrayBufferLike>,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await service.create(dto as CreateRegistrosSanidadDTO);
+  await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(transactionMock).toHaveBeenCalled();
     expect(registroCreateMock).toHaveBeenCalledWith(
@@ -143,8 +139,7 @@ describe("RegistrosSanidadService", () => {
   });
 
   it("should return the created registroSanidad", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, require-await
-    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => cb("transaction"));
+  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
     sequelize.transaction = transactionMock;
 
     const registroCreateMock = vi.fn().mockResolvedValue({ id: 5 }) as unknown as typeof RegistroSanidad.create;
@@ -153,16 +148,14 @@ describe("RegistrosSanidadService", () => {
 
     const dto: Partial<CreateRegistrosSanidadDTO>  = { perroId: 5 as unknown as string, tipoSanidad: "banio", fecha: "23-09-2025" };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const result = await service.create(dto as CreateRegistrosSanidadDTO);
+  const result = await service.create(dto as CreateRegistrosSanidadDTO);
 
     expect(result).toEqual({ id: 5 });
 
   });
 
   it("should propagate error if create fails", async () => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, require-await
-    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => cb("transaction"));
+    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
     sequelize.transaction = transactionMock;
 
     RegistroSanidad.create = vi.fn().mockRejectedValue(new Error("DB error")) as typeof RegistroSanidad.create;
@@ -173,8 +166,7 @@ describe("RegistrosSanidadService", () => {
       fecha: "24-09-2025",
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await expect(service.create(dto as CreateRegistrosSanidadDTO)).rejects.toThrow("DB error");
+  await expect(service.create(dto as CreateRegistrosSanidadDTO)).rejects.toThrow("DB error");
   });
 
 
@@ -191,7 +183,7 @@ describe("RegistrosSanidadService", () => {
       getOrder: () => [],
     };
 
-    const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
     expect(result.data).toEqual([]);
     expect(result.count).toBe(0);
     expect(findOneMock).toHaveBeenCalledWith({ where: { perroId: "123" } });
@@ -220,7 +212,7 @@ it("should return combined events when registro exists", async () => {
   };
 
 
-  const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
 
   expect(result.count).toBe(3);
@@ -254,7 +246,7 @@ it("should return combined events when registro exists", async () => {
       getOffset: () => 5,
       getOrder: () => [],
     };
-    const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
     expect(result.data).toHaveLength(5); 
     expect(result.count).toBe(15);       
@@ -270,7 +262,7 @@ it("should return combined events when registro exists", async () => {
       getOrder: () => [],
     };
 
-    const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
     expect(result.data).toEqual([]);
     expect(result.count).toBe(0);
@@ -290,7 +282,7 @@ it("should return combined events when registro exists", async () => {
       getOrder: () => [],
     };
 
-    const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
     expect(result.data[0].fecha).toBe("19/09/2025");
   });
@@ -309,7 +301,7 @@ it("should return combined events when registro exists", async () => {
       getOrder: () => [],
     };
 
-    const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
     expect(result.data).toEqual([]);
     expect(result.count).toBe(0);
@@ -332,7 +324,7 @@ it("should slice correctly when pagination page is beyond total events", async (
     getOrder: () => [],
   };
 
-  const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
   expect(result.data).toEqual([]);
   expect(result.count).toBe(3);
@@ -353,7 +345,7 @@ it("should return events sorted in insertion order (Banio, Vacuna, Desparasitaci
     getOrder: () => [],
   };
 
-  const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
   const actividades = result.data.map(r => r.actividad);
   expect(actividades).toEqual(["Baño", "Vacuna", "Desparasitación"]);
@@ -373,7 +365,7 @@ it("should handle pagination size 0", async () => {
     getOrder: () => [],
   };
 
-  const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
   expect(result.data).toEqual([]);
   expect(result.count).toBe(1);
@@ -399,7 +391,7 @@ it("should handle events with duplicated IDs", async () => {
     getOrder: () => [],
   };
 
-  const result = await service.findAll(pagination as PaginationDto, "123");
+  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
 
   expect(result.data).toHaveLength(2);
   expect(result.data.map(r => r.id)).toEqual([1, 1]);

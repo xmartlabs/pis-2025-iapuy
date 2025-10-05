@@ -23,9 +23,7 @@ type UserRowBase = {
 };
 type UserRow = UserRowBase & { perros?: PerroSummary[] };
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 export default function ListadoPersonas() {
   const context = useContext(LoginContext);
@@ -58,10 +56,11 @@ export default function ListadoPersonas() {
     const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
     const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-    const url = new URL("/api/users", BASE_API_URL);
-    url.searchParams.set("page", String(p));
-    url.searchParams.set("size", String(s));
-    url.searchParams.set("query", String(search));
+  const qs = new URLSearchParams();
+  qs.set("page", String(p));
+  qs.set("size", String(s));
+  qs.set("query", String(search));
+  const url = `/api/users?${qs.toString()}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -83,7 +82,7 @@ export default function ListadoPersonas() {
       });
 
       if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+  const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
           headers: { Accept: "application/json" },
           signal: combinedSignal,

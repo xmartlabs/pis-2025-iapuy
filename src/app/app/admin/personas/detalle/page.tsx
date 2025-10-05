@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BotonEliminarUsuario } from "./eliminar-usuario-boton";
 
-export default function DetallePersona() {
+function DetallePersonaContent() {
   const searchParams = useSearchParams();
   const ci: string = searchParams.get("ci") ?? "";
 
@@ -12,5 +13,13 @@ export default function DetallePersona() {
       Detalle Persona
       <BotonEliminarUsuario ci={ci} />
     </div>
+  );
+}
+
+export default function DetallePersona() {
+  return (
+    <Suspense fallback={<div>Cargando persona...</div>}>
+      <DetallePersonaContent />
+    </Suspense>
   );
 }

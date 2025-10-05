@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -11,7 +12,7 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 
-export type TipoIntervencion = "educativa" | "recreativa" | "terapeutica";
+export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 
 @Table({ tableName: "intervenciones" })
 export class Intervencion extends Model {
@@ -25,13 +26,19 @@ export class Intervencion extends Model {
   @Column
   declare costo: number;
 
+  @Column
+  declare status: string;
+
+  @Column
+  declare pairsQuantity?: number;
+
   @Column({
     type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
     validate: {
       isIn: [["educativa", "recreativa", "terapeutica"]],
     },
   })
-  declare tipo: TipoIntervencion;
+  declare tipo: TipoIntervention;
 
   @Column
   declare post_evaluacion?: string;

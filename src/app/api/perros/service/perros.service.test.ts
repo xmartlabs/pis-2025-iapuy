@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PerrosService } from "./perros.service";
 import { PerrosController } from "../controller/perros.controller";
 import { Perro } from "@/app/models/perro.entity";
-//import { FindAndCountOptions, Op, WhereOptions } from "sequelize";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PayloadForUser } from "../detalles/route";
 
 
 vi.mock("@/app/models/perro.entity", () => ({
@@ -319,7 +319,7 @@ it("should return perro details when found", async () => {
   vi.spyOn(Perro as unknown as { findByPk: (id: string) => Promise<MockPerro | null> }, "findByPk")
     .mockResolvedValue(mockPerro);
 
-  const result = await service.findOne("1");
+  const result = await service.findOne("1", { ci: "123", name: "test", type: "Administrador" } as PayloadForUser);
 
   expect(result.status).toBe(200);
   expect(result.perro).toBeDefined();
@@ -336,7 +336,7 @@ it("should return error when perro not found", async () => {
     vi.spyOn(Perro as unknown as { findByPk: (id: string) => Promise<null> }, "findByPk")
       .mockResolvedValue(null);
 
-    const result = await service.findOne("120");
+  const result = await service.findOne("120", { ci: "123", name: "test", type: "Administrador" } as PayloadForUser);
 
     expect(result.status).toBe(404);
     expect(result.error).toBe("Perro no encontrado");
