@@ -48,9 +48,7 @@ import { useSearchParams } from "next/navigation";
 //import { useSearchParams } from "next/navigation";
 
 
-const BASE_API_URL = (
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
+
 
 export default function RegistroSanidad() {
 
@@ -159,7 +157,7 @@ export default function RegistroSanidad() {
             });
 
             if (res.status === 401) {
-                const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+                const resp2 = await fetch("/api/auth/refresh", {
                     method: "POST",
                 });
                 if (resp2.ok) {

@@ -10,6 +10,7 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import type { CreatePerroDTO } from "../dtos/create-perro.dto";
+import type { PayloadForUser } from "../detalles/route";
 
 export class PerrosService {
   async findAll(
@@ -20,14 +21,20 @@ export class PerrosService {
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
       include: [
-        { model: User, attributes: ["ci", "nombre"] },
+        {
+          model: User,
+          as: "User",
+          attributes: ["ci", "nombre"],
+        },
         {
           model: UsrPerro,
+          as: "UsrPerros",
           attributes: ["id"],
           include: [
             {
               attributes: ["id"],
               model: Intervention,
+              as: "Intervencion",
               where: {},
               required: true,
             },
@@ -35,11 +42,12 @@ export class PerrosService {
         },
         {
           model: RegistroSanidad,
+          as: "RegistroSanidad",
           attributes: ["id"],
           include: [
             {
               model: Vacuna,
-              limit: 1,
+              as: "Vacunas",
               order: [["fecha", "DESC"]],
               attributes: ["fecha"],
             },
@@ -78,13 +86,28 @@ export class PerrosService {
     return await Perro.create({ ...createPerroDto });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, payload: PayloadForUser) {
     const perro = await Perro.findByPk(id, {
-      include: [{ model: User, attributes: ["ci", "nombre"] }],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["ci", "nombre"],
+          where:
+            payload.type === "Administrador"
+              ? undefined
+              : {
+                  ci: payload.ci,
+                },
+          required: payload.type !== "Administrador",
+        },
+      ],
     });
+
     if (perro === null) {
       return { error: "Perro no encontrado", status: 404 };
     }
+
     if (!perro.User) {
       return {
         error: "Error en datos del perro: Dueño no encontrado",
@@ -98,7 +121,6 @@ export class PerrosService {
       perro.descripcion,
       perro.fortalezas,
       perro.duenioId,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
       perro.User.nombre,
       perro.deletedAt
     );

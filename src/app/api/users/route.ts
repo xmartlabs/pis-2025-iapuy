@@ -41,3 +41,32 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+export async function DELETE(request: NextRequest) {
+  try {
+    const ci: string = request.nextUrl.searchParams.get("ci") ?? "";
+    const res: boolean = await userController.deleteUser(ci);
+
+    if (res) {
+      return NextResponse.json(
+        { success: true, message: "User deleted successfully" },
+        { status: 200 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        message: "User not found.",
+      },
+      { status: 404 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      },
+      { status: 500 }
+    );
+  }
+}

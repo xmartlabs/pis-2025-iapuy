@@ -40,6 +40,7 @@ const registerUserAssociations = () => {
     User.belongsToMany(Intervention, {
       through: Acompania,
       foreignKey: "userId",
+      as: "Intervenciones",
     });
   }
 
@@ -47,31 +48,38 @@ const registerUserAssociations = () => {
     User.hasMany(Gasto, {
       foreignKey: "userId",
       sourceKey: "ci",
+      as: "Gastos",
     });
   }
 };
 
 const registerPerroAssociations = () => {
   if (!hasAssociation(Perro, User)) {
-    Perro.belongsTo(User, { foreignKey: "duenioId" });
+    Perro.belongsTo(User, { foreignKey: "duenioId", as: "User" });
   }
   if (!hasAssociation(Perro, UsrPerro)) {
-    Perro.hasMany(UsrPerro, { foreignKey: "perroId" });
+    Perro.hasMany(UsrPerro, { foreignKey: "perroId", as: "UsrPerros" });
   }
   if (!hasAssociation(Perro, RegistroSanidad)) {
-    Perro.hasOne(RegistroSanidad, { foreignKey: "perroId" });
+    Perro.hasOne(RegistroSanidad, {
+      foreignKey: "perroId",
+      as: "RegistroSanidad",
+    });
   }
 };
 
 const registerUsrPerroAssociations = () => {
   if (!hasAssociation(UsrPerro, User)) {
-    UsrPerro.belongsTo(User, { foreignKey: "userId" });
+    UsrPerro.belongsTo(User, { foreignKey: "userId", as: "User" });
   }
   if (!hasAssociation(UsrPerro, Intervention)) {
-    UsrPerro.belongsTo(Intervention, { foreignKey: "intervencionId" });
+    UsrPerro.belongsTo(Intervention, {
+      foreignKey: "intervencionId",
+      as: "Intervencion",
+    });
   }
   if (!hasAssociation(UsrPerro, Perro)) {
-    UsrPerro.belongsTo(Perro, { foreignKey: "perroId" });
+    UsrPerro.belongsTo(Perro, { foreignKey: "perroId", as: "Perro" });
   }
 };
 
@@ -79,18 +87,21 @@ const registerIntervencionAssociations = () => {
   if (!hasAssociation(Intervention, User)) {
     Intervention.belongsToMany(User, {
       through: Acompania,
-      foreignKey: "id",
+      as: "Users",
+      foreignKey: "intervencionId",
     });
   }
   if (!hasAssociation(Intervention, Institucion)) {
     Intervention.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
+      as: "Institucions",
       foreignKey: "intervencionId",
       otherKey: "institucionId",
     });
   }
   if (!hasAssociation(Intervention, Perro)) {
     Intervention.hasMany(UsrPerro, {
+      as: "UsrPerroIntervention",
       foreignKey: "intervencionId",
     });
   }
@@ -99,12 +110,14 @@ const registerIntervencionAssociations = () => {
 const registerInstitucionIntervencionAssociations = () => {
   if (!hasAssociation(InstitucionIntervencion, Institucion)) {
     InstitucionIntervencion.belongsTo(Institucion, {
+      as: "Institution",
       foreignKey: "institucionId",
     });
   }
   if (!hasAssociation(InstitucionIntervencion, Intervention)) {
     InstitucionIntervencion.belongsTo(Intervention, {
       foreignKey: "intervencionId",
+      as: "Users",
     });
   }
 };
@@ -114,21 +127,25 @@ const registerRegistroSanidadAssociations = () => {
     RegistroSanidad.belongsTo(Perro, {
       foreignKey: "perroId",
       targetKey: "id",
+      as: "Perro",
     });
   }
   if (!hasAssociation(RegistroSanidad, Banio)) {
     RegistroSanidad.hasMany(Banio, {
       foreignKey: "registroSanidadId",
+      as: "Banios",
     });
   }
   if (!hasAssociation(RegistroSanidad, Vacuna)) {
     RegistroSanidad.hasMany(Vacuna, {
       foreignKey: "registroSanidadId",
+      as: "Vacunas",
     });
   }
   if (!hasAssociation(RegistroSanidad, Desparasitacion)) {
     RegistroSanidad.hasMany(Desparasitacion, {
       foreignKey: "registroSanidadId",
+      as: "Desparasitaciones",
     });
   }
 };
@@ -139,6 +156,7 @@ const registerInstitucionAssociations = () => {
       through: InstitucionPatologias,
       foreignKey: "institucionId",
       otherKey: "patologiaId",
+      as: "Patologias",
     });
   }
   if (!hasAssociation(Patologia, Institucion)) {
@@ -146,18 +164,24 @@ const registerInstitucionAssociations = () => {
       through: InstitucionPatologias,
       foreignKey: "patologiaId",
       otherKey: "institucionId",
+      as: "Instituciones",
     });
   }
 };
 
 const registerGastoAssociations = () => {
   if (!hasAssociation(Gasto, User)) {
-    Gasto.belongsTo(User, { foreignKey: "userId", targetKey: "ci" });
+    Gasto.belongsTo(User, {
+      foreignKey: "userId",
+      targetKey: "ci",
+      as: "User",
+    });
   }
   if (!hasAssociation(Gasto, Intervention)) {
     Gasto.belongsTo(Intervention, {
       foreignKey: "intervencionId",
       targetKey: "id",
+      as: "Intervencion",
     });
   }
 };

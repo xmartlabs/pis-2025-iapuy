@@ -1,7 +1,7 @@
 import { Institucion } from "@/app/models/institucion.entity";
 import { Patologia } from "@/app/models/patologia.entity";
-import { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 
@@ -16,6 +16,7 @@ export class InstitucionesService {
       include: [
         {
           model: Patologia,
+          as: "Patologias",
         },
       ],
       limit: pagination.size,

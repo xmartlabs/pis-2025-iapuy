@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -30,6 +31,9 @@ export class Intervention extends Model {
 
   @Column
   declare costo: number;
+
+  @Column
+  declare status: string;
 
   @Column({
     type: DataType.INTEGER,

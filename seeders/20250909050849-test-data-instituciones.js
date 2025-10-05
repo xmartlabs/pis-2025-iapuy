@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     // Create instituciones
     const inst1 = uuidv4();
     const inst2 = uuidv4();
@@ -134,13 +134,42 @@ module.exports = {
         updatedAt: new Date(),
       },
     ]);
+
+    // Insert usrperros (relations between users, perros, and intervenciones)
+    await queryInterface.bulkInsert("usrperros", [
+      {
+        userId: "11111111", // Santiago
+        perroId: "p1111111",
+        intervencionId: int1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        userId: "22222222", // María
+        perroId: "p2222222",
+        intervencionId: int2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        userId: "33333333", // Carlos
+        perroId: "p3333333",
+        intervencionId: int3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+    ]);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("institucion-intervenciones", null, {});
     await queryInterface.bulkDelete("institucion-patologias", null, {});
     await queryInterface.bulkDelete("intervenciones", null, {});
     await queryInterface.bulkDelete("patologias", null, {});
     await queryInterface.bulkDelete("instituciones", null, {});
+    await queryInterface.bulkDelete("usrperros", null, {});
   },
 };
