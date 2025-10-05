@@ -56,7 +56,7 @@ export default function EvaluarIntervencion(){
   const [patientsCards, setPatientCard] = useState([0]);
   const context = useContext(LoginContext);
   const { interventionId } = useParams<{ interventionId?: string }>();
-  //! Hardcoded id for testing (cambiar por id de tu base de datos son todas diferentes segun PC)
+  //! Hardcoded id for testing (cambiar por id de tu base de datos)
   const id = interventionId ?? "8426ad74-8ca1-413f-acc2-5b43b0445280";
 
   useEffect(()=> {
@@ -214,7 +214,7 @@ export default function EvaluarIntervencion(){
       (files) =>
         files instanceof FileList &&
         Array.from(files).every((file) => file.size <= MAX_FILE_SIZE),
-      "Cada foto debe pesar menos de 20MB"
+      "Cada foto debe pesar menos de 15MB"
     );
 
 
@@ -585,7 +585,10 @@ export default function EvaluarIntervencion(){
         <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter" >
           Fotos
         </h3>
-        {(() => {
+        <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter">
+          Fotos
+        </h3>
+        {typeof window !== "undefined" && (() => {
           const photos = form.watch("photos") as FileList;
           if (photos instanceof FileList && photos.length > 0) {
             return (
