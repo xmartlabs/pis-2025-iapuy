@@ -78,7 +78,7 @@ export default function ListadoIntervenciones() {
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
       const url = new URL(
-        "/api/intervencion",
+        "/api/intervenciones",
         (typeof window !== "undefined" && window.location?.origin) || ""
       );
       url.searchParams.set("page", String(p));
@@ -199,7 +199,6 @@ export default function ListadoIntervenciones() {
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
-
           try {
             const map = new Map<string, number>();
             res.data.forEach((it) => {
@@ -248,18 +247,7 @@ export default function ListadoIntervenciones() {
         >
           Intervenciones
         </h1>
-        <CustomSearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-        />
-        <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <NuevaInstervencion />
-        </div>
-      </div>
       <div className="flex justify-end mb-2 p-3">
-        <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <Funnel className="w-[20px] h-[20px] "></Funnel>
-        </div>
         <Button className="flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-sm transition-colors duration-200 hover:bg-gray-100">
           <Plus className="w-5 h-5 mr-2" />
           <span style={{ fontFamily: "Inter, sans-serif" }}>
@@ -267,18 +255,12 @@ export default function ListadoIntervenciones() {
           </span>
         </Button>
       </div>
+      </div>
       <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-            }}
-            className="pl-10 pr-4 py-2 w-full md:w-[320px] rounded-md border border-gray-200 bg-white shadow-sm"
-          />
-        </div>
+        <CustomSearchBar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+        />
         <FilterDropdown
           months={availableMonths}
           statuses={statuses}
