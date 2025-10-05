@@ -126,7 +126,7 @@ describe("UserService", () => {
   });
 
   // ---- CU Consultar/Editar Perfil ----
-  it("consultar perfil debería devolver un usuario existente", async () => {
+  it("consultar perfil should return an existing user", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     const mockUser = { ci: "12345678", nombre: "Juan", celular: "099111222" };
@@ -138,7 +138,7 @@ describe("UserService", () => {
     expect(result).toEqual(mockUser);
   });
 
-  it("consultar perfil debería devolver null si el usuario no existe", async () => {
+  it("consultar perfil should return null if user does not exist", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     findByPkMock.mockResolvedValue(null);
@@ -149,7 +149,7 @@ describe("UserService", () => {
   });
 
   // ---- CU Consultar/Editar Perfil ----
-  it("editar perfil debería actualizar los datos de un usuario", async () => {
+  it("editar perfil should update user data", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     const updateMock = vi.fn().mockResolvedValue({
@@ -177,7 +177,7 @@ describe("UserService", () => {
     });
   });
 
-  it("editar perfil debería devolver null si el usuario no existe", async () => {
+  it("editar perfil should return null if user does not exist", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     findByPkMock.mockResolvedValue(null);
