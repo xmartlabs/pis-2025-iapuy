@@ -1,0 +1,52 @@
+/* eslint-disable new-cap */
+import {
+  Column,
+  CreatedAt,
+  DataType,
+  DeletedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
+
+import {
+  type CreationOptional
+} from "sequelize"
+import { Sequelize } from "sequelize";
+
+import { User } from "./user.entity";
+import { UsrPerro } from "./usrperro.entity";
+
+@Table({ tableName: "perros" })
+export class Perro extends Model{
+  @PrimaryKey
+  @Column({ type: DataType.STRING, defaultValue: Sequelize.literal("uuid_generate_v4()") })
+  declare id: CreationOptional<string>; // este objeto de sequelize permite que no le pasemos el campo y que lo cree solo, los que no lo tienen debemos pasarlos
+
+  @Column({ type: DataType.STRING })
+  declare nombre: string;
+
+  @Column({ type: DataType.STRING })
+  declare descripcion: string;
+
+  @Column({ type: DataType.STRING })
+  declare fortalezas: string;
+
+  @ForeignKey(() => User)
+  @Column({ type: DataType.STRING })
+  declare duenioId: string;
+
+  @CreatedAt
+  declare createdAt: CreationOptional<Date>;
+
+  @UpdatedAt
+  declare updatedAt: CreationOptional<Date>;
+
+  @DeletedAt
+  declare deletedAt: CreationOptional<Date>;
+
+  declare UsrPerros?: UsrPerro[];
+  declare User: User;
+}
