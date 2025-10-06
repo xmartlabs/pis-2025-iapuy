@@ -14,12 +14,11 @@ import {
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import { Button } from "@/components/ui/button";
 import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
 
 const statuses = ["Pendiente", "Finalizada", "Suspendida"];
@@ -32,6 +31,7 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
+import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -76,7 +76,7 @@ export default function ListadoIntervenciones() {
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
       const url = new URL(
-        "/api/intervenciones",
+        "/api/intervention",
         (typeof window !== "undefined" && window.location?.origin) || ""
       );
       url.searchParams.set("page", String(p));
@@ -254,12 +254,11 @@ export default function ListadoIntervenciones() {
           Intervenciones
         </h1>
         <div className="flex justify-end mb-2 p-3">
-          <Button className="flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-sm transition-colors duration-200 hover:bg-gray-100">
-            <Plus className="w-5 h-5 mr-2" />
-            <span style={{ fontFamily: "Inter, sans-serif" }}>
-              Agregar intervención
-            </span>
-          </Button>
+          <AddIntervencionButton
+            onClick={() => {
+              router.push("/app/admin/intervenciones/nueva");
+            }}
+          />
         </div>
       </div>
       <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
@@ -358,9 +357,13 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions && inter.Institucions.length > 0
-                          ? inter.Institucions.map((i) => i.nombre).join(", ")
-                          : ""}
+                        {
+                          (
+                            inter as InterventionDto & {
+                              Institucions: Array<{ nombre: string }>;
+                            }
+                          ).Institucions?.[0]?.nombre
+                        }
                       </div>
                     </TableCell>
 

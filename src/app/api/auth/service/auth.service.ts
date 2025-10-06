@@ -24,7 +24,7 @@ export class AuthService {
   constructor(private readonly userService: UserService = new UserService()) {}
 
   async login(ci: string, password: string) {
-    await initDatabase();
+    // await initDatabase();
 
     const user = await this.userService.findOneForAuth(ci);
     if (

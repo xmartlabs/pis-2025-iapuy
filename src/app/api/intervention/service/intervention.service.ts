@@ -1,4 +1,4 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
@@ -6,41 +6,45 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
+import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
+import sequelize from "@/lib/database";
 
 const monthMap: Record<string, number> = {
-        ene: 0,
-        enero: 0,
-        feb: 1,
-        febrero: 1,
-        mar: 2,
-        marzo: 2,
-        abr: 3,
-        abril: 3,
-        may: 4,
-        mayo: 4,
-        jun: 5,
-        junio: 5,
-        jul: 6,
-        julio: 6,
-        ago: 7,
-        agosto: 7,
-        sep: 8,
-        sept: 8,
-        septiembre: 8,
-        oct: 9,
-        octubre: 9,
-        nov: 10,
-        noviembre: 10,
-        dic: 11,
-        diciembre: 11,
-      };
-export class IntervencionService {
+  ene: 0,
+  enero: 0,
+  feb: 1,
+  febrero: 1,
+  mar: 2,
+  marzo: 2,
+  abr: 3,
+  abril: 3,
+  may: 4,
+  mayo: 4,
+  jun: 5,
+  junio: 5,
+  jul: 6,
+  julio: 6,
+  ago: 7,
+  agosto: 7,
+  sep: 8,
+  sept: 8,
+  septiembre: 8,
+  oct: 9,
+  octubre: 9,
+  nov: 10,
+  noviembre: 10,
+  dic: 11,
+  diciembre: 11,
+};
+
+export class InterventionService {
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser,
     months: string | null,
     statuses: string | null
-  ): Promise<PaginationResultDto<Intervencion>> {
+  ): Promise<PaginationResultDto<Intervention>> {
     const whereBase: Record<string, unknown> =
       payload.type === "Administrador" || payload.type === "Colaborador"
         ? {}
@@ -58,7 +62,7 @@ export class IntervencionService {
       }
     }
 
-  let timeStampWhere: Record<string, unknown> | undefined = undefined;
+    let timeStampWhere: Record<string, unknown> | undefined = undefined;
     if (months && months.trim()) {
       const monthsArr = months
         .split(",")
@@ -67,7 +71,9 @@ export class IntervencionService {
 
       const ranges: Array<{ start: Date; end: Date }> = [];
 
-      const parseMonthLabel = (label: string): { start: Date; end: Date } | null => {
+      const parseMonthLabel = (
+        label: string
+      ): { start: Date; end: Date } | null => {
         let normalized = label.replace(/\+/g, " ");
         try {
           normalized = decodeURIComponent(normalized);
@@ -107,24 +113,44 @@ export class IntervencionService {
       };
 
       for (const m of monthsArr) {
-        const r = parseMonthLabel(m) ?? ((): { start: Date; end: Date } | null => {
-          const tryParse = (s: string) => {
-            const parsed = Date.parse(`1 ${s}`);
-            if (!isNaN(parsed)) {
-              const d = new Date(parsed);
-              return { start: new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0), end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999) };
-            }
-            return null;
-          };
-          return tryParse(m) ?? tryParse(decodeURIComponent(m.replace(/\+/g, " ")).replace(".", ""));
-        })();
+        const r =
+          parseMonthLabel(m) ??
+          ((): { start: Date; end: Date } | null => {
+            const tryParse = (s: string) => {
+              const parsed = Date.parse(`1 ${s}`);
+              if (!isNaN(parsed)) {
+                const d = new Date(parsed);
+                return {
+                  start: new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0),
+                  end: new Date(
+                    d.getFullYear(),
+                    d.getMonth() + 1,
+                    0,
+                    23,
+                    59,
+                    59,
+                    999
+                  ),
+                };
+              }
+              return null;
+            };
+            return (
+              tryParse(m) ??
+              tryParse(
+                decodeURIComponent(m.replace(/\+/g, " ")).replace(".", "")
+              )
+            );
+          })();
         if (r) ranges.push(r);
       }
 
       if (ranges.length === 1) {
         timeStampWhere = { [Op.between]: [ranges[0].start, ranges[0].end] };
       } else if (ranges.length > 1) {
-        timeStampWhere = { [Op.or]: ranges.map((r) => ({ [Op.between]: [r.start, r.end] })) };
+        timeStampWhere = {
+          [Op.or]: ranges.map((r) => ({ [Op.between]: [r.start, r.end] })),
+        };
       }
     }
 
@@ -132,8 +158,12 @@ export class IntervencionService {
       ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
       : undefined;
 
-    const result = await Intervencion.findAndCountAll({
-      where: Object.assign({}, whereBase, timeStampWhere ? { timeStamp: timeStampWhere } : {}),
+    const result = await Intervention.findAndCountAll({
+      where: Object.assign(
+        {},
+        whereBase,
+        timeStampWhere ? { timeStamp: timeStampWhere } : {}
+      ),
       include: [
         {
           model: Institucion,
@@ -153,12 +183,12 @@ export class IntervencionService {
     pagination: PaginationDto,
     dogId: string,
     payload: PayloadForUser
-  ): Promise<PaginationResultDto<Intervencion>> {
+  ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
       : {};
 
-    const result = await Intervencion.findAndCountAll({
+    const result = await Intervention.findAndCountAll({
       where: interventionWhere,
       include: [
         {
@@ -188,5 +218,46 @@ export class IntervencionService {
       order: pagination.getOrder(),
     });
     return getPaginationResultFromModel(pagination, result);
+  }
+
+  async create(request: CreateInterventionDto): Promise<Intervention> {
+    const institution = await Institucion.findOne({
+      where: { nombre: request.institution },
+    });
+    if (!institution) {
+      throw new Error(
+        `Institution with name "${request.institution}" not found`
+      );
+    }
+    const transaction = await sequelize.transaction();
+
+    try {
+      const intervention = await Intervention.create(
+        {
+          timeStamp: request.timeStamp,
+          costo: request.cost,
+          tipo: request.type,
+          pairsQuantity: request.pairsQuantity,
+          description: request.description,
+          status: request.state,
+        },
+        { transaction }
+      );
+
+      await InstitucionIntervencion.create(
+        {
+          institucionId: institution.id,
+          intervencionId: intervention.id,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+
+      return intervention;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }

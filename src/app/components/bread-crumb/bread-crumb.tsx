@@ -23,7 +23,7 @@ export default function CustomBreadCrumb({ link, current,className }: props) {
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <span>{current}</span>
+            <span> <strong>{current}</strong></span>
           </BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>

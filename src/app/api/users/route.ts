@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const data = await userController.getUsers(pagination);
     return NextResponse.json(data);
   } catch (error) {
+    console.log(error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }

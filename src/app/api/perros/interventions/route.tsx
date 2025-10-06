@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import { IntervencionController } from "@/app/api/intervenciones/controller/intervencion.controller";
+import { InterventionController } from "@/app/api/intervention/controller/intervention.controller";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
@@ -7,7 +7,7 @@ import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PayloadForUser } from "../detalles/route";
 import jwt from "jsonwebtoken";
 
-const intervencionController = new IntervencionController();
+const interventionController = new InterventionController();
 await initDatabase();
 
 export async function GET(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     const payload = jwt.decode(accessToken) as PayloadForUser;
 
-    const res = await intervencionController.getInterventionByDogId(
+    const res = await interventionController.getInterventionByDogId(
       pagination,
       id,
       payload
