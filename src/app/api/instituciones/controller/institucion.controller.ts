@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { InstitucionesService } from "../service/instituciones.service";
-import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import { type PaginationDto } from "@/lib/pagination/pagination.dto";
+import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
+import type { Institucion } from "@/app/models/institucion.entity";
 
 export class InstitucionesController {
   constructor(
-    private readonly institucionesService: InstitucionesService = new InstitucionesService()
+    private readonly institutionsService: InstitucionesService = new InstitucionesService()
   ) {}
-  async getInstituciones(pagination: PaginationDto) {
+  async getInstitutions(pagination: PaginationDto) {
     try {
-      const users = await this.institucionesService.findAll(pagination);
+      const users = await this.institutionsService.findAll(pagination);
       return NextResponse.json(users);
     } catch (error) {
       console.error(error);
@@ -18,8 +20,14 @@ export class InstitucionesController {
       );
     }
   }
+
   async getInstitutionsSimple() {
-    const institutions = await this.institucionesService.findAllSimple();
+    const institutions = await this.institutionsService.findAllSimple();
     return institutions;
+  }
+
+  async createInstitution(req: NextRequest): Promise<Institucion> {
+    const body = (await req.json()) as unknown as CreateInstitutionDTO;
+    return this.institutionsService.create(body);
   }
 }
