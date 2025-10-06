@@ -31,7 +31,7 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
-import AddIntervencionButton from "../../../app/admin/intervenciones/listado/nueva-intervencion-btn";
+
 import { Button } from "@/components/ui/button";
 
 export default function ListadoIntervenciones() {
@@ -254,13 +254,6 @@ export default function ListadoIntervenciones() {
       >
         Intervenciones
       </h1>
-      <div className="flex justify-end mb-2 p-3">
-        <AddIntervencionButton
-          onClick={() => {
-            router.push("/app/admin/intervenciones/nueva");
-          }}
-        />
-      </div>
     </div>
 
     <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
