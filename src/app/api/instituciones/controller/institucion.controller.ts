@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { InstitucionesService } from "../service/instituciones.service";
 import { type PaginationDto } from "@/lib/pagination/pagination.dto";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
+import type { Institucion } from "@/app/models/institucion.entity";
 
 export class InstitucionesController {
   constructor(
@@ -20,7 +21,7 @@ export class InstitucionesController {
     }
   }
 
-  async createInstitution(req: NextRequest) {
+  async createInstitution(req: NextRequest) : Promise<Institucion> {
     const body = (await req.json()) as unknown as CreateInstitutionDTO;
     return this.institutionsService.create(body);
   }
