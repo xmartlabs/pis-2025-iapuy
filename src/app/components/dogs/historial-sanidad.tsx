@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import {
@@ -12,15 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { LoginContext } from "@/app/context/login-context";
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationNext,
-    PaginationPrevious
-} from "@/components/ui/pagination";
+import CustomPagination from "../pagination";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
@@ -41,11 +34,13 @@ export default function HistorialSanidad() {
       const triedRefresh = false;
 
       const resp = await fetch(
-        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+        `/api/registros-sanidad?id=${encodeURIComponent(
+          id
+        )}&page=${page}&size=${size}`,
         {
           method: "GET",
           headers: baseHeaders,
-        },
+        }
       );
       if (!resp.ok && !triedRefresh && resp.status === 401) {
         const resp2 = await fetch("/api/auth/refresh", {
@@ -61,14 +56,16 @@ export default function HistorialSanidad() {
           if (newToken) {
             context?.setToken(newToken);
             const retryResp = await fetch(
-              `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+              `/api/registros-sanidad?id=${encodeURIComponent(
+                id
+              )}&page=${page}&size=${size}`,
               {
                 method: "GET",
                 headers: {
                   Accept: "application/json",
                   Authorization: `Bearer ${newToken}`,
                 },
-              },
+              }
             );
 
             return (await retryResp.json()) as Promise<
@@ -79,7 +76,7 @@ export default function HistorialSanidad() {
       }
       return (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
     },
-    [context, page, size],
+    [context, page, size]
   );
 
   const searchParams = useSearchParams();
@@ -101,7 +98,7 @@ export default function HistorialSanidad() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 mb-4 w-full">
+      <div className="flex flex-col gap-5 w-full">
         <h2
           className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
           style={{ fontFamily: "Poppins, sans-serif" }}
@@ -137,24 +134,31 @@ export default function HistorialSanidad() {
                       <TableCell
                         className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
                       >
-                        {String(registro.fecha)}
+                        {`${new Date(registro.date).toLocaleDateString(
+                          "pt-BR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }
+                        )}`}
                       </TableCell>
                       <TableCell
                         className={`h-[56px] px-4 text-sm font-normal`}
                       >
-                        {String(registro.actividad)}
+                        {String(registro.activity)}
                       </TableCell>
                       <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            className="shrink-0 p-1"
+                            className="shrink-0 p-1 hidden"
                             onClick={() => {
                               setIsOpenEdit(true);
                             }}
                           >
                             <Pencil />
                           </button>
-                          <button className="shrink-0 p-1">
+                          <button className="shrink-0 p-1 hidden">
                             <Trash2 />
                           </button>
                         </div>
@@ -166,44 +170,7 @@ export default function HistorialSanidad() {
           </Table>
         </div>
       </div>
-        {
-            <div className="px-6 border-t border-gray-100">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <Pagination>
-                        <PaginationContent className="flex items-center gap-3">
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (page > 1) setPage(page - 1);
-                                    }}
-                                    className={
-                                        page <= 1 ? "pointer-events-none opacity-40" : ""
-                                    }
-                                />
-                            </PaginationItem>
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (page < totalPages) setPage(page + 1);
-                                    }}
-                                    className={
-                                        page >= totalPages ? "pointer-events-none opacity-40" : ""
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-                <div className="text-muted-foreground text-center">
-                    Página {page} de {totalPages}
-                </div>
-            </div>
-        }
+      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">

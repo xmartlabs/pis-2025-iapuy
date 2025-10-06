@@ -109,7 +109,10 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        setLoginError("Este usuario no existe, por favor revisá los datos.");
+        if (res.status === 402)
+          setLoginError("Contraseña inválida, por favor revisá los datos.");
+        else
+          setLoginError("Este usuario no existe, por favor revisá los datos.");
         return;
       }
 

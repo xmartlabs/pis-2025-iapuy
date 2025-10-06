@@ -1,11 +1,11 @@
 export class EventoSanidadDto {
-    id: string;
-    fecha: Date;
-    actividad: string;
+  id: string;
+  date: Date;
+  activity: string;
 
-    constructor(id: string, fecha: Date, actividad: string) {
-        this.id = id;
-        this.fecha = fecha;
-        this.actividad = actividad;
-    }
+  constructor(id: string, date: Date, activity: string) {
+    this.id = id;
+    this.date = date;
+    this.activity = activity;
+  }
 }

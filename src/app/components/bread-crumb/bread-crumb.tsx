@@ -1,32 +1,36 @@
-import Link from "next/link"
+import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-interface props{
-  link:[string,string],
-  current:string,
-  className:string;
+} from "@/components/ui/breadcrumb";
+interface props {
+  link: [string, string];
+  current: string;
+  className: string;
 }
-export default function CustomBreadCrumb({ link, current,className }: props) {
+export default function CustomBreadCrumb({ link, current, className }: props) {
   return (
     <Breadcrumb className={className}>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
+          <BreadcrumbLink
+            href="../personas/listado"
+            className="gray-500 p-0 gap-0 text-sm leading-5"
+          >
             <Link href={link[0]}>{link[1]}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbSeparator />
+        <BreadcrumbSeparator className="border-muted-foreground" />
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <span> <strong>{current}</strong></span>
-          </BreadcrumbLink>
+          <BreadcrumbPage className="font-sans font-semibold text-foreground p-0 gap-0 text-sm leading-5">
+            {current}
+          </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }
