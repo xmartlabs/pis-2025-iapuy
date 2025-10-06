@@ -1,96 +1,27 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useContext, useCallback, useEffect, useState } from "react";
+import { useContext, useCallback, useEffect, useState, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
-import { AlertCircleIcon, MinusIcon, PlusIcon } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import InterventionRow from "@/app/app/admin/intervenciones/nueva/intervention-row";
+import NuevaIntervencionForm, {
+  type FormValues,
+  type NuevaIntervencionFormRef,
+} from "@/app/app/admin/intervenciones/nueva/form";
 
 const BASE_API_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
-const formSchema = z
-  .object({
-    date: z
-      .string()
-      .min(1, { message: "Debe seleccionar una fecha" })
-      .refine(
-        (dateString) => {
-          const selectedDate = new Date(dateString);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          return selectedDate >= today;
-        },
-        {
-          message: "La fecha debe ser hoy o en el futuro",
-        }
-      ),
-    hour: z
-      .string()
-      .min(1, { message: "Debe seleccionar una hora" })
-      .refine(
-        (timeString) => {
-          const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-          return timeRegex.test(timeString);
-        },
-        {
-          message: "Formato de hora inválido (HH:MM)",
-        }
-      ),
-    pairQuantity: z.number().min(1, { message: "Debe ingresar una cantidad" }),
-    type: z.enum(["Educativa", "Recreativa", "Terapeutica"]),
-    institution: z.string().min(1, {
-      message: "Debe ingresar una institución",
-    }),
-    description: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.date && data.hour) {
-      const selectedDateTime = new Date(`${data.date}T${data.hour}`);
-      const now = new Date();
-
-      if (selectedDateTime <= now) {
-        ctx.addIssue({
-          code: "custom",
-          message: "La fecha y hora debe ser en el futuro",
-          path: ["hour"],
-        });
-      }
-    }
-  });
-
 type Institution = {
   id: string;
   name: string;
 };
-
-type FormValues = z.infer<typeof formSchema>;
 
 export default function NewIntervention() {
   const [error, setError] = useState<string | null>(null);
@@ -100,22 +31,10 @@ export default function NewIntervention() {
   );
   const context = useContext(LoginContext);
   const router = useRouter();
-  const interventionTypes = ["Educativa", "Recreativa", "Terapeutica"];
   const [repeatedIntervention, setRepeatedIntervention] =
     useState<InterventionDto | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: "",
-      hour: "",
-      pairQuantity: 1,
-      type: "Educativa",
-      institution: "",
-      description: "",
-    },
-  });
+  const formRef = useRef<NuevaIntervencionFormRef>(null);
   const fetchInterventionsByInstitution = useCallback(
     async (
       institutionName: string,
@@ -450,195 +369,23 @@ export default function NewIntervention() {
           Nueva Intervención
         </h1>
       </div>
-      <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
+      <NuevaIntervencionForm
+        ref={formRef}
+        institutions={institutions || []}
+        onSubmit={onSubmit}
+      />
 
-            form
-              .handleSubmit(onSubmit)()
-              .catch((err) => {
-                toast("Error en el formulario", {
-                  description: err instanceof Error ? err.message : String(err),
-                });
-              });
+      <div className="flex justify-start items-center mt-2">
+        <Button
+          type="button"
+          onClick={() => {
+            formRef.current?.submitForm().catch(() => {});
           }}
-          className="w-full"
+          className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="grid grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha*</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="hour"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hora*</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="pairQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cantidad de duplas necesaria*</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const newValue = Math.max(1, field.value - 1);
-                          field.onChange(newValue);
-                        }}
-                        disabled={field.value <= 1}
-                        aria-label="Disminuir cantidad"
-                      >
-                        <MinusIcon />
-                      </Button>
-                      <div className="flex items-center justify-center min-w-[3rem] h-10 px-3 py-2 text-sm border border-input bg-background rounded-md">
-                        {field.value}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const newValue = field.value + 1;
-                          field.onChange(newValue);
-                        }}
-                        aria-label="Aumentar cantidad"
-                      >
-                        <PlusIcon />
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Intervención*</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione el tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {interventionTypes.map((type, index) => (
-                          <SelectItem key={index} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="institution"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Institución*</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione una institución" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {institutions && institutions.length > 0 ? (
-                          institutions
-                            .filter(
-                              (inst) => inst?.name && inst.name.trim() !== ""
-                            )
-                            .map((inst, index) => (
-                              <SelectItem key={index} value={inst.name}>
-                                {inst.name}
-                              </SelectItem>
-                            ))
-                        ) : (
-                          <SelectItem value="no-institutions" disabled>
-                            No hay instituciones disponibles
-                          </SelectItem>
-                        )}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <textarea
-                      {...field}
-                      className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md"
-                      rows={4}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="flex justify-start items-center mt-2">
-            <Button
-              type="submit"
-              className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
-            >
-              Crear Intervención
-            </Button>
-          </div>
-        </form>
-      </Form>
+          Crear Intervención
+        </Button>
+      </div>
       <Toaster richColors position="bottom-right" />
     </div>
   );
