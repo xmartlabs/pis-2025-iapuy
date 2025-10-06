@@ -4,6 +4,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import type { Resolver } from "react-hook-form";
 import { useFieldArray, useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button";
@@ -20,14 +21,10 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Upload } from 'lucide-react';
 import { useEffect, useState, useContext } from "react";
-import { useParams } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
 import { Minus } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-
-//!const searchParams = useSearchParams();
 
 type Pathology = {
   id: string;
@@ -49,15 +46,17 @@ const BASE_API_URL = (
 ).replace(/\/$/, "");
 
 
-
 export default function EvaluarIntervencion(){
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
   const context = useContext(LoginContext);
-  const { interventionId } = useParams<{ interventionId?: string }>();
-  //! Hardcoded id for testing (cambiar por id de tu base de datos)
-  const id = interventionId ?? "26a7a4ed-4bf4-4974-974b-675e549e6dd6";
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+
+  if (!id) {
+  throw new Error("Falta el parámetro id en la URL");
+  }
 
   useEffect(()=> {
     const callApi = async () => {

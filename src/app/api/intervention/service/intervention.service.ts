@@ -55,7 +55,7 @@ export class InterventionService {
     statuses: string | null
   ): Promise<PaginationResultDto<Intervention>> {
     const whereBase: Record<string, unknown> =
-      payload.type === "Administrador"
+      payload.type === "Administrador" || payload.type === "Colaborador"
         ? {}
         : {
             userId: payload.ci,
@@ -310,15 +310,15 @@ export class InterventionService {
       if (body.driveLink) {
         intervention.driveLink = body.driveLink;
       }
+      intervention.status = "Evaluada" //! agrego este estado para que no la vuelvan a evaluar????
       await intervention.save({ transaction });
-
       await Promise.all(
         body.patients.map((patient) =>
           Paciente.create(
             {
               nombre: patient.name,
               edad: patient.age,
-              ...(patient.pathology_id !== null && {
+              ...(patient.pathology_id !== '' && {
                 patologia_id: patient.pathology_id,
               }),
               intervencion_id: id,
@@ -352,6 +352,8 @@ export class InterventionService {
 
   
     async findAllPathologiesbyId(id: string) {
+          const intervention = await Intervention.findByPk(id)
+          if(intervention?.tipo !== "terapeutica") {return []}
           const relation = await InstitucionIntervencion.findOne({
           where: { intervencionId: id }
           });
@@ -383,5 +385,10 @@ export class InterventionService {
           )
         );
         return dogs
+    }
+
+    async findIntervention(id: string) {
+        const intervention = await Intervention.findByPk(id);
+        return intervention
     }
 }

@@ -94,4 +94,19 @@ export class InterventionController {
     const ret = await this.interventionService.evaluate(id, body);
     return ret;
   }
+
+  async getDogsInterventionByPK(id : string){
+    try {
+      const intervention = await this.interventionService.findIntervention(id);
+      return intervention;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: 500 }
+      );
+    }
+  }
+
 }

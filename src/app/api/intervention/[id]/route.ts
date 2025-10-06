@@ -2,9 +2,9 @@
 import { initDatabase } from "@/lib/init-database";
 import { InterventionController } from "../controller/intervention.controller";
 import { NextRequest, NextResponse } from "next/server";
-import { extractPagination } from "@/lib/pagination/extraction";
 
-const intervencionController = new InterventionController();
+
+const interventionController = new InterventionController();
 await initDatabase();
 
 export async function PUT(
@@ -13,7 +13,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const intervention = await intervencionController.evaluateIntervention(
+    const intervention = await interventionController.evaluateIntervention(
       request,
       id
     );
@@ -23,5 +23,21 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const data = await interventionController.getDogsInterventionByPK(id);
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

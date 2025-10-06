@@ -2,12 +2,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import EditarIntervencion from "../EditarIntervencion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import { Plus } from "lucide-react";
-import ListadoIntervenciones from "@/app/components/listado-intervenciones";
+import ListadoIntervencionesColab from "@/app/app/colaboradores/intervenciones/list-colab";
+//import ListadoIntervenciones from "../../../../components/listado-intervenciones";
 
 export default function PantallaIntervencionesCollaborador() {
   const router = useRouter();
@@ -40,8 +40,7 @@ export default function PantallaIntervencionesCollaborador() {
 
   return (
     <>
-      <EditarIntervencion />
-      <ListadoIntervenciones />
+      <ListadoIntervencionesColab />
       <div className="mt-6 flex">
         <Button
           onClick={() => {
