@@ -581,9 +581,6 @@ export default function EvaluarIntervencion(){
             </Card>
           ))}
         </div>
-        <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter" >
-          Fotos
-        </h3>
         <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter">
           Fotos
         </h3>
