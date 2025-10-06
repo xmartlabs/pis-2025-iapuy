@@ -72,6 +72,12 @@ export default function EliminarPerro() {
           },
         });
 
+        try {
+          await context?.refreshPerros?.();
+        } catch {
+          // ignore refresh errors
+        }
+
         router.push("/app/admin/perros/listado");
       } else {
         toast.error(`No se pudo eliminar al perro.`, {

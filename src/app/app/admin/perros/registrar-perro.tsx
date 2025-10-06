@@ -269,6 +269,11 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         });
 
         setReload(!reload);
+        try {
+          await context?.refreshPerros?.();
+        } catch {
+          // ignore refresh errors
+        }
       } else {
         toast.message(`NO se pudo agregar a "${data.nombrePerro}" al equipo.`, {
           duration: 5000,
