@@ -236,7 +236,7 @@ export default function NewIntervention() {
         description: values.description,
         cost: 0,
         fotosUrls: [],
-        state: "pendiente",
+        state: "Pendiente",
       };
       if (!retrying) {
         const interventions = await fetchInterventionsByInstitution(
