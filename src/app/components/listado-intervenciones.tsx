@@ -19,7 +19,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import NuevaInstervencion from "../app/admin/intervenciones/nueva/page";
+import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -61,7 +61,7 @@ export default function ListadoIntervenciones() {
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
       const url = new URL(
-        "/api/intervencion",
+        "/api/intervention",
         (typeof window !== "undefined" && window.location?.origin) || ""
       );
       url.searchParams.set("page", String(p));
@@ -197,24 +197,46 @@ export default function ListadoIntervenciones() {
   return (
     <div className=" max-w-[92%]">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
-        <h1
-          className="text-5xl font-bold tracking-tight leading-[1.2] tracking-[0.01em]"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Intervenciones
-        </h1>
-        <CustomSearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-        />
-        <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <NuevaInstervencion />
-        </div>
-      </div>
-      <div className="flex justify-end mb-2 p-3">
-        <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <Funnel className="w-[20px] h-[20px] "></Funnel>
-        </div>
+        <header className="w-full mb-6">
+          {/* main row: on small screens stack, on md+ show title left and controls right */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-6">
+            {/* LEFT: Title */}
+            <h1
+              className="text-5xl font-bold leading-[1.2] tracking-[0.01em]"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Intervenciones
+            </h1>
+
+            {/* RIGHT: controls column (button top, search+filter below) */}
+            <div className="flex flex-col items-end gap-4">
+              {/* top-right button */}
+              <AddIntervencionButton
+                onClick={() => {
+                  router.push("/app/admin/intervenciones/nueva");
+                }}
+              />
+
+              {/* search + filter row */}
+              <div className="flex items-center gap-3">
+                {/* give the search bar a fixed width so it looks like the screenshot */}
+                <div className="w-[360px]">
+                  <CustomSearchBar
+                    searchInput={searchInput}
+                    setSearchInput={setSearchInput}
+                  />
+                </div>
+
+                {/* filter button (SVG included) */}
+                <div className="flex justify-end mb-2 p-3">
+                  <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
+                    <Funnel className="w-[20px] h-[20px] "></Funnel>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
@@ -295,9 +317,13 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions && inter.Institucions.length > 0
-                          ? inter.Institucions.map((i) => i.nombre).join(", ")
-                          : ""}
+                        {
+                          (
+                            inter as InterventionDto & {
+                              Institucions: Array<{ nombre: string }>;
+                            }
+                          ).Institucions?.[0]?.nombre
+                        }
                       </div>
                     </TableCell>
 

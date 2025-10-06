@@ -1,4 +1,4 @@
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
@@ -6,13 +6,16 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
+import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
+import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
+import sequelize from "@/lib/database";
 
-export class IntervencionService {
+export class InterventionService {
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser
-  ): Promise<PaginationResultDto<Intervencion>> {
-    const result = await Intervencion.findAndCountAll({
+  ): Promise<PaginationResultDto<Intervention>> {
+    const result = await Intervention.findAndCountAll({
       where:
         payload.type === "Administrador"
           ? undefined
@@ -40,12 +43,12 @@ export class IntervencionService {
     pagination: PaginationDto,
     dogId: string,
     payload: PayloadForUser
-  ): Promise<PaginationResultDto<Intervencion>> {
+  ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
       : {};
 
-    const result = await Intervencion.findAndCountAll({
+    const result = await Intervention.findAndCountAll({
       where: interventionWhere,
       include: [
         {
@@ -65,7 +68,7 @@ export class IntervencionService {
         },
         {
           model: Institucion,
-          as: "Institucions",
+          as: "institutions",
           attributes: ["id", "nombre"],
           where: interventionWhere,
         },
@@ -75,5 +78,46 @@ export class IntervencionService {
       order: pagination.getOrder(),
     });
     return getPaginationResultFromModel(pagination, result);
+  }
+
+  async create(request: CreateInterventionDto): Promise<Intervention> {
+    const institution = await Institucion.findOne({
+      where: { nombre: request.institution },
+    });
+    if (!institution) {
+      throw new Error(
+        `Institution with name "${request.institution}" not found`
+      );
+    }
+    const transaction = await sequelize.transaction();
+
+    try {
+      const intervention = await Intervention.create(
+        {
+          timeStamp: request.timeStamp,
+          costo: request.cost,
+          tipo: request.type,
+          pairsQuantity: request.pairsQuantity,
+          description: request.description,
+          status: request.state,
+        },
+        { transaction }
+      );
+
+      await InstitucionIntervencion.create(
+        {
+          institucionId: institution.id,
+          intervencionId: intervention.id,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+
+      return intervention;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }

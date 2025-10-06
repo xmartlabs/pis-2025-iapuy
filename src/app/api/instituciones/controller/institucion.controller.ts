@@ -21,7 +21,12 @@ export class InstitucionesController {
     }
   }
 
-  async createInstitution(req: NextRequest) : Promise<Institucion> {
+  async getInstitutionsSimple() {
+    const institutions = await this.institutionsService.findAllSimple();
+    return institutions;
+  }
+
+  async createInstitution(req: NextRequest): Promise<Institucion> {
     const body = (await req.json()) as unknown as CreateInstitutionDTO;
     return this.institutionsService.create(body);
   }
