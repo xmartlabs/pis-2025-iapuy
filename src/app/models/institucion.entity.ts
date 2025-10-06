@@ -1,6 +1,7 @@
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   Model,
   PrimaryKey,
@@ -11,17 +12,14 @@ import {
 @Table({ tableName: "instituciones" })
 export class Institucion extends Model {
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
   declare id: string;
 
   @Column
   declare nombre: string;
-
-  @Column
-  declare contacto: string;
-
-  @Column
-  declare telefono: string;
 
   @CreatedAt
   declare createdAt: Date;

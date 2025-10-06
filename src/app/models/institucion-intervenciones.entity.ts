@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -9,18 +10,17 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { Institucion } from "./institucion.entity";
-import { Intervencion } from "./intervencion.entity";
+import { Intervention } from "./intervention.entity";
 
 @Table({ tableName: "institucion-intervenciones" })
 export class InstitucionIntervencion extends Model {
-  
   @PrimaryKey
   @ForeignKey(() => Institucion)
   @Column
   declare institucionId: string;
 
   @PrimaryKey
-  @ForeignKey(() => Intervencion)
+  @ForeignKey(() => Intervention)
   @Column
   declare intervencionId: string;
 

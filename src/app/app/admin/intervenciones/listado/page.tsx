@@ -1,11 +1,5 @@
-import ListadoIntervenciones from "@/app/app/colaboradores/intervenciones/ListadoIntervenciones";
-import NuevaInstervencion from "../NuevaIntervencion";
+import ListadoIntervenciones from "../../../../components/listado-intervenciones";
 
 export default function PantallaIntervenciones() {
-  return (
-    <>
-      <ListadoIntervenciones />
-      <NuevaInstervencion />
-    </>
-  );
+  return <ListadoIntervenciones />;
 }

@@ -8,7 +8,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Intervencion } from "./intervencion.entity";
+import { Intervention } from "./intervention.entity";
 
 @Table({ tableName: "acompaniantes" })
 export class Acompania extends Model {
@@ -16,7 +16,7 @@ export class Acompania extends Model {
   @Column
   declare userId: string;
 
-  @ForeignKey(() => Intervencion)
+  @ForeignKey(() => Intervention)
   @Column
   declare intervencionId: string;
 

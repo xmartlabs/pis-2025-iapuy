@@ -1,15 +1,15 @@
-"use client"
+/* eslint-disable check-file/folder-naming-convention */
+"use client";
 
 import { Button } from "@/components/ui/button";
 import EditarIntervencion from "../EditarIntervencion";
-import ListadoIntervenciones from "../ListadoIntervenciones";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import { Plus } from "lucide-react";
+import ListadoIntervenciones from "@/app/components/listado-intervenciones";
 
 export default function PantallaIntervencionesCollaborador() {
-  
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -44,7 +44,9 @@ export default function PantallaIntervencionesCollaborador() {
       <ListadoIntervenciones />
       <div className="mt-6 flex">
         <Button
-          onClick={() => { router.push("/app/colaboradores/intervenciones/evaluar"); }}
+          onClick={() => {
+            router.push("/app/colaboradores/intervenciones/evaluar");
+          }}
           className="
             w-auto
             min-w-[118px] 
@@ -53,15 +55,14 @@ export default function PantallaIntervencionesCollaborador() {
             bg-[#2D3648] text-white text-[12px] font-semibold
             px-3 py-2
             flex items-center justify-center gap-2
-          "        
-          >
-          <Plus/>
+          "
+        >
+          <Plus />
           Agregar info
         </Button>
       </div>
 
       <Toaster position="bottom-right" richColors />
-
     </>
   );
 }

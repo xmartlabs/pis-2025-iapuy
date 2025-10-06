@@ -1,11 +1,11 @@
-import CambiarContraseña from "./CambiarContraseña";
+"use client";
+
 import MiPerfil from "./mi-perfil";
 
 export default function PantallaInsituciones() {
   return (
     <>
       <MiPerfil />
-      <CambiarContraseña />
     </>
   );
 }

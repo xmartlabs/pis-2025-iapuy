@@ -13,8 +13,8 @@ import {
 import {
   type CreationOptional
 } from "sequelize"
-import { Intervencion } from "./intervencion.entity";
 import { Perro } from "./perro.entity";
+import { Intervention } from "./intervention.entity";
 
 // eslint-disable-next-line new-cap
 @Table({ tableName: "perros-experiencias" })
@@ -31,7 +31,7 @@ export class PerroExperiencia extends Model{
   declare perro_id: CreationOptional<string>;
 
 // eslint-disable-next-line new-cap
-  @ForeignKey(() => Intervencion)
+  @ForeignKey(() => Intervention)
       // eslint-disable-next-line new-cap
   @Column({ type: DataType.STRING })
   declare intervencion_id: string;
