@@ -57,7 +57,7 @@ export default function EvaluarIntervencion(){
   const context = useContext(LoginContext);
   const { interventionId } = useParams<{ interventionId?: string }>();
   //! Hardcoded id for testing (cambiar por id de tu base de datos)
-  const id = interventionId ?? "8426ad74-8ca1-413f-acc2-5b43b0445280";
+  const id = interventionId ?? "26a7a4ed-4bf4-4974-974b-675e549e6dd6";
 
   useEffect(()=> {
     const callApi = async () => {

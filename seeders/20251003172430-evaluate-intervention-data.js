@@ -11,8 +11,6 @@ module.exports = {
       {
         id: inst2,
         nombre: "Fundación 1",
-        contacto: "Juan Pérez",
-        telefono: "092987654",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
