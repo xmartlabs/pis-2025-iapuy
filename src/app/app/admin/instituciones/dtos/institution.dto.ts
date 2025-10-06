@@ -1,4 +1,4 @@
-import { type InstitutionContactDTO } from "@/app/api/instituciones/dtos/institution-contact.dto";
+import { type InstitutionContactDTO } from "./institution-contact.dto";
 
 export class InstitutionDto {
   id: string;

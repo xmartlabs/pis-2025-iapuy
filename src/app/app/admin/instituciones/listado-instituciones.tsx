@@ -29,7 +29,7 @@ export default function InstitutionList() {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [reload, setReload] = useState(false);
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
 
   const context = useContext(LoginContext);
   const router = useRouter();
@@ -46,6 +46,9 @@ export default function InstitutionList() {
     };
   }, [searchInput]);
 
+  // function go(id: string) {
+  //   router.push(`/app/admin/instituciones/detalles?id=${id}`);
+  // }
   async function fetchInstitutions(
     pageNum: number,
     pageSize: number,
@@ -234,7 +237,7 @@ export default function InstitutionList() {
                   Referentes
                 </TableHead>
                 <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Patologias
+                  Estado de cuenta
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -259,9 +262,9 @@ export default function InstitutionList() {
                   <TableRow
                     key={p.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
-                    onClick={() => {
-                      go(p.id);
-                    }}
+                    // onClick={() => {
+                    //   go(p.id);
+                    // }}
                   >
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-3">
@@ -274,19 +277,18 @@ export default function InstitutionList() {
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-2 text-sm text-gray-700">
                         {/* {p.User?.nombre ?? p.duenioId ?? "-"} */}
-                        Aca van los contactos
+                        {p.InstitutionContacts.map((contact, index) => (
+                          <span key={contact.id || index}>
+                            {contact.name} - {contact.contact}
+                            {index < p.InstitutionContacts.length - 1 && ", "}
+                          </span>
+                        ))}
                       </div>
                     </TableCell>
 
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        {/* {p.RegistroSanidad &&
-                        p.RegistroSanidad.Vacunas &&
-                        p.RegistroSanidad.Vacunas.length > 0 &&
-                        p.RegistroSanidad.Vacunas[0].fecha
-                          ? formatDate(p.RegistroSanidad.Vacunas[0].fecha)
-                          : "N/A"} */}
-                        Aca van las patologias
+                        {/* Aca el estado de cuenta */}
                       </div>
                     </TableCell>
                   </TableRow>
