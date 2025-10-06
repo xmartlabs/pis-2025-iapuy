@@ -1,7 +1,7 @@
 import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
 import type { CreateUserDto } from "../dtos/create-user.dto";
-import { Intervencion } from "../../../models/intervencion.entity";
+import { Intervention } from "../../../models/intervention.entity";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
@@ -42,7 +42,7 @@ export class UserService {
       attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
       include: [
         {
-          model: Intervencion,
+          model: Intervention,
           as: "Intervenciones",
         },
         {
@@ -78,10 +78,9 @@ export class UserService {
     });
   }
   async findDogIdsByUser(duenioId: string): Promise<Perro[]> {
-
     const Perros = await Perro.findAll({
       where: { duenioId },
-      attributes: ["id","nombre"],
+      attributes: ["id", "nombre"],
     });
 
     return Perros;

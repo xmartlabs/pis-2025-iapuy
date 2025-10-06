@@ -14,15 +14,28 @@ import {
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Funnel } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import NuevaInstervencion from "../app/admin/intervenciones/nueva/page";
+import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
+
+const statuses = ["Pendiente", "Finalizada", "Suspendida"];
+
+function formatMonthYear(ts: string | number | Date) {
+  const d = new Date(ts);
+  const monthShort = d
+    .toLocaleString("es-ES", { month: "short" })
+    .replace(".", "");
+  const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
+  return `${monthCap} ${d.getFullYear()}`;
+}
+import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -30,6 +43,8 @@ export default function ListadoIntervenciones() {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [reload] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
   const context = useContext(LoginContext);
   const router = useRouter();
@@ -61,12 +76,16 @@ export default function ListadoIntervenciones() {
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
       const url = new URL(
-        "/api/intervencion",
+        "/api/intervention",
         (typeof window !== "undefined" && window.location?.origin) || ""
       );
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
       if (query?.trim().length) url.searchParams.set("query", query.trim());
+      if (selectedMonths && selectedMonths.length)
+        url.searchParams.set("months", selectedMonths.join(","));
+      if (selectedStatuses && selectedStatuses.length)
+        url.searchParams.set("statuses", selectedStatuses.join(","));
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -170,7 +189,7 @@ export default function ListadoIntervenciones() {
         clearTimeout(timeout);
       }
     },
-    [context]
+    [context, selectedMonths, selectedStatuses]
   );
 
   useEffect(() => {
@@ -182,6 +201,28 @@ export default function ListadoIntervenciones() {
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
+          if (availableMonths.length === 0) {
+            try {
+              const map = new Map<string, number>();
+              res.data.forEach((it) => {
+                const d = new Date(it.timeStamp);
+                if (isNaN(d.getTime())) return;
+                const key = formatMonthYear(d);
+                const monthStart = new Date(
+                  d.getFullYear(),
+                  d.getMonth(),
+                  1
+                ).getTime();
+                if (!map.has(key)) map.set(key, monthStart);
+              });
+              const sorted = Array.from(map.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map((e) => e[0]);
+              setAvailableMonths(sorted);
+            } catch {
+              setAvailableMonths([]);
+            }
+          }
         }
       })
       .catch(() => {})
@@ -192,29 +233,46 @@ export default function ListadoIntervenciones() {
     return () => {
       controller.abort();
     };
-  }, [page, size, search, reload, fetchIntervenciones]);
+  }, [page, size, search, reload, fetchIntervenciones, availableMonths.length]);
+
+  const onFilterSelectionChange = (
+    monthsSelected: string[],
+    statusesSelected: string[]
+  ) => {
+    setSelectedMonths(monthsSelected);
+    setSelectedStatuses(statusesSelected);
+    setPage(1);
+  };
 
   return (
     <div className=" max-w-[92%]">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
         <h1
-          className="text-5xl font-bold tracking-tight leading-[1.2] tracking-[0.01em]"
+          className="text-5xl font-bold tracking-tight leading-[1.2]"
           style={{ fontFamily: "Inter, sans-serif" }}
         >
           Intervenciones
         </h1>
+        <div className="flex justify-end mb-2 p-3">
+          <AddIntervencionButton
+            onClick={() => {
+              router.push("/app/admin/intervenciones/nueva");
+            }}
+          />
+        </div>
+      </div>
+      <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
         <CustomSearchBar
           searchInput={searchInput}
           setSearchInput={setSearchInput}
         />
-        <div className="w-[200px] sm:w-full flex items-center justify-center border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <NuevaInstervencion />
-        </div>
-      </div>
-      <div className="flex justify-end mb-2 p-3">
-        <div className="flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out">
-          <Funnel className="w-[20px] h-[20px] "></Funnel>
-        </div>
+        <FilterDropdown
+          months={availableMonths}
+          statuses={statuses}
+          initialSelectedMonths={selectedMonths}
+          initialSelectedStatuses={selectedStatuses}
+          onSelectionChangeAction={onFilterSelectionChange}
+        />
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
@@ -239,12 +297,13 @@ export default function ListadoIntervenciones() {
                 <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
+                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 bg-white">
               {loading ? (
-                ["s1", "s2", "s3", "s4", "s5", "s6"].map((key) => (
+                ["s1", "s2", "s3", "s4", "s5", "s6", "s7"].map((key) => (
                   <TableRow key={key} className="px-6 py-4">
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[140px]" />
@@ -260,6 +319,9 @@ export default function ListadoIntervenciones() {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[48px] ml-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[40px]" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -295,9 +357,13 @@ export default function ListadoIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions && inter.Institucions.length > 0
-                          ? inter.Institucions.map((i) => i.nombre).join(", ")
-                          : ""}
+                        {
+                          (
+                            inter as InterventionDto & {
+                              Institucions: Array<{ nombre: string }>;
+                            }
+                          ).Institucions?.[0]?.nombre
+                        }
                       </div>
                     </TableCell>
 
@@ -315,11 +381,14 @@ export default function ListadoIntervenciones() {
                         {inter.status || ""}
                       </div>
                     </TableCell>
+                    <TableCell className="w-[40px] mr-0">
+                      <ArrowRight />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
+                  <TableCell colSpan={6} className="h-36 px-6 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <p className="text-sm text-muted-foreground">
                         {search

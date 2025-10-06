@@ -1,17 +1,18 @@
-/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
-  DataType,
   DeletedAt,
-  Model,
+  ForeignKey,
   PrimaryKey,
+  Model,
   Table,
   UpdatedAt,
+  DataType,
 } from "sequelize-typescript";
+import { Institucion } from "./institucion.entity";
 
-@Table({ tableName: "patologias" })
-export class Patologia extends Model {
+@Table({ tableName: "institutionContacts" })
+export class InstitutionContact extends Model {
   @PrimaryKey
   @Column({
     type: DataType.UUID,
@@ -20,7 +21,14 @@ export class Patologia extends Model {
   declare id: string;
 
   @Column
-  declare nombre: string;
+  declare name: string;
+
+  @Column
+  declare contact: string;
+
+  @ForeignKey(() => Institucion)
+  @Column
+  declare institutionId: string;
 
   @CreatedAt
   declare createdAt: Date;
