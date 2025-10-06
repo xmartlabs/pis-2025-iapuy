@@ -349,7 +349,9 @@ export default function ListadoIntervenciones() {
                   <TableCell className="p-3">{inter.tipo}</TableCell>
 
                   <TableCell className="p-3">
-                    {Number(inter.pairsQuantity) || 0}
+                    {
+                    //! aqui irían los nombres de las personas inscriptas
+                    }
                   </TableCell>
 
                   <TableCell className="p-3">
