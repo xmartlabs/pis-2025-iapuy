@@ -30,10 +30,6 @@ import { AlertCircleIcon, MinusIcon, PlusIcon } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import InterventionRow from "@/app/app/admin/intervenciones/nueva/intervention-row";
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
-
 const formSchema = z
   .object({
     date: z
@@ -122,7 +118,7 @@ export default function NewIntervention() {
       signal?: AbortSignal,
       triedRefresh = false
     ): Promise<PaginationResultDto<InterventionDto> | null> => {
-      const url = new URL("/api/intervention", BASE_API_URL);
+      const url = new URL("/api/intervention", location.origin);
       url.searchParams.set("query", institutionName);
 
       const controller = new AbortController();
@@ -151,7 +147,7 @@ export default function NewIntervention() {
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
+            new URL("/api/auth/refresh", location.origin),
             {
               method: "POST",
               headers: { Accept: "application/json" },
@@ -257,7 +253,7 @@ export default function NewIntervention() {
           }
         }
       }
-      const url = new URL("/api/intervention", BASE_API_URL);
+      const url = new URL("/api/intervention", location.origin);
 
       const doPost = async (authToken: string) => {
         const headers = {
@@ -276,7 +272,7 @@ export default function NewIntervention() {
 
       if (response.status === 401) {
         const refreshResponse = await fetch(
-          new URL("/api/auth/refresh", BASE_API_URL),
+          new URL("/api/auth/refresh", location.origin),
           {
             method: "POST",
             headers: { Accept: "application/json" },
@@ -321,7 +317,7 @@ export default function NewIntervention() {
       signal?: AbortSignal,
       triedRefresh = false
     ): Promise<Array<{ id: string; name: string }> | null> => {
-      const url = new URL("/api/instituciones/findall-simple", BASE_API_URL);
+      const url = new URL("/api/instituciones/findall-simple", location.origin);
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -349,7 +345,7 @@ export default function NewIntervention() {
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
+            new URL("/api/auth/refresh", location.origin),
             {
               method: "POST",
               headers: { Accept: "application/json" },
