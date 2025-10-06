@@ -41,26 +41,6 @@ export default function PantallaIntervencionesCollaborador() {
   return (
     <>
       <ListadoIntervencionesColab />
-      <div className="mt-6 flex">
-        <Button
-          onClick={() => {
-            router.push("/app/colaboradores/intervenciones/evaluar");
-          }}
-          className="
-            w-auto
-            min-w-[118px] 
-            h-[24px]
-            rounded-[6px]
-            bg-[#2D3648] text-white text-[12px] font-semibold
-            px-3 py-2
-            flex items-center justify-center gap-2
-          "
-        >
-          <Plus />
-          Agregar info
-        </Button>
-      </div>
-
       <Toaster position="bottom-right" richColors />
     </>
   );
