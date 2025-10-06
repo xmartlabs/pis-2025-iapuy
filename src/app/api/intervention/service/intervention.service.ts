@@ -46,7 +46,7 @@ export class InterventionService {
     statuses: string | null
   ): Promise<PaginationResultDto<Intervention>> {
     const whereBase: Record<string, unknown> =
-      payload.type === "Administrador" || payload.type === "Colaborador"
+      payload.type === "Administrador"
         ? {}
         : {
             userId: payload.ci,
