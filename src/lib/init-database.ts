@@ -174,6 +174,10 @@ const registerInstitutionContactsAssociations = () => {
     InstitutionContact.belongsTo(Institucion, {
       foreignKey: "institutionId",
     });
+    Institucion.hasMany(InstitutionContact, {
+      foreignKey: "institutionId",
+      as: "InstitutionContacts",
+    });
   }
 };
 const registerGastoAssociations = () => {
