@@ -4,6 +4,7 @@ import { jwtVerify } from "jose";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const method = req.method;
 
   // Se excluye las rutas de login y refresh
   if (pathname.startsWith("/api/auth")) {
@@ -31,7 +32,7 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/api/gastos") ||
         pathname.startsWith("/api/users/profile") ||
         pathname.startsWith("/api/perros/interventions") ||
-        pathname.startsWith("/api/intervencion")
+        (pathname.startsWith("/api/intervention") && method === "GET")
       ) {
         return NextResponse.next();
       }

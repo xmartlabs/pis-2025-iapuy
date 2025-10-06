@@ -15,12 +15,18 @@ import { User } from "./user.entity";
 export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 
 @Table({ tableName: "intervenciones" })
-export class Intervencion extends Model {
+export class Intervention extends Model {
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
   declare id: string;
 
-  @Column
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+  })
   declare timeStamp: Date;
 
   @Column
@@ -29,16 +35,22 @@ export class Intervencion extends Model {
   @Column
   declare status: string;
 
-  @Column
-  declare pairsQuantity?: number;
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  declare pairsQuantity: number;
 
   @Column({
     type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
+    allowNull: false,
     validate: {
       isIn: [["educativa", "recreativa", "terapeutica"]],
     },
   })
   declare tipo: TipoIntervention;
+  @Column
+  declare description: string;
 
   @Column
   declare post_evaluacion?: string;

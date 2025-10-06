@@ -1,5 +1,5 @@
 import { Gasto } from "@/app/models/gastos.entity";
-import { Intervencion } from "@/app/models/intervencion.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
@@ -20,8 +20,7 @@ export class GastoService {
           as: "User",
         },
         {
-          model: Intervencion,
-          as: "Intervencion",
+          model: Intervention,
         },
       ],
       limit: pagination.size,
