@@ -260,4 +260,12 @@ export class InterventionService {
       throw error;
     }
   }
+
+  async delete(id: string): Promise<void> {
+    const intervention = await Intervention.findByPk(id);
+    if (!intervention) {
+      throw new Error(`Intervention with id ${id} not found`);
+    }
+    await intervention.destroy();
+  }
 }

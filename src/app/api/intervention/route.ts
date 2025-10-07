@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       pagination,
       payload,
       months,
-      statuses,
+      statuses
     );
 
     return NextResponse.json(res);
@@ -50,9 +50,35 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json(intervention, { status: 201 });
   } catch (error) {
-    console.log(error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Hubo un error desconocido" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  console.log("doing DELETE /api/intervention called");
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing id parameter" },
+        { status: 400 }
+      );
+    }
+    await interventionController.deleteIntervention(id);
+    return NextResponse.json(
+      { message: "Intervention deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json(
       { error: "Hubo un error desconocido" },
