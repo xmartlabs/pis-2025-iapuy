@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  console.log("doing DELETE /api/intervention called");
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -77,8 +76,11 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(
       { error: "Hubo un error desconocido" },
