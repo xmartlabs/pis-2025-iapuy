@@ -91,4 +91,11 @@ export class InstitucionesService {
       name: institucion.nombre,
     }));
   }
+
+  async delete(id: string): Promise<void> {
+    const res = await Institucion.destroy({ where: { id } });
+    if (res === 0) {
+      throw new Error(`Institution not found with id: ${id}`);
+    }
+  }
 }
