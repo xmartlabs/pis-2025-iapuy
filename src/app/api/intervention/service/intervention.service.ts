@@ -47,6 +47,10 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 
+type InterventionWithInstitution = Intervention & {
+  institutionName: string | null;
+};
+
 export class InterventionService {
   async findAll(
     pagination: PaginationDto,
@@ -310,7 +314,7 @@ export class InterventionService {
       if (body.driveLink) {
         intervention.driveLink = body.driveLink;
       }
-      intervention.status = "Evaluada" //! agrego este estado para que no la vuelvan a evaluar????
+      intervention.status = "Evaluada"; //! agrego este estado para que no la vuelvan a evaluar????
       await intervention.save({ transaction });
       await Promise.all(
         body.patients.map((patient) =>
@@ -318,7 +322,7 @@ export class InterventionService {
             {
               nombre: patient.name,
               edad: patient.age,
-              ...(patient.pathology_id !== '' && {
+              ...(patient.pathology_id !== "" && {
                 patologia_id: patient.pathology_id,
               }),
               intervencion_id: id,
@@ -350,45 +354,67 @@ export class InterventionService {
     }
   }
 
-  
-    async findAllPathologiesbyId(id: string) {
-          const intervention = await Intervention.findByPk(id)
-          if(intervention?.tipo !== "terapeutica") {return []}
-          const relation = await InstitucionIntervencion.findOne({
-          where: { intervencionId: id }
-          });
-          if(!relation){ return [] }
-          const institutionId = relation.institucionId;
-          const pathologiesRelation = await InstitucionPatologias.findAll({
-            where: { institucionId : institutionId }
-          });
-          const pathologies = await Promise.all(
-            pathologiesRelation.map((rel) =>
-              Patologia.findByPk(rel.patologiaId, {
-                attributes: ["id", "nombre"]
-              })
-            )
-          );
-          return pathologies
+  async findAllPathologiesbyId(id: string) {
+    const intervention = await Intervention.findByPk(id);
+    if (intervention?.tipo !== "terapeutica") {
+      return [];
     }
-  
-    async findAllDogsbyId(id: string) {
-        const pairsUserDog = await UsrPerro.findAll({
-          where: { intervencionId: id }
-        });
-        if(!pairsUserDog){ return [] }
-        const dogs = await Promise.all(
-          pairsUserDog.map((pair) =>
-            Perro.findByPk(pair.perroId, {
-              attributes: ["id", "nombre"]
-            })
-          )
-        );
-        return dogs
+    const relation = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+    if (!relation) {
+      return [];
+    }
+    const institutionId = relation.institucionId;
+    const pathologiesRelation = await InstitucionPatologias.findAll({
+      where: { institucionId: institutionId },
+    });
+    const pathologies = await Promise.all(
+      pathologiesRelation.map((rel) =>
+        Patologia.findByPk(rel.patologiaId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return pathologies;
+  }
+
+  async findAllDogsbyId(id: string) {
+    const pairsUserDog = await UsrPerro.findAll({
+      where: { intervencionId: id },
+    });
+    if (!pairsUserDog) {
+      return [];
+    }
+    const dogs = await Promise.all(
+      pairsUserDog.map((pair) =>
+        Perro.findByPk(pair.perroId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return dogs;
+  }
+
+  async findIntervention(id: string) {
+    const intervention = await Intervention.findByPk(id);
+
+    if (!intervention) return null;
+    const link = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+
+    let institutionName = null;
+    if (link?.institucionId) {
+      const institution = await Institucion.findByPk(link.institucionId, {
+        attributes: ["nombre"],
+      });
+      institutionName = institution?.nombre ?? null;
     }
 
-    async findIntervention(id: string) {
-        const intervention = await Intervention.findByPk(id);
-        return intervention
-    }
+    return {
+      ...intervention.toJSON(),
+      institutionName,
+    } as InterventionWithInstitution;
+  }
 }

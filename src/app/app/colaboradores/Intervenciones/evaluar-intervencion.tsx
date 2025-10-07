@@ -37,24 +37,21 @@ type Dog = {
   nombre: string;
 }
 
-type Intervention = {
+interface Intervention {
   id: string;
   timeStamp: string;
-  costo: string;              
-  status: string;             
-  pairsQuantity: number;    
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  description: string | null;
-  driveLink: string | null;
-  fotosUrls: string[];
-  institucion: string;
-  post_evaluacion: string | null;
+  costo: string;
+  status: string;
+  pairsQuantity: number;
   tipo: string;
+  post_evaluacion: string;
+  fotosUrls: string[];
+  driveLink: string | null;
+  description: string | null;
   userId: string | null;
-
+  institutionName?: string; 
 }
+
 
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
@@ -139,7 +136,7 @@ export default function EvaluarIntervencion(){
     callApi().catch((err) => {
       reportError(err);
     });
-  }, []);
+  }, [context, id]);
 
   useEffect(()=> {
     const callApi = async () => {
@@ -201,7 +198,7 @@ export default function EvaluarIntervencion(){
     callApi().catch((err) => {
       reportError(err);
     });
-  }, []);
+  }, [context, id]);
 
   useEffect(()=> {
     const callApi = async () => {
@@ -263,7 +260,7 @@ export default function EvaluarIntervencion(){
     callApi().catch((err) => {
       reportError(err);
     });
-  }, []);
+  }, [context, id]);
 
   const patientsSchema = z.object({
     name: z.string().min(1, "Nombre requerido"),
@@ -333,7 +330,7 @@ export default function EvaluarIntervencion(){
         dogs: dogs.map(dog => ({ dogId: dog.id, feelingDog: "good" })),
        });
     }
-  }, [dogs]);
+  }, [dogs, form]);
 
 
   const router = useRouter();
@@ -474,7 +471,7 @@ export default function EvaluarIntervencion(){
           leading-[120%] 
         "
       >
-       {`Editar ${interv?.institucion ?? ""} ${
+       {`Editar ${interv?.institutionName ?? ""} ${
         interv?.timeStamp
           ? new Date(interv.timeStamp).toLocaleDateString("es-ES", {
               day: "2-digit",
@@ -557,7 +554,7 @@ export default function EvaluarIntervencion(){
             <div>
               <h2 className="block text-sm font-medium">Institución*</h2>
               <select disabled className="h-[48px] w-full border rounded-md px-3 py-2">
-                <option>{interv?.institucion ?? "—"}</option>
+                <option>{interv?.institutionName ?? "—"}</option>
               </select>
             </div>
           </div>
