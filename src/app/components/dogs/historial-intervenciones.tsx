@@ -10,24 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import CustomPagination from "../pagination";
-
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 export default function HistorialIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -55,7 +43,8 @@ export default function HistorialIntervenciones() {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL(`/api/perros/interventions?id=${id}`, BASE_API_URL);
+      const url = new URL(`/api/perros/interventions`, location.origin);
+      url.searchParams.set("id", id);
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
 
@@ -80,7 +69,7 @@ export default function HistorialIntervenciones() {
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
+            new URL("/api/auth/refresh", location.origin),
             {
               method: "POST",
               headers: { Accept: "application/json" },
@@ -258,7 +247,13 @@ export default function HistorialIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {inter.Institucions?.[0]?.nombre || ""}
+                        {Array.isArray(inter.institutions) &&
+                        inter.institutions.length > 0
+                          ? (inter.institutions as Array<{ nombre?: string }>)
+                              .map((inst) => inst?.nombre ?? "")
+                              .filter(Boolean)
+                              .join(", ")
+                          : ""}
                       </div>
                     </TableCell>
                   </TableRow>

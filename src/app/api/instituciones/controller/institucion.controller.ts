@@ -12,8 +12,7 @@ export class InstitucionesController {
     try {
       const users = await this.institutionsService.findAll(pagination);
       return NextResponse.json(users);
-    } catch (error) {
-      console.error(error);
+    } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
         { status: 500 }
@@ -29,5 +28,9 @@ export class InstitucionesController {
   async createInstitution(req: NextRequest): Promise<Institucion> {
     const body = (await req.json()) as unknown as CreateInstitutionDTO;
     return this.institutionsService.create(body);
+  }
+
+  async deleteInstitution(id: string): Promise<void> {
+    await this.institutionsService.delete(id);
   }
 }
