@@ -93,10 +93,9 @@ export class InstitucionesService {
   }
 
   async delete(id: string): Promise<void> {
-    const institution = await Institucion.findByPk(id);
-    if (!institution) {
+    const res = await Institucion.destroy({ where: { id } });
+    if (res === 0) {
       throw new Error(`Institution not found with id: ${id}`);
     }
-    await institution.destroy();
   }
 }
