@@ -12,19 +12,32 @@ module.exports = {
       {
         id: inst1,
         nombre: "Centro Educativo Los Andes",
-        contacto: "María Gómez",
-        telefono: "099123456",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         id: inst2,
         nombre: "Fundación Recrear",
-        contacto: "Juan Pérez",
-        telefono: "092987654",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+    ]);
+
+    await queryInterface.bulkInsert("institutionContacts", [
+      {
+        name: "María Gómez",
+        contact: "099123456",
+        institutionId: inst1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Juan Pérez",
+        contact: "092987654",
+        institutionId: inst2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     ]);
 
     // Create patologias
