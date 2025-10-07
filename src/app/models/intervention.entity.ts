@@ -11,6 +11,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
+import type { CreationOptional } from "sequelize";
 
 export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
 
@@ -70,4 +71,7 @@ export class Intervention extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  declare driveLink: CreationOptional<string>;
 }
