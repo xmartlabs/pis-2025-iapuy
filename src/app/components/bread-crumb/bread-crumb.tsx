@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,10 +17,10 @@ export default function CustomBreadCrumb({ link, current, className }: props) {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href="../personas/listado"
+            href={link[0]}
             className="gray-500 p-0 gap-0 text-sm leading-5"
           >
-            <Link href={link[0]}>{link[1]}</Link>
+            {link[1]}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator className="border-muted-foreground" />

@@ -5,7 +5,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
-import type { InterventionDto } from "../dtos/intervention.dto";
+import type { InterventionDto } from "../../app/admin/intervenciones/dtos/intervention.dto";
 
 export default function InterventionRow({
   intervention,
