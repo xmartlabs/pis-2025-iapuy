@@ -36,4 +36,8 @@ export class InterventionController {
       (await request.json()) as CreateInterventionDto;
     return await this.interventionService.create(interventionData);
   }
+
+  async deleteIntervention(id: string) {
+      await this.interventionService.delete(id);
+  }
 }
