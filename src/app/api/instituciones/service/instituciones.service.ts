@@ -91,4 +91,12 @@ export class InstitucionesService {
       name: institucion.nombre,
     }));
   }
+
+  async delete(id: string): Promise<void> {
+    const institution = await Institucion.findByPk(id);
+    if (!institution) {
+      throw new Error(`Institution not found with id: ${id}`);
+    }
+    await institution.destroy();
+  }
 }
