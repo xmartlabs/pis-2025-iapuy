@@ -416,6 +416,8 @@ export class InterventionService {
       ...intervention.toJSON(),
       institutionName,
     } as InterventionWithInstitution;
+  }
+  
   async delete(id: string): Promise<void> {
     const res = await Intervention.destroy({ where: { id } });
     if (res === 0) {

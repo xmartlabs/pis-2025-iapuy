@@ -95,7 +95,7 @@ export class InterventionController {
     return ret;
   }
 
-  async getDogsInterventionByPK(id : string){
+  async getDogsInterventionByPK(id: string) {
     try {
       const intervention = await this.interventionService.findIntervention(id);
       return intervention;
@@ -110,6 +110,6 @@ export class InterventionController {
   }
 
   async deleteIntervention(id: string) {
-      await this.interventionService.delete(id);
+    await this.interventionService.delete(id);
   }
 }
