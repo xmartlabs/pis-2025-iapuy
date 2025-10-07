@@ -262,10 +262,9 @@ export class InterventionService {
   }
 
   async delete(id: string): Promise<void> {
-    const intervention = await Intervention.findByPk(id);
-    if (!intervention) {
+    const res = await Intervention.destroy({ where: { id } });
+    if (res === 0) {
       throw new Error(`Intervention not found with id ${id}`);
     }
-    await intervention.destroy();
   }
 }
