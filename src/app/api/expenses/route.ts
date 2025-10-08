@@ -1,16 +1,16 @@
 import { initDatabase } from "@/lib/init-database";
-import { GastosController } from "./controller/gastos.controller";
-import { NextRequest } from "next/server";
+import { ExpensesController } from "./controller/expenses.controller";
+import type { NextRequest } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
 
-const gastoController = new GastosController();
+const expensesController = new ExpensesController();
 await initDatabase();
 
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
 
-    return gastoController.getGastos(pagination);
+    return expensesController.getExpenses(pagination);
   } catch (error) {
     console.error(error);
     return new Response(undefined, { status: 400 });
