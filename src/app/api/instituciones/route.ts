@@ -9,10 +9,18 @@ await initDatabase();
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-    return institutionsController.getInstitutions(pagination);
+    const institutions = await institutionsController.getInstitutions(
+      pagination
+    );
+    return NextResponse.json(institutions, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return new Response(undefined, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
+      { status: 500 }
+    );
   }
 }
 
