@@ -8,6 +8,7 @@ import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import sequelize from "@/lib/database";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+import { Intervention } from "@/app/models/intervention.entity";
 
 export class InstitucionesService {
   async findAll(
@@ -97,5 +98,51 @@ export class InstitucionesService {
     if (res === 0) {
       throw new Error(`Institution not found with id: ${id}`);
     }
+  }
+
+  async interventionsPDF(id: string, fechas: Date[]) {
+    const interventions = await Intervention.findAll({
+      where:
+        fechas && fechas.length > 0
+          ? {
+              [Op.or]: fechas.map((rawFecha) => {
+                const fecha = new Date(rawFecha);
+                console.log(fecha.toISOString());
+                const year = fecha.getFullYear();
+                const month = fecha.getMonth() + 1;
+
+                return {
+                  [Op.and]: [
+                    sequelize.where(
+                      sequelize.fn(
+                        "EXTRACT",
+                        sequelize.literal(`YEAR FROM "timeStamp"`)
+                      ),
+                      year
+                    ),
+                    sequelize.where(
+                      sequelize.fn(
+                        "EXTRACT",
+                        sequelize.literal(`MONTH FROM "timeStamp"`)
+                      ),
+                      month
+                    ),
+                  ],
+                };
+              }),
+            }
+          : undefined,
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          where: { id },
+          required: true,
+          attributes: [],
+        },
+      ],
+    });
+
+    return interventions;
   }
 }
