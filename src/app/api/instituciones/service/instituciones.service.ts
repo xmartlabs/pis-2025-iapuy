@@ -6,8 +6,8 @@ import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
-import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 import sequelize from "@/lib/database";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 
 export class InstitucionesService {
   async findAll(
@@ -90,5 +90,12 @@ export class InstitucionesService {
       id: institucion.id,
       name: institucion.nombre,
     }));
+  }
+
+  async delete(id: string): Promise<void> {
+    const res = await Institucion.destroy({ where: { id } });
+    if (res === 0) {
+      throw new Error(`Institution not found with id: ${id}`);
+    }
   }
 }
