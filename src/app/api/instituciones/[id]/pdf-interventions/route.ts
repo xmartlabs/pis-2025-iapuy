@@ -12,9 +12,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    return NextResponse.json(
-      await institutionsController.interventionsPDF(request, id)
-    );
+    // interventionsPDF may return a NextResponse (with PDF) or JSON. Return it directly.
+    return await institutionsController.interventionsPDF(request, id);
   } catch (error) {
     return NextResponse.json(
       {

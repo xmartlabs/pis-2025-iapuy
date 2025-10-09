@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Institucion } from "@/app/models/institucion.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { type PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
@@ -9,6 +13,9 @@ import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import sequelize from "@/lib/database";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 import { Intervention } from "@/app/models/intervention.entity";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import * as fs from "fs";
+import * as path from "path";
 
 export class InstitucionesService {
   async findAll(
@@ -100,14 +107,13 @@ export class InstitucionesService {
     }
   }
 
-  async interventionsPDF(id: string, fechas: Date[]) {
+  async interventionsPDF(id: string, fechas: Date[]): Promise<Uint8Array> {
     const interventions = await Intervention.findAll({
       where:
         fechas && fechas.length > 0
           ? {
               [Op.or]: fechas.map((rawFecha) => {
                 const fecha = new Date(rawFecha);
-                console.log(fecha.toISOString());
                 const year = fecha.getFullYear();
                 const month = fecha.getMonth() + 1;
 
@@ -143,6 +149,202 @@ export class InstitucionesService {
       ],
     });
 
-    return interventions;
+    // Create a PDF document summarizing the interventions
+    const pdfDoc = await PDFDocument.create();
+    let currentPage = pdfDoc.addPage();
+    const { width, height } = currentPage.getSize();
+    const margin = 50;
+    const fontSizeTitle = 18;
+    const fontSizeHeader = 12;
+    const fontSize = 10;
+    const rowHeight = 22; // increased spacing between rows
+
+    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Watermark image + brand text (logo + "IAPUy") on the background/top
+    try {
+      // load image from public folder
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      if (fs.existsSync(logoPath)) {
+        const logoBytes = fs.readFileSync(logoPath);
+        const pngImage = await pdfDoc.embedPng(logoBytes);
+        const pngDims = pngImage.scale(0.6);
+        // center the watermark and make it faint
+        const wmWidth = Math.min(Number(pngDims.width), width / 2);
+        const wmHeight =
+          (Number(pngDims.height) / Number(pngDims.width)) * wmWidth;
+        currentPage.drawImage(pngImage, {
+          x: (width - wmWidth) / 2,
+          y: (height - wmHeight) / 2,
+          width: wmWidth,
+          height: wmHeight,
+          opacity: 0.12,
+        } as any);
+
+        // brand text to the right of the logo (top-left area)
+        currentPage.drawText("IAPUy", {
+          x: margin,
+          y: height - margin,
+          size: 28,
+          font: timesRomanFont,
+          color: rgb(0.0, 0.6, 0.2),
+        });
+      } else {
+        // fallback title if no image found
+        currentPage.drawText("Intervenciones", {
+          x: margin,
+          y: height - margin - fontSizeTitle,
+          size: fontSizeTitle,
+          font: timesRomanFont,
+          color: rgb(0, 0, 0),
+        });
+      }
+    } catch {
+      // if anything fails embedding the image, fallback to title
+      currentPage.drawText("Intervenciones", {
+        x: margin,
+        y: height - margin - fontSizeTitle,
+        size: fontSizeTitle,
+        font: timesRomanFont,
+        color: rgb(0, 0, 0),
+      });
+    }
+
+    // Table headers - giving more space to "Descripción"
+    const headers = [
+      "Fecha",
+      "Tipo",
+      "Status",
+      "Costo",
+      "Pares",
+      "Descripción",
+    ];
+    const startY = height - margin - fontSizeTitle - 25;
+    let y = startY;
+
+    // Adjusted column widths - giving more space to "Descripción" column
+    const colWidths = [
+      70, // Fecha - reduced
+      60, // Tipo - reduced
+      60, // Status - reduced
+      50, // Costo - reduced
+      40, // Pares - reduced
+      width - margin * 2 - (70 + 60 + 60 + 50 + 40), // Descripción - gets remaining space
+    ];
+
+    const xPositions: number[] = [];
+    let x = margin;
+    for (let i = 0; i < colWidths.length; i++) {
+      xPositions.push(x);
+      x += colWidths[i];
+    }
+
+    // Draw header function so we can repeat on new pages
+    const drawTableHeader = (page: any) => {
+      for (let i = 0; i < headers.length; i++) {
+        page.drawText(headers[i], {
+          x: xPositions[i] + 2,
+          y,
+          size: i === 5 ? fontSizeHeader : 10, // "Descripción" has font size 12, others 10
+          font: timesRomanFont,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+      }
+      y -= fontSizeHeader + 6;
+    };
+
+    drawTableHeader(currentPage);
+
+    // Improved text wrapping function
+    const wrapText = (
+      text: string,
+      font: any,
+      size: number,
+      maxW: number
+    ): string[] => {
+      if (!text) return [""];
+
+      const words = text.split(/\s+/);
+      const lines: string[] = [];
+      let currentLine = words[0] ?? "";
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const testLine = `${currentLine  } ${  word}`;
+        const testWidth = font.widthOfTextAtSize(testLine, size);
+
+        if (testWidth <= maxW) {
+          currentLine = testLine;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    };
+
+    // Draw rows with multi-line wrapping for all columns to prevent text overflow
+    for (const interv of interventions) {
+      // Prepare row values
+      const fechaStr = interv.timeStamp
+        ? new Date(interv.timeStamp).toLocaleString().split(",")[0]
+        : "";
+      const tipo = (interv.tipo as unknown as string) ?? "";
+      const status = (interv.status as unknown as string) ?? "";
+      const costo =
+        interv.costo !== null && interv.costo !== undefined
+          ? String(interv.costo)
+          : "";
+      const pares =
+        interv.pairsQuantity !== null && interv.pairsQuantity !== undefined
+          ? String(interv.pairsQuantity)
+          : "";
+      const desc = interv.description ? String(interv.description) : "";
+
+      // Wrap text for ALL columns to prevent overflow
+      const wrappedValues: string[][] = [];
+      for (let i = 0; i < colWidths.length - 1; i++) {
+        const value = [fechaStr, tipo, status, costo, pares][i];
+        const maxWidth = colWidths[i] - 4;
+        wrappedValues.push(wrapText(value, timesRomanFont, fontSize, maxWidth));
+      }
+
+      // Wrap description separately with more space
+      const descMaxWidth = colWidths[5] - 4;
+      const descLines = wrapText(desc, timesRomanFont, fontSize, descMaxWidth);
+      wrappedValues.push(descLines);
+
+      // Calculate total lines needed for this row
+      const maxLines = Math.max(...wrappedValues.map((lines) => lines.length));
+      const neededHeight = maxLines * rowHeight;
+
+      // If not enough space, add new page and draw header
+      if (y - neededHeight < margin) {
+        currentPage = pdfDoc.addPage();
+        y = height - margin - fontSizeTitle - 25;
+        drawTableHeader(currentPage);
+      }
+
+      // Draw all columns with proper text wrapping
+      for (let col = 0; col < wrappedValues.length; col++) {
+        const lines = wrappedValues[col];
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+          currentPage.drawText(lines[lineIndex], {
+            x: xPositions[col] + 2,
+            y: y - lineIndex * rowHeight,
+            size: fontSize,
+            font: timesRomanFont,
+            color: rgb(0, 0, 0),
+          });
+        }
+      }
+
+      // advance y by lines used
+      y -= neededHeight;
+    }
+
+    const pdfBytes = (await pdfDoc.save()) as Uint8Array;
+    return pdfBytes;
   }
 }
