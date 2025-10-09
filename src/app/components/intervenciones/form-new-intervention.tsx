@@ -23,23 +23,22 @@ import {
 } from "@/components/ui/select";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
+import { Textarea } from "@/components/ui/textarea";
 const formSchema = z
   .object({
     date: z
       .string()
       .min(1, { message: "Debe seleccionar una fecha" })
-      .refine(
-        (dateString) => {
-          const selectedDate = new Date(dateString);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
+      .refine((dateString) => {
+        const selectedDate = new Date(dateString);
+        const today = new Date();
+        const selected = selectedDate.toISOString().split("T")[0];
+        const current = today.toISOString().split("T")[0];
 
-          return selectedDate >= today;
-        },
-        {
-          message: "La fecha debe ser hoy o en el futuro",
-        }
-      ),
+        return selected >= current;
+      }, {
+        message: "La fecha debe ser hoy o en el futuro",
+      }),
     hour: z
       .string()
       .min(1, { message: "Debe seleccionar una hora" })
@@ -116,31 +115,29 @@ const NuevaIntervencionForm = forwardRef<
       }
     },
   }));
-
+  const descripcion = form.watch("description") || "";
+  const charCount = descripcion.length;
   return (
-    <div>
-      <Form {...form}>
-        <form
+    <Form {...form}>
+      <form
           onSubmit={(e) => {
             e.preventDefault();
             form.handleSubmit(onSubmit)().catch(() => {
-              // Error handling is done in the parent component
             });
           }}
           className="w-full"
         >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="flex flex-col md:flex-row gap-8 mb-8">
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1 max-w-[255px]">
                   <FormLabel>Fecha*</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
@@ -148,7 +145,7 @@ const NuevaIntervencionForm = forwardRef<
               control={form.control}
               name="hour"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1 max-w-[255px]">
                   <FormLabel>Hora*</FormLabel>
                   <FormControl>
                     <Input type="time" {...field} />
@@ -157,13 +154,11 @@ const NuevaIntervencionForm = forwardRef<
                 </FormItem>
               )}
             />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="pairQuantity"
-            render={({ field }) => (
-              <FormItem>
+            <FormField
+              control={form.control}
+              name="pairQuantity"
+              render={({ field }) => (
+              <FormItem className="flex-1 max-w-[255px]">
                 <FormLabel>Cantidad de duplas necesaria*</FormLabel>
                 <FormControl>
                   <div className="flex items-center gap-2">
@@ -171,6 +166,7 @@ const NuevaIntervencionForm = forwardRef<
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="border border-[#BDD7B3] disabled:opacity-100"
                       onClick={() => {
                         const newValue = Math.max(1, field.value - 1);
                         field.onChange(newValue);
@@ -187,6 +183,7 @@ const NuevaIntervencionForm = forwardRef<
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="border border-[#BDD7B3]"
                       onClick={() => {
                         const newValue = field.value + 1;
                         field.onChange(newValue);
@@ -200,15 +197,15 @@ const NuevaIntervencionForm = forwardRef<
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />        
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="flex flex-col md:flex-row gap-8 mb-8">
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex-1 max-w-[542px]">
                 <FormLabel>Tipo de Intervención*</FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -237,7 +234,7 @@ const NuevaIntervencionForm = forwardRef<
             control={form.control}
             name="institution"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex-1 max-w-[542px]">
                 <FormLabel>Institución*</FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -273,18 +270,24 @@ const NuevaIntervencionForm = forwardRef<
             )}
           />
         </div>
-        <div>
+        <div className="flex flex-col mb-8 max-w-[542px]">
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descripción</FormLabel>
+              <FormItem className="flex-1">
+                <div className="flex justify-between items-center mb-1">
+                  <FormLabel>Descripción</FormLabel>
+                  <span >
+                    {charCount}/400
+                  </span>
+                </div>
                 <FormControl>
-                  <textarea
+                  <Textarea
                     {...field}
-                    className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md"
+                    className="w-full min-h-[80px]  px-3 py-2 text-sm border border-input bg-background rounded-md"
                     rows={4}
+                    maxLength={400}
                   />
                 </FormControl>
                 <FormMessage />
@@ -292,12 +295,10 @@ const NuevaIntervencionForm = forwardRef<
             )}
           />
         </div>
-        </form>
-      </Form>
-    </div>
+      </form>
+    </Form>
   );
 });
-
 NuevaIntervencionForm.displayName = "NuevaIntervencionForm";
 
 export default NuevaIntervencionForm;
