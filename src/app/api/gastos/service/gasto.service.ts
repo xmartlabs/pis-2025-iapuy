@@ -34,9 +34,7 @@ export class GastoService {
   async update(id: string, data: Partial<Gasto>): Promise<Gasto | null> {
     const gasto = await Gasto.findByPk(id);
     if (!gasto) return null;
-    // coerce monto to number if it came as string
     const toUpdate: Partial<Gasto> = { ...data };
-    // coerce monto safely if it arrived as string
     if (toUpdate.monto && typeof toUpdate.monto === "string") {
       const parsed = Number(toUpdate.monto as unknown as string);
       if (!Number.isNaN(parsed)) {
