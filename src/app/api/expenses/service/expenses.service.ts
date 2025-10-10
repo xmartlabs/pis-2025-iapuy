@@ -32,7 +32,7 @@ export class ExpensesService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async create(request: CreateExpenseDto): Promise<Expense> {
+  async createExpense(request: CreateExpenseDto): Promise<Expense> {
     const intervention = await Intervention.findOne({
       where: { id: request.interventionId },
     });
@@ -42,7 +42,7 @@ export class ExpensesService {
       );
     }
     const user = await User.findOne({
-      where: { id: request.userId },
+      where: { ci: request.userId },
     });
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
@@ -52,7 +52,7 @@ export class ExpensesService {
       interventionId: request.interventionId,
       type: request.type,
       concept: request.concept,
-      state: request.state,
+      state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
       amount: request.amount,
     });
 

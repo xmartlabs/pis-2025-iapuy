@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ExpensesService } from "../service/expenses.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { NextRequest } from "next/server";
+import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 
 export class ExpensesController {
   constructor(
@@ -17,5 +19,11 @@ export class ExpensesController {
         { status: 500 }
       );
     }
+  }
+
+  async createExpense(request: NextRequest) {
+    const expenseData: CreateExpenseDto =
+      (await request.json()) as CreateExpenseDto;
+    return await this.expensesService.createExpense(expenseData);
   }
 }

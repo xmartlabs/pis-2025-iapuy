@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -12,7 +13,7 @@ import {
 import { User } from "./user.entity";
 import { Intervention } from "./intervention.entity";
 
-export type ExpenseState = "Pendiente de pago" | "Pagado";
+export type ExpenseState = "no pagado" | "pagado";
 
 export const EXPENSE_TYPES = [
   "Baño",
@@ -30,7 +31,10 @@ export type ExpenseType = (typeof EXPENSE_TYPES)[number];
 @Table({ tableName: "expenses" })
 export class Expense extends Model {
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
   declare id: string;
 
   @ForeignKey(() => User)
@@ -39,7 +43,7 @@ export class Expense extends Model {
 
   @ForeignKey(() => Intervention)
   @Column
-  declare intervencionId: string;
+  declare interventionId: string;
 
   @Column({
     type: DataType.ENUM(...EXPENSE_TYPES),
@@ -53,9 +57,9 @@ export class Expense extends Model {
   declare concept: string;
 
   @Column({
-    type: DataType.ENUM("Pendiente de pago", "Pagado"),
+    type: DataType.ENUM("no pagado", "pagado"),
     validate: {
-      isIn: [["Pendiente de pago", "Pagado"]],
+      isIn: [["no pagado", "pagado"]],
     },
   })
   declare state: ExpenseState;

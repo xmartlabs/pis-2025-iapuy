@@ -186,7 +186,7 @@ const registerExpenseAssociations = () => {
   }
   if (!hasAssociation(Expense, Intervention)) {
     Expense.belongsTo(Intervention, {
-      foreignKey: "intervencionId",
+      foreignKey: "interventionId",
       targetKey: "id",
       as: "Intervencion",
     });

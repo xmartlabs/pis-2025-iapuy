@@ -28,7 +28,7 @@ const sequelize = new Sequelize({
     User,
     Intervention,
     Acompania,
-    Gasto,
+    Expense,
     Perro,
     UsrPerro,
     RegistroSanidad,
