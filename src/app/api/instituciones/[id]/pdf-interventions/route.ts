@@ -12,8 +12,23 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    // interventionsPDF may return a NextResponse (with PDF) or JSON. Return it directly.
-    return await institutionsController.interventionsPDF(request, id);
+
+    const result = await institutionsController.interventionsPDF(request, id);
+
+    if (result instanceof Uint8Array || Buffer.isBuffer(result)) {
+      const body = (Buffer.isBuffer(result)
+        ? result
+        : Buffer.from(result)) as unknown as BodyInit;
+      return new NextResponse(body, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename=intervenciones_${id}.pdf`,
+        },
+      });
+    }
+
+    return NextResponse.json(result, { status: 500 });
   } catch (error) {
     return NextResponse.json(
       {

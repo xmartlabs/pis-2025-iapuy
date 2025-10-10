@@ -37,22 +37,6 @@ export class InstitucionesController {
   async interventionsPDF(req: NextRequest, id: string) {
     const { fechas } = (await req.json()) as { fechas: Date[] };
 
-    const result = await this.institutionsService.interventionsPDF(id, fechas);
-
-    if (result instanceof Uint8Array || Buffer.isBuffer(result)) {
-      const body = (Buffer.isBuffer(result)
-        ? result
-        : Buffer.from(result)) as unknown as BodyInit;
-      return new NextResponse(body, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename=intervenciones_${id}.pdf`,
-        },
-      });
-    }
-
-    // Otherwise return JSON (fallback)
-    return NextResponse.json(result);
+    return await this.institutionsService.interventionsPDF(id, fechas);
   }
 }
