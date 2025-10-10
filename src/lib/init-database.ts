@@ -118,7 +118,7 @@ const registerInstitucionIntervencionAssociations = () => {
   if (!hasAssociation(InstitucionIntervencion, Intervention)) {
     InstitucionIntervencion.belongsTo(Intervention, {
       foreignKey: "intervencionId",
-      as: "Users",
+      as: "IntervencionesDeInstitucion",
     });
   }
 };
@@ -153,6 +153,13 @@ const registerRegistroSanidadAssociations = () => {
 
 const registerInstitucionAssociations = () => {
   if (!hasAssociation(Institucion, Patologia)) {
+    Institucion.belongsToMany(Intervention, {
+      through: InstitucionIntervencion,
+      as: "Intervenciones",
+      otherKey: "intervencionId",
+      foreignKey: "institucionId",
+    });
+    
     Institucion.belongsToMany(Patologia, {
       through: InstitucionPatologias,
       foreignKey: "institucionId",
