@@ -202,122 +202,126 @@ export default function ListadoPerrosTable() {
   return (
     <div className=" max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1 mb-[32px]">
+        <div className="w-full h-[48px] flex justify-between opacity-100 mb-[32px]">
           <div className="flex items-center gap-3">
             <Dog className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
-            <h1 className="text-5xl font-extrabold tracking-tight ">Perros</h1>
+            <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">Perros</h1>
           </div>
-        </div>
-
-        <div className="flex items-start gap-4">
-          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
           <Button
-            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
+            className="w-[139px] h-10 min-w-[80px] rounded-md flex 
+                      items-center justify-center gap-1 p-2.5 bg-[#5B9B40]
+                      font-sans font-medium text-sm leading-6 text-[#EFF5EC]"
             onClick={(e) => { e.preventDefault(); setOpen(true); }}
           >
             <Plus size={16} />
             Agregar perro
           </Button>
-          <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} />
         </div>
       </div>
-      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
-        <div className="w-full overflow-x-auto">
-          <Table className="min-w-full table-fixed border-collapse">
-            <TableHeader>
-              <TableRow className="bg-gray-50 border-b border-gray-200 -mt-px">
-                <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Nombre
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Dueño
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Última vacunación
-                </TableHead>
-                <TableHead className="px-6 py-3 text-center text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Intervenciones este mes
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody className="divide-y divide-gray-100 bg-white">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i} className="px-6 py-4">
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[140px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[160px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[110px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[48px] ml-auto" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : perros.length > 0 ? (
-                perros.map((p) => (
-                  <TableRow
-                    key={p.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                    onClick={() => {
-                      go(p.id);
-                    }}
-                  >
-                    <TableCell className="px-6 py-4 align-middle">
-                      <div className="flex items-center gap-3">
-                        <span className="text-base md:text-base ml-2 font-semibold">
-                          {p.nombre}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-6 py-4 align-middle">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        {p.User?.nombre ?? p.duenioId ?? "-"}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-6 py-4 align-middle">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        {p.RegistroSanidad && p.RegistroSanidad.Vacunas && p.RegistroSanidad.Vacunas.length > 0 && p.RegistroSanidad.Vacunas[0].fecha
-                          ? formatDate(
-                            p.RegistroSanidad.Vacunas[0].fecha
-                          )
-                          : "N/A"}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-6 py-4 text-center align-middle">
-                      {Number(p.intervencionCount) || 0}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-36 px-6 py-8 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <Dog className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        {search
-                          ? `Intenta ajustar los términos de búsqueda: "${search}"`
-                          : "Intenta agregar un nuevo perro"}
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+      <div>
+        <div className="flex justify-end items-end gap-4 mb-4">
+          <CustomSearchBar searchInput={searchInput} setSearchInput={setSearchInput} />
+          <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} />
         </div>
+        <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+          
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-full table-fixed border-collapse">
+              <TableHeader>
+                <TableRow className="bg-gray-50 border-b border-gray-200 -mt-px">
+                  <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                    Nombre
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                    Dueño
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                    Última vacunación
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-center text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                    Intervenciones este mes
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-        {totalPages > 1 && (
-          <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
-        )}
+              <TableBody className="divide-y divide-gray-100 bg-white">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i} className="px-6 py-4">
+                      <TableCell className="px-6 py-4">
+                        <Skeleton className="h-4 w-[140px]" />
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Skeleton className="h-4 w-[160px]" />
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Skeleton className="h-4 w-[110px]" />
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Skeleton className="h-4 w-[48px] ml-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : perros.length > 0 ? (
+                  perros.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="hover:bg-gray-50 transition-colors duration-150"
+                      onClick={() => {
+                        go(p.id);
+                      }}
+                    >
+                      <TableCell className="px-6 py-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          <span className="text-base md:text-base ml-2 font-semibold">
+                            {p.nombre}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-6 py-4 align-middle">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          {p.User?.nombre ?? p.duenioId ?? "-"}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-6 py-4 align-middle">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          {p.RegistroSanidad && p.RegistroSanidad.Vacunas && p.RegistroSanidad.Vacunas.length > 0 && p.RegistroSanidad.Vacunas[0].fecha
+                            ? formatDate(
+                              p.RegistroSanidad.Vacunas[0].fecha
+                            )
+                            : "N/A"}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-6 py-4 text-center align-middle">
+                        {Number(p.intervencionCount) || 0}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-36 px-6 py-8 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Dog className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {search
+                            ? `Intenta ajustar los términos de búsqueda: "${search}"`
+                            : "Intenta agregar un nuevo perro"}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {totalPages > 1 && (
+            <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+          )}
+        </div>
       </div>
     </div>
   );
