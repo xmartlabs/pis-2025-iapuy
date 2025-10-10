@@ -30,10 +30,10 @@ export class Intervention extends Model {
   })
   declare timeStamp: Date;
 
-  @Column
+  @Column({ type: DataType.FLOAT })
   declare costo: number;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare status: string;
 
   @Column({
@@ -50,17 +50,17 @@ export class Intervention extends Model {
     },
   })
   declare tipo: TipoIntervention;
-  @Column
+  @Column({ type: DataType.STRING })
   declare description: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare post_evaluacion?: string;
 
   @Column({ type: DataType.ARRAY(DataType.STRING) })
   declare fotosUrls: string[];
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @CreatedAt
