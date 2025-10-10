@@ -30,4 +30,21 @@ export class GastoService {
 
     return getPaginationResultFromModel(pagination, result);
   }
+
+  async update(id: string, data: Partial<Gasto>): Promise<Gasto | null> {
+    const gasto = await Gasto.findByPk(id);
+    if (!gasto) return null;
+    // coerce monto to number if it came as string
+    const toUpdate: Partial<Gasto> = { ...data };
+    // coerce monto safely if it arrived as string
+    if (toUpdate.monto && typeof toUpdate.monto === "string") {
+      const parsed = Number(toUpdate.monto as unknown as string);
+      if (!Number.isNaN(parsed)) {
+        (toUpdate as unknown as Record<string, unknown>).monto = parsed;
+      }
+    }
+
+    const updated = await gasto.update(toUpdate as unknown as Partial<Gasto>);
+    return updated;
+  }
 }
