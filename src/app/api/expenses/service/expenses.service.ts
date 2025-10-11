@@ -33,17 +33,21 @@ export class ExpensesService {
   }
 
   async createExpense(request: CreateExpenseDto): Promise<Expense> {
-    const intervention = await Intervention.findOne({
-      where: { id: request.interventionId },
-    });
+    const [intervention, user] = await Promise.all([
+      Intervention.findOne({
+        where: { id: request.interventionId },
+        attributes: ["id"],
+      }),
+      User.findOne({
+        where: { ci: request.userId },
+        attributes: ["ci"],
+      }),
+    ]);
     if (!intervention) {
       throw new Error(
         `Intervention with id "${request.interventionId}" not found`
       );
     }
-    const user = await User.findOne({
-      where: { ci: request.userId },
-    });
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
