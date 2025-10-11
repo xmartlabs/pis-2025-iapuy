@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {CalendarRange} from "lucide-react";
+import { CalendarRange } from "lucide-react";
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -249,13 +249,13 @@ export default function ListadoIntervenciones() {
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
         <div className="w-full h-[48px] flex justify-between opacity-100 rotate-0">
           <div className="flex items-center gap-3">
-            <CalendarRange size={48}/>
+            <CalendarRange size={48} />
             <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
               Intervenciones
             </h1>
           </div>
         </div>
-        <div className="flex justify-end mb-2 p-3">
+        <div className="flex justify-end mb-2">
           <AddIntervencionButton
             onClick={() => {
               router.push("/app/admin/intervenciones/nueva");
@@ -405,8 +405,13 @@ export default function ListadoIntervenciones() {
           </Table>
         </div>
       </div>
-      {totalPages>1 &&(<CustomPagination page={page} totalPages={totalPages} setPage={setPage} />)}
-      
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }
