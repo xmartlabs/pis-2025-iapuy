@@ -405,7 +405,8 @@ export default function ListadoIntervenciones() {
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages>1 &&(<CustomPagination page={page} totalPages={totalPages} setPage={setPage} />)}
+      
     </div>
   );
 }

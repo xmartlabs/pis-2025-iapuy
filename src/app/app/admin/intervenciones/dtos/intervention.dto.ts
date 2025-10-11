@@ -4,7 +4,7 @@ export class InterventionDto {
   id: string;
   timeStamp: Date;
   cost: number;
-  tipo: "educativa" | "recreativa" | "terapeutica";
+  tipo: "Educativa" | "Recreativa" | "Terapeutica";
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
@@ -20,7 +20,7 @@ export class InterventionDto {
     id: string,
     timeStamp: Date,
     cost: number,
-    tipo: "educativa" | "recreativa" | "terapeutica",
+    tipo: "Educativa" | "Recreativa" | "Terapeutica",
     postEvaluacion: string | undefined,
     photosUrls: string[],
     userId: string,

@@ -146,7 +146,7 @@ export default function NewIntervention() {
       const backendData = {
         timeStamp: combinedDateTime.toISOString(),
         pairsQuantity: values.pairQuantity,
-        type: values.type.toLowerCase(),
+        type: values.type,
         institution: values.institution,
         description: values.description,
         cost: 0,

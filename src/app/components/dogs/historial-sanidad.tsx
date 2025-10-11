@@ -103,7 +103,7 @@ export default function HistorialSanidad() {
           className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
-          Historial de sanidad
+          Historial de Sanidad
         </h2>
         <div
           className="rounded-md border  w-full font-normal"
@@ -128,49 +128,43 @@ export default function HistorialSanidad() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
-              {registros && registros.length > 0
-                ? registros.map((registro, i) => (
-                    <TableRow key={i}>
-                      <TableCell
-                        className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
-                      >
-                        {`${new Date(registro.date).toLocaleDateString(
-                          "pt-BR",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }
-                        )}`}
-                      </TableCell>
-                      <TableCell
-                        className={`h-[56px] px-4 text-sm font-normal`}
-                      >
-                        {String(registro.activity)}
-                      </TableCell>
-                      <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            className="shrink-0 p-1 hidden"
-                            onClick={() => {
-                              setIsOpenEdit(true);
-                            }}
-                          >
-                            <Pencil />
-                          </button>
-                          <button className="shrink-0 p-1 hidden">
-                            <Trash2 />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : null}
+              {registros && registros.length > 0 ? (
+                registros.map((registro, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal">
+                      {`${new Date(registro.date).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}`}
+                    </TableCell>
+                    <TableCell className="h-[56px] px-4 text-sm font-normal">
+                      {String(registro.activity)}
+                    </TableCell>
+                    <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="shrink-0 p-1 hidden" onClick={() => { setIsOpenEdit(true); }}>
+                          <Pencil />
+                        </button>
+                        <button className="shrink-0 p-1 hidden">
+                          <Trash2 />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-6 text-gray-400">
+                    No se encuentran registros de sanidad
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages>1 &&(<CustomPagination page={page} totalPages={totalPages} setPage={setPage} />)}     
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">

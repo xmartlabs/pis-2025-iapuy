@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogTrigger,
+  DialogOverlay,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -195,6 +196,7 @@ export default function RegistroSanidad() {
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50"/>
         <DialogTrigger asChild>
           <Button
             className="
