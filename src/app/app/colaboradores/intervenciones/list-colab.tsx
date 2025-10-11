@@ -19,7 +19,6 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
 
 const statuses = ["Pendiente", "Finalizada", "Suspendida", "Realizada", "Pendiente de Asignacion"];
 
@@ -33,6 +32,7 @@ function formatMonthYear(ts: string | number | Date) {
 }
 
 import { Button } from "@/components/ui/button";
+import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);

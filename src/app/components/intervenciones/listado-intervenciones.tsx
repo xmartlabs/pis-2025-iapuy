@@ -19,7 +19,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
+import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
 
 const statuses = ["Pendiente", "Finalizada", "Suspendida"];
 
@@ -31,7 +31,7 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
-import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
+import AddIntervencionButton from "./nueva-intervencion-btn";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
