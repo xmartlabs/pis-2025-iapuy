@@ -53,7 +53,7 @@ export function AppSidebar() {
       url:
         type === UserType.Administrator
           ? "/app/admin/intervenciones/listado"
-          : "/app/colaboradores/Intervenciones/listado",
+          : "/app/colaboradores/intervenciones/listado",
       icon: CalendarRange,
       onlyAdmin: false,
     },

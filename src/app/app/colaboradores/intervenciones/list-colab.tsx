@@ -14,14 +14,13 @@ import {
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
 
-const statuses = ["Pendiente", "Finalizada", "Suspendida"];
+const statuses = ["Pendiente", "Finalizada", "Suspendida", "Realizada", "Pendiente de Asignacion"];
 
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
@@ -31,7 +30,9 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
-import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
+
+import { Button } from "@/components/ui/button";
+import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
 
 export default function ListadoIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -245,165 +246,170 @@ export default function ListadoIntervenciones() {
   };
 
   return (
-    <div className=" max-w-[92%]">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
-        <h1
-          className="text-5xl font-bold tracking-tight leading-[1.2]"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Intervenciones
-        </h1>
-        <div className="flex justify-end mb-2 p-3">
-          <AddIntervencionButton
-            onClick={() => {
-              router.push("/app/admin/intervenciones/nueva");
-            }}
-          />
-        </div>
-      </div>
-      <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
-        <CustomSearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-        />
-        <FilterDropdown
-          months={availableMonths}
-          statuses={statuses}
-          initialSelectedMonths={selectedMonths}
-          initialSelectedStatuses={selectedStatuses}
-          onSelectionChangeAction={onFilterSelectionChange}
-        />
-      </div>
-      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
-        <div className="sm:w-full overflow-x-auto">
-          <Table className="table-fixed border-collapse">
-            <TableHeader>
-              <TableRow
-                className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
-                style={{ fontFamily: "Roboto, sans-serif" }}
-              >
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Fecha y hora
-                </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Organizacion
-                </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Tipo de intervencion
-                </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Cantidad de duplas necesarias
-                </TableHead>
-                <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Estado
-                </TableHead>
-                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
-              </TableRow>
-            </TableHeader>
+  <div className=" max-w-[92%]">
+    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
+      <h1
+        className="text-5xl font-bold tracking-tight leading-[1.2]"
+        style={{ fontFamily: "Inter, sans-serif" }}
+      >
+        Intervenciones
+      </h1>
+    </div>
 
-            <TableBody className="divide-y divide-gray-100 bg-white">
-              {loading ? (
-                ["s1", "s2", "s3", "s4", "s5", "s6", "s7"].map((key) => (
-                  <TableRow key={key} className="px-6 py-4">
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[140px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[160px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[110px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[48px] ml-auto" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[48px] ml-auto" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[40px]" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : intervention && intervention.length > 0 ? (
-                intervention.map((inter) => (
-                  <TableRow
-                    key={inter.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                    onClick={() => {
-                      go(inter.id);
-                    }}
-                  >
-                    <TableCell className="p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-base md:text-base">
-                          {`${new Date(inter.timeStamp).toLocaleDateString(
-                            "pt-BR",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )} ${new Date(inter.timeStamp).toLocaleTimeString(
-                            "pt-BR",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}`}
-                        </span>
-                      </div>
-                    </TableCell>
+    <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+      <CustomSearchBar
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
+      />
+      <FilterDropdown
+        months={availableMonths}
+        statuses={statuses}
+        initialSelectedMonths={selectedMonths}
+        initialSelectedStatuses={selectedStatuses}
+        onSelectionChangeAction={onFilterSelectionChange}
+      />
+    </div>
 
-                    <TableCell className="p-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        {
-                          (
-                            inter as InterventionDto & {
-                              Institucions: Array<{ nombre: string }>;
-                            }
-                          ).Institucions?.[0]?.nombre
-                        }
-                      </div>
-                    </TableCell>
+    <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+      <div className="sm:w-full overflow-x-auto">
+        <Table className="table-fixed border-collapse">
+          <TableHeader>
+            <TableRow
+              className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
+              style={{ fontFamily: "Roboto, sans-serif" }}
+            >
+              <TableHead className="w-[200px] pl-3 text-left">Fecha y hora</TableHead>
+              <TableHead className="w-[200px] pl-3 text-left">Organizacion</TableHead>
+              <TableHead className="w-[200px] pl-3 text-left">Tipo de intervencion</TableHead>
+              <TableHead className="w-[200px] pl-3 text-left">Personas</TableHead>
+              <TableHead className="w-[150px] pl-3 text-left">Estado</TableHead>
+              <TableHead className="w-[100px] pl-3 text-left">Acción</TableHead>
+            </TableRow>
+          </TableHeader>
 
-                    <TableCell className="p-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        {inter.tipo}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="p-3">
-                      {Number(inter.pairsQuantity) || 0}
-                    </TableCell>
-                    <TableCell className="p-3">
-                      <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
-                        {inter.status || ""}
-                      </div>
-                    </TableCell>
-                    <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-36 px-6 py-8 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <p className="text-sm text-muted-foreground">
-                        {search
-                          ? `Intenta ajustar los términos de búsqueda: "${search}"`
-                          : "No se encuentran intervenciones"}
-                      </p>
-                    </div>
+          <TableBody className="divide-y divide-gray-100 bg-white">
+            {loading ? (
+              ["s1", "s2", "s3", "s4", "s5", "s6", "s7"].map((key) => (
+                <TableRow key={key} className="px-6 py-4">
+                  <TableCell className="px-6 py-4">
+                    <Skeleton className="h-4 w-[140px]" />
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <Skeleton className="h-4 w-[160px]" />
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <Skeleton className="h-4 w-[110px]" />
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <Skeleton className="h-4 w-[48px] ml-auto" />
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <Skeleton className="h-4 w-[48px] ml-auto" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-[40px]" />
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            ) : intervention && intervention.length > 0 ? (
+              intervention.map((inter) => (
+                <TableRow
+                  key={inter.id}
+                  className="hover:bg-gray-50 transition-colors duration-150"
+                  onClick={() => {
+                    go(inter.id);
+                  }}
+                >
+                  <TableCell className="p-3">
+                    <span className="text-base md:text-base">
+                      {`${new Date(inter.timeStamp).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })} ${new Date(inter.timeStamp).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="p-3">
+                    {(inter as InterventionDto & {
+                      Institucions: Array<{ nombre: string }>;
+                    }).Institucions?.[0]?.nombre}
+                  </TableCell>
+
+                  <TableCell className="p-3">{inter.tipo}</TableCell>
+
+                  <TableCell className="p-3">
+                    {
+                    //! aqui irían los nombres de las personas inscriptas
+                    }
+                  </TableCell>
+
+                  <TableCell className="p-3">
+                    <div className="bg-[#F2F4F8] px-2 py-1 rounded-[10px] w-min">
+                      {inter.status || ""}
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="p-3">
+                    {inter.status === "Realizada" ? (
+                        <div className="mt-6 flex">
+                            <Button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/app/colaboradores/intervenciones/evaluar?id=${inter.id}`);
+                            }}
+                            className="
+                                w-auto
+                                min-w-[118px] 
+                                h-[24px]
+                                rounded-[6px]
+                                bg-[#2D3648] text-white text-[12px] font-semibold
+                                px-3 py-2
+                                flex items-center justify-center gap-2
+                            "
+                            >
+                            <Plus />
+                            Agregar info
+                            </Button>
+                        </div>
+                    ) : inter.status === "Pendiente de Asignación" ? (
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            //! redireccionar
+                        }}
+                        className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
+                        >
+                        Ver detalle
+                        </button>
+                    ) : (
+                        <ArrowRight />
+                    )}
+                    </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-36 px-6 py-8 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      {search
+                        ? `Intenta ajustar los términos de búsqueda: "${search}"`
+                        : "No se encuentran intervenciones"}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
     </div>
-  );
+
+    <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+  </div>
+);
 }

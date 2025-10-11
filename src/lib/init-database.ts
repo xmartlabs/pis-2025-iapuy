@@ -10,7 +10,7 @@ import { Vacuna } from "@/app/models/vacuna.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import { Patologia } from "@/app/models/patologia.entity";
-import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 
 import { Gasto } from "@/app/models/gastos.entity";
 import type { ModelStatic, Model } from "sequelize";
@@ -118,7 +118,7 @@ const registerInstitucionIntervencionAssociations = () => {
   if (!hasAssociation(InstitucionIntervencion, Intervention)) {
     InstitucionIntervencion.belongsTo(Intervention, {
       foreignKey: "intervencionId",
-      as: "Users",
+      as: "IntervencionesDeInstitucion",
     });
   }
 };
@@ -153,6 +153,13 @@ const registerRegistroSanidadAssociations = () => {
 
 const registerInstitucionAssociations = () => {
   if (!hasAssociation(Institucion, Patologia)) {
+    Institucion.belongsToMany(Intervention, {
+      through: InstitucionIntervencion,
+      as: "Intervenciones",
+      otherKey: "intervencionId",
+      foreignKey: "institucionId",
+    });
+    
     Institucion.belongsToMany(Patologia, {
       through: InstitucionPatologias,
       foreignKey: "institucionId",

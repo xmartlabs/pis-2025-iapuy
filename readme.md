@@ -6,10 +6,11 @@
 | ------ | ------ | ---------- | ---------- | --------- | --------- |
 | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/node_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/next_js.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/typescript.png"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/postgresql.png"> | <img height="60" src="https://sequelize.org/img/logo.svg"> | <img height="60" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/docker.png"> |
 
-
-# Getting Started
-
 ## Enviroments
+
+### Production
+
+On production we will be setting up the whole infrastructure with Docker containers, using the command:
 
 ### Production
 
@@ -30,28 +31,10 @@ docker compose up postgres -d
 ```shell
 npm run dev
 ```
+### Local development
 
-### Example .env file
-
-```shell
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=[username]
-DB_PASS=[password]
-DB_NAME=[name for db]
-
-JWT_SECRET=ba1b46dcbd266376.......
-
-ENVIROMENT=dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Database Managment
-
-### Migrations
-
-For running pending migrations: 
+For local development we will setup the DB on Docker but run locally the Next application in order to take advantage of tools like hot reload to see changes on the code be reflected on real-time.
+Before pushing to the repo all changes should be testes dockerizing the whole application.
 ```shell
 npx sequelize-cli db:migrate
 ```
@@ -82,4 +65,18 @@ npx sequelize-cli db:seed --seed name-of-seed-file
 To undo a seed:
 ```shell
 npx sequelize-cli db:seed:undo
+```
+
+### Example .env file
+
+```shell
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=[username]
+DB_PASS=[password]
+DB_NAME=[name for db]
+
+JWT_SECRET=ba1b46dcbd266376.......
+
+ENVIROMENT=dev
 ```

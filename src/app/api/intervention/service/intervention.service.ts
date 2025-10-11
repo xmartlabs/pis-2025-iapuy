@@ -9,6 +9,15 @@ import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import sequelize from "@/lib/database";
+import { Paciente } from "@/app/models/pacientes.entity";
+
+import path from "path";
+import fs from "fs";
+import type { EvaluateInterventionDTO } from "../dtos/evaluate-intervention.dto";
+import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+import { Perro } from "@/app/models/perro.entity";
+import { Patologia } from "@/app/models/patologia.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -36,6 +45,10 @@ const monthMap: Record<string, number> = {
   noviembre: 10,
   dic: 11,
   diciembre: 11,
+};
+
+type InterventionWithInstitution = Intervention & {
+  institutionName: string | null;
 };
 
 export class InterventionService {
@@ -258,6 +271,157 @@ export class InterventionService {
     } catch (error) {
       await transaction.rollback();
       throw error;
+    }
+  }
+
+  async evaluate(id: string, body: EvaluateInterventionDTO) {
+    const transaction = await sequelize.transaction();
+    try {
+      const intervention = await Intervention.findByPk(id, { transaction });
+      if (!intervention) throw new Error("Intervention not found");
+
+      const picturesUrls: string[] = [];
+      if (body.pictures && body.pictures.length > 0) {
+        const uploadDir = path.join(
+          process.cwd(),
+          "public",
+          "interventionsPictures",
+          id
+        );
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        for (const file of body.pictures) {
+          if (file.size > 15 * 1024 * 1024) {
+            throw new Error(
+              `El archivo ${file.name} excede el tamaño máximo permitido el cual es de 15MB`
+            );
+          }
+          if (!file.type.startsWith("image/")) {
+            throw new Error(`El archivo ${file.name} no es una imagen válida`);
+          }
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = path.join(uploadDir, fileName);
+          // eslint-disable-next-line no-await-in-loop
+          const buffer = Buffer.from(await file.arrayBuffer());
+          fs.writeFileSync(filePath, buffer);
+          picturesUrls.push(`/interventionsPictures/${id}/${fileName}`);
+        }
+        intervention.fotosUrls = picturesUrls;
+      }
+
+      if (body.driveLink) {
+        intervention.driveLink = body.driveLink;
+      }
+      intervention.status = "Evaluada"; //! agrego este estado para que no la vuelvan a evaluar????
+      await intervention.save({ transaction });
+      await Promise.all(
+        body.patients.map((patient) =>
+          Paciente.create(
+            {
+              nombre: patient.name,
+              edad: patient.age,
+              ...(patient.pathology_id !== "" && {
+                patologia_id: patient.pathology_id,
+              }),
+              intervencion_id: id,
+              experiencia: patient.experience,
+            },
+            { transaction }
+          )
+        )
+      );
+
+      await Promise.all(
+        body.experiences.map((dogExperience) =>
+          PerroExperiencia.create(
+            {
+              perro_id: dogExperience.perro_id,
+              intervencion_id: id,
+              experiencia: dogExperience.experiencia,
+            },
+            { transaction }
+          )
+        )
+      );
+
+      await transaction.commit();
+      return intervention;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async findAllPathologiesbyId(id: string) {
+    const intervention = await Intervention.findByPk(id);
+    if (intervention?.tipo !== "terapeutica") {
+      return [];
+    }
+    const relation = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+    if (!relation) {
+      return [];
+    }
+    const institutionId = relation.institucionId;
+    const pathologiesRelation = await InstitucionPatologias.findAll({
+      where: { institucionId: institutionId },
+    });
+    const pathologies = await Promise.all(
+      pathologiesRelation.map((rel) =>
+        Patologia.findByPk(rel.patologiaId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return pathologies;
+  }
+
+  async findAllDogsbyId(id: string) {
+    const pairsUserDog = await UsrPerro.findAll({
+      where: { intervencionId: id },
+    });
+    if (!pairsUserDog) {
+      return [];
+    }
+    const dogs = await Promise.all(
+      pairsUserDog.map((pair) =>
+        Perro.findByPk(pair.perroId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return dogs;
+  }
+
+  async findIntervention(id: string) {
+    const intervention = await Intervention.findByPk(id);
+
+    if (!intervention) return null;
+    const link = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+
+    let institutionName = null;
+    if (link?.institucionId) {
+      const institution = await Institucion.findByPk(link.institucionId, {
+        attributes: ["nombre"],
+      });
+      institutionName = institution?.nombre ?? null;
+    }
+
+    return {
+      ...intervention.toJSON(),
+      institutionName,
+    } as InterventionWithInstitution;
+  }
+  
+  async delete(id: string): Promise<void> {
+    const res = await Intervention.destroy({ where: { id } });
+    if (res === 0) {
+      throw new Error(`Intervention not found with id ${id}`);
     }
   }
 }

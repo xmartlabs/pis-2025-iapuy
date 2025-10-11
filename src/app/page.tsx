@@ -72,7 +72,7 @@ export default function Home() {
       if (decoded.type === UserType.Administrator) {
         router.push("/app/admin/intervenciones/listado");
       } else {
-        router.push("/app/colaboradores/Intervenciones/listado");
+        router.push("/app/colaboradores/intervenciones/listado");
       }
     },
     [context, router]
@@ -109,7 +109,10 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        setLoginError("Este usuario no existe, por favor revisá los datos.");
+        if (res.status === 402)
+          setLoginError("Contraseña inválida, por favor revisá los datos.");
+        else
+          setLoginError("Este usuario no existe, por favor revisá los datos.");
         return;
       }
 
