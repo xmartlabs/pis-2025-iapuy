@@ -27,6 +27,11 @@ export class InterventionController {
       statuses
     );
   }
+
+  async getInterventionDetails(id: string) {
+    return await this.interventionService.getInterventionDetails(id);
+  }
+
   async getInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
