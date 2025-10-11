@@ -30,9 +30,6 @@ export class Intervention extends Model {
   })
   declare timeStamp: Date;
 
-  @Column({ type: DataType.FLOAT })
-  declare costo: number;
-
   @Column({ type: DataType.STRING })
   declare status: string;
 

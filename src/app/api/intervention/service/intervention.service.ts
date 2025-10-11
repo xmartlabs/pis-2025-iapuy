@@ -248,7 +248,6 @@ export class InterventionService {
       const intervention = await Intervention.create(
         {
           timeStamp: request.timeStamp,
-          costo: request.cost,
           tipo: request.type,
           pairsQuantity: request.pairsQuantity,
           description: request.description,
@@ -417,7 +416,7 @@ export class InterventionService {
       institutionName,
     } as InterventionWithInstitution;
   }
-  
+
   async delete(id: string): Promise<void> {
     const res = await Intervention.destroy({ where: { id } });
     if (res === 0) {
