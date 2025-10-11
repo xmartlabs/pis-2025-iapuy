@@ -9,7 +9,7 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.addColumn("intervenciones", "costo", {
       type: Sequelize.FLOAT,
-      allowNull: false,
+      allowNull: true,
     });
   },
 };
