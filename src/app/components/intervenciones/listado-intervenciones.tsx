@@ -14,14 +14,29 @@ import { CalendarRange } from "lucide-react";
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
 
-const statuses = ["Pendiente", "Finalizada", "Suspendida"];
+const statusToColor: Record<string, string> = {
+  "Pendiente de asignacion": "#FECACA",
+  "Cupo completo": "#FDE68A",
+  Realizada: "#BAE6FD",
+  Finalizada: "#DEEBD9",
+  Suspendida: "#D4D4D4",
+  Cerrada: "#F5D0FE",
+};
+
+const statuses = [
+  "Pendiente de asignacion",
+  "Cupo completo",
+  "Realizada",
+  "Finalizada",
+  "Suspendida",
+  "Cerrada",
+];
 
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
@@ -32,8 +47,13 @@ function formatMonthYear(ts: string | number | Date) {
   return `${monthCap} ${d.getFullYear()}`;
 }
 import AddIntervencionButton from "./nueva-intervencion-btn";
+import InterventionActionButton from "./intervention-actions";
 
-export default function ListadoIntervenciones() {
+export default function ListadoIntervenciones({
+  isColab,
+}: {
+  isColab: boolean;
+}) {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -258,27 +278,45 @@ export default function ListadoIntervenciones() {
             </h1>
           </div>
         </div>
-        <div className="flex justify-end mb-2">
-          <AddIntervencionButton
-            onClick={() => {
-              router.push("/app/admin/intervenciones/nueva");
-            }}
+        {!isColab ? (
+          <div className="flex justify-end mb-2">
+            <AddIntervencionButton
+              onClick={() => {
+                router.push("/app/admin/intervenciones/nueva");
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+            <CustomSearchBar
+              searchInput={searchInput}
+              setSearchInput={setSearchInput}
+            />
+            <FilterDropdown
+              months={availableMonths}
+              statuses={statuses}
+              initialSelectedMonths={selectedMonths}
+              initialSelectedStatuses={selectedStatuses}
+              onSelectionChangeAction={onFilterSelectionChange}
+            />
+          </div>
+        )}
+      </div>
+      {!isColab && (
+        <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+          <CustomSearchBar
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+          />
+          <FilterDropdown
+            months={availableMonths}
+            statuses={statuses}
+            initialSelectedMonths={selectedMonths}
+            initialSelectedStatuses={selectedStatuses}
+            onSelectionChangeAction={onFilterSelectionChange}
           />
         </div>
-      </div>
-      <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
-        <CustomSearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-        />
-        <FilterDropdown
-          months={availableMonths}
-          statuses={statuses}
-          initialSelectedMonths={selectedMonths}
-          initialSelectedStatuses={selectedStatuses}
-          onSelectionChangeAction={onFilterSelectionChange}
-        />
-      </div>
+      )}
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
           <Table className="table-fixed border-collapse">
@@ -287,22 +325,22 @@ export default function ListadoIntervenciones() {
                 className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
                 style={{ fontFamily: "Roboto, sans-serif" }}
               >
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Fecha y hora
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Organizacion
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Tipo de intervencion
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Cantidad de duplas necesarias
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Duplas necesarias
                 </TableHead>
-                <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
-                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
+                <TableHead className="w-[183px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
               </TableRow>
             </TableHeader>
 
@@ -382,13 +420,27 @@ export default function ListadoIntervenciones() {
                       {Number(inter.pairsQuantity) || 0}
                     </TableCell>
                     <TableCell className="p-3">
-                      <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
+                      <div
+                        className="pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min"
+                        style={{
+                          backgroundColor:
+                            statusToColor[inter.status || "Realizada"] ||
+                            "#F2F4F8",
+                        }}
+                      >
                         {inter.status || ""}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
-                    </TableCell>
+                    {!isColab ? (
+                      <TableCell className="w-[40px] mr-0"></TableCell>
+                    ) : (
+                      <TableCell className="w-[40px] mr-0">
+                        <InterventionActionButton
+                          status={inter.status || ""}
+                          id={inter.id}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (

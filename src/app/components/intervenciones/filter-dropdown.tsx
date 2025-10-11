@@ -103,7 +103,7 @@ export default function FilterDropdown({
         onClick={() => {
           setIsOpen((v) => !v);
         }}
-        className="bg-white text-[#5B9B40] flex items-center justify-center w-10 h-10 border-2 border-[#5B9B40] rounded-md gap-2 opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white transition duration-300 ease-in-out"
+        className="bg-white text-[#5B9B40] flex items-center justify-center w-10 h-10 border-2 border-[#BDD7B3] rounded-md gap-2 opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white transition duration-300 ease-in-out"
         aria-expanded={isOpen}
         aria-haspopup="menu"
         id="filter-button"
