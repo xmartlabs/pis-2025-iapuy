@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LoginContext } from "@/app/context/login-context";
+import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "../pagination";
 
 export default function HistorialSanidad() {
@@ -23,6 +24,7 @@ export default function HistorialSanidad() {
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
   const context = useContext(LoginContext);
+  const sanidadContext = useContext(SanidadContext);
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
@@ -92,7 +94,14 @@ export default function HistorialSanidad() {
         setRegistros([]);
         setIsOpenError(true);
       });
-  }, [id, context, page, size, fetchRegistrosSanidad]);
+  }, [
+    id,
+    context,
+    page,
+    size,
+    fetchRegistrosSanidad,
+    sanidadContext.lastUpdate,
+  ]);
 
   const columnHeader: string[] = ["Fecha", "Actividad"];
 
@@ -143,7 +152,12 @@ export default function HistorialSanidad() {
                     </TableCell>
                     <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="shrink-0 p-1 hidden" onClick={() => { setIsOpenEdit(true); }}>
+                        <button
+                          className="shrink-0 p-1 hidden"
+                          onClick={() => {
+                            setIsOpenEdit(true);
+                          }}
+                        >
                           <Pencil />
                         </button>
                         <button className="shrink-0 p-1 hidden">
@@ -155,7 +169,10 @@ export default function HistorialSanidad() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-6 text-gray-400">
+                  <TableCell
+                    colSpan={3}
+                    className="text-center py-6 text-gray-400"
+                  >
                     No se encuentran registros de sanidad
                   </TableCell>
                 </TableRow>
@@ -164,7 +181,13 @@ export default function HistorialSanidad() {
           </Table>
         </div>
       </div>
-      {totalPages>1 &&(<CustomPagination page={page} totalPages={totalPages} setPage={setPage} />)}     
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">

@@ -33,6 +33,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { LoginContext } from "@/app/context/login-context";
+import { SanidadContext } from "@/app/context/sanidad-context";
 import { useSearchParams } from "next/navigation";
 
 //! Para que el id del perro venga del URL sacar comentario
@@ -42,6 +43,7 @@ export default function RegistroSanidad() {
   const [tab, setTab] = React.useState<Tab>("vacuna");
   const [open, setOpen] = React.useState(false);
   const context = useContext(LoginContext);
+  const sanidadContext = useContext(SanidadContext);
 
   const vacunaSchema = z.object({
     fechaInVac: z
@@ -164,6 +166,7 @@ export default function RegistroSanidad() {
       if (res.ok) {
         setOpen(false);
         form.reset();
+        if (sanidadContext) sanidadContext.refresh();
         toast.success(`¡Datos de Sanidad guardados correctamente!`, {
           duration: 5000,
           icon: null,
@@ -196,7 +199,7 @@ export default function RegistroSanidad() {
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogOverlay className="fixed inset-0 z-50 bg-black/50"/>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50" />
         <DialogTrigger asChild>
           <Button
             className="
@@ -205,7 +208,6 @@ export default function RegistroSanidad() {
                       !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]
                       !rounded-md !h-10
                       !w-auto"
-                      
           >
             <HeartPulse size={16} />
             Registrar Sanidad
@@ -213,14 +215,14 @@ export default function RegistroSanidad() {
         </DialogTrigger>
 
         <DialogContent className="!w-[422px] !h-[478px] flex flex-col !pb-0">
-          <DialogHeader className="!w-full  !items-center !m-0 shrink-0" >
-              <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
-                Registrar Sanidad
-              </DialogTitle>
-            </DialogHeader>
+          <DialogHeader className="!w-full  !items-center !m-0 shrink-0">
+            <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
+              Registrar Sanidad
+            </DialogTitle>
+          </DialogHeader>
           <Form {...form}>
             <div className="flex flex-col h-full">
-              <div  className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto">
                 <form
                   id="sanidadForm"
                   onSubmit={(e) => {
