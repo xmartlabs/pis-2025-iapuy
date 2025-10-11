@@ -250,7 +250,10 @@ export default function ListadoIntervenciones() {
         <div className="w-full h-[48px] flex justify-between opacity-100 rotate-0">
           <div className="flex items-center gap-3">
             <CalendarRange size={48} />
-            <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
+            <h1
+              className="var(--accent-foreground, #1B2F13) font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle"
+              style={{ fontFamily: "Poppins" }}
+            >
               Intervenciones
             </h1>
           </div>

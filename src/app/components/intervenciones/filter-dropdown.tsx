@@ -22,7 +22,6 @@ const CheckboxRow: React.FC<{
     <Checkbox
       checked={checked}
       onCheckedChange={(val) => {
-        // Radix puede enviar true/false or "indeterminate" but here it's boolean
         onCheckedChange(Boolean(val));
       }}
       className="form-checkbox text-blue-600 rounded"
@@ -42,10 +41,10 @@ export default function FilterDropdown({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const [localSelectedMonths, setLocalSelectedMonths] = useState<string[]>(
-    initialSelectedMonths ?? [],
+    initialSelectedMonths ?? []
   );
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>(
-    initialSelectedStatuses ?? [],
+    initialSelectedStatuses ?? []
   );
 
   useEffect(() => {
@@ -56,13 +55,21 @@ export default function FilterDropdown({
 
   const setMonthChecked = (month: string, checked: boolean) => {
     setLocalSelectedMonths((prev) =>
-      checked ? (prev.includes(month) ? prev : [...prev, month]) : prev.filter((m) => m !== month),
+      checked
+        ? prev.includes(month)
+          ? prev
+          : [...prev, month]
+        : prev.filter((m) => m !== month)
     );
   };
 
   const setStatusChecked = (status: string, checked: boolean) => {
     setLocalSelectedStatuses((prev) =>
-      checked ? (prev.includes(status) ? prev : [...prev, status]) : prev.filter((s) => s !== status),
+      checked
+        ? prev.includes(status)
+          ? prev
+          : [...prev, status]
+        : prev.filter((s) => s !== status)
     );
   };
 
@@ -96,7 +103,7 @@ export default function FilterDropdown({
         onClick={() => {
           setIsOpen((v) => !v);
         }}
-        className="bg-white text-black flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out"
+        className="bg-white text-[#5B9B40] flex items-center justify-center w-10 h-10 border-2 border-[#5B9B40] rounded-md gap-2 opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white transition duration-300 ease-in-out"
         aria-expanded={isOpen}
         aria-haspopup="menu"
         id="filter-button"
@@ -119,7 +126,9 @@ export default function FilterDropdown({
                   key={month}
                   label={month}
                   checked={localSelectedMonths.includes(month)}
-                  onCheckedChange={(checked) => { setMonthChecked(month, checked); }}
+                  onCheckedChange={(checked) => {
+                    setMonthChecked(month, checked);
+                  }}
                 />
               ))}
             </div>
@@ -137,7 +146,9 @@ export default function FilterDropdown({
                   key={status}
                   label={status}
                   checked={localSelectedStatuses.includes(status)}
-                  onCheckedChange={(checked) => { setStatusChecked(status, checked); }}
+                  onCheckedChange={(checked) => {
+                    setStatusChecked(status, checked);
+                  }}
                 />
               ))}
             </div>
