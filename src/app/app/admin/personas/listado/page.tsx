@@ -201,22 +201,15 @@ export default function ListadoPersonas() {
     "Perro",
   ];
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 !overflow-x-auto">
-      <div className="mb-[32px] max-w-full mx-auto w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
-        <div className="flex items-center gap-3">
-          <PersonStanding className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
-          <h1
-            className="text-5xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            Personas
-          </h1>
-        </div>
-        <div className="flex justify-start sm:justify-end items-center">
-          <CustomSearchBar
-            searchInput={searchInput}
-            setSearchInput={setSearchInput}
-          />
+    <div className=" max-w-[95%] p-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="w-full h-[48px] flex justify-between opacity-100 mb-[32px]">
+          <div className="flex items-center gap-3">
+            <PersonStanding className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
+            <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
+              Personas
+            </h1>
+          </div>
           <Button
             asChild
             className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
@@ -227,6 +220,13 @@ export default function ListadoPersonas() {
             </span>
           </Button>
         </div>
+      </div>
+
+      <div className="flex justify-start sm:justify-end items-center">
+        <CustomSearchBar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+        />
       </div>
       <div className=" mb-8 max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
         <div className="overflow-x-auto">
