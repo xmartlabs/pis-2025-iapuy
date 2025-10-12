@@ -3,7 +3,7 @@ import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op } from "sequelize";
+import { Op, type WhereOptions } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
@@ -18,6 +18,7 @@ import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
+import { User } from "@/app/models/user.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -191,7 +192,98 @@ export class InterventionService {
     });
     return getPaginationResultFromModel(pagination, result);
   }
+  async findAllSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ): Promise<
+    Array<{
+      intervensionId: string;
+      type: string;
+      timestamp: Date;
+      institutionId: string;
+      institutionName: string;
+    }>
+  > {
+    const includeBase: Record<string, unknown>[] = [
+      {
+        model: Institucion,
+        as: "Institucions",
+        attributes: ["id", "nombre"],
+        through: { attributes: [] },
+      },
+    ];
 
+    let interventions: Intervention[] = [];
+    const whereBase: WhereOptions = {};
+    if (statuses && statuses.trim()) {
+      const statusesArr = statuses
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statusesArr.length) {
+        whereBase.status = { [Op.in]: statusesArr };
+      }
+    }
+
+    if (payload.type === "Administrador") {
+      interventions = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: includeBase,
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+    } else {
+      // Interventions in which the Collaborator 'Acompanies'
+      const viaUsers = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: User,
+            as: "Users",
+            where: { ci: payload.ci },
+            through: { attributes: [] },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // Interventions in which the Collaborator takes part
+      const viaUsrPerro = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: UsrPerro,
+            as: "UsrPerroIntervention",
+            where: { userId: payload.ci },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // merge results, remove duplicates
+      const map = new Map<string, Intervention>();
+      [...viaUsers, ...viaUsrPerro].forEach((i) => map.set(i.id, i));
+      interventions = Array.from(map.values());
+    }
+
+    const mapped = interventions.map((r) => {
+      const institution = r.Institucions?.[0];
+      return {
+        intervensionId: r.id,
+        type: r.tipo.toString(),
+        timestamp: r.timeStamp,
+        institutionId: institution?.id ?? "",
+        institutionName: institution?.nombre ?? "",
+      };
+    });
+
+    return mapped;
+  }
   async findInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
@@ -417,7 +509,7 @@ export class InterventionService {
       institutionName,
     } as InterventionWithInstitution;
   }
-  
+
   async delete(id: string): Promise<void> {
     const res = await Intervention.destroy({ where: { id } });
     if (res === 0) {

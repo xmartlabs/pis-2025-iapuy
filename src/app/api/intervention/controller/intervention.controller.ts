@@ -27,6 +27,17 @@ export class InterventionController {
       statuses
     );
   }
+
+  async getInterventionsSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ) {
+    const interventions = await this.interventionService.findAllSimple(
+      payload,
+      statuses
+    );
+    return interventions;
+  }
   async getInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
