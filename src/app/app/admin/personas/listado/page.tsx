@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { PersonStanding, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PerroSummary = { id?: string; nombre?: string };
 type UserRowBase = {
@@ -23,9 +24,8 @@ type UserRowBase = {
 };
 type UserRow = UserRowBase & { perros?: PerroSummary[] };
 
-
-
 export default function ListadoPersonas() {
+  const [loading, setLoading] = useState<boolean>(true);
   const context = useContext(LoginContext);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -47,122 +47,126 @@ export default function ListadoPersonas() {
     };
   }, [searchInput]);
 
-  async function fetchUsers(
-    pageNum: number,
-    pageSize: number,
-    signal?: AbortSignal,
-    triedRefresh = false
-  ): Promise<PaginationResultDto<UserRow> | null> {
-    const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
-    const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
+  const fetchUsers = useCallback(
+    async (
+      pageNum: number,
+      pageSize: number,
+      signal?: AbortSignal,
+      triedRefresh = false
+    ): Promise<PaginationResultDto<UserRow> | null> => {
+      const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
+      const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-  const qs = new URLSearchParams();
-  qs.set("page", String(p));
-  qs.set("size", String(s));
-  qs.set("query", String(search));
-  const url = `/api/users?${qs.toString()}`;
+      const qs = new URLSearchParams();
+      qs.set("page", String(p));
+      qs.set("size", String(s));
+      qs.set("query", String(search));
+      const url = `/api/users?${qs.toString()}`;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 10000);
-    const combinedSignal = signal ?? controller.signal;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
 
-    try {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
+      try {
+        const token = context?.tokenJwt;
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
 
-      const resp = await fetch(url.toString(), {
-        method: "GET",
-        headers: baseHeaders,
-        signal: combinedSignal,
-      });
-
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-  const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
           signal: combinedSignal,
         });
 
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            signal: combinedSignal,
+          });
 
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(url.toString(), {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${newToken}`,
-              },
-              signal: combinedSignal,
-            });
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
 
-            if (!retryResp.ok) {
-              const txt = await retryResp.text().catch(() => "");
-              throw new Error(
-                `API ${retryResp.status}: ${retryResp.statusText}${
-                  txt ? ` - ${txt}` : ""
-                }`
-              );
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              const retryResp = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${newToken}`,
+                },
+                signal: combinedSignal,
+              });
+
+              if (!retryResp.ok) {
+                const txt = await retryResp.text().catch(() => "");
+                throw new Error(
+                  `API ${retryResp.status}: ${retryResp.statusText}${
+                    txt ? ` - ${txt}` : ""
+                  }`
+                );
+              }
+
+              const ct2 = retryResp.headers.get("content-type") ?? "";
+              if (!ct2.includes("application/json"))
+                throw new Error("Expected JSON response");
+
+              const body2 = (await retryResp.json()) as unknown;
+              if (
+                !body2 ||
+                typeof body2 !== "object" ||
+                !Array.isArray((body2 as PaginationResultDto<UserRow>).data)
+              )
+                throw new Error("Malformed API response");
+
+              return body2 as PaginationResultDto<UserRow>;
             }
-
-            const ct2 = retryResp.headers.get("content-type") ?? "";
-            if (!ct2.includes("application/json"))
-              throw new Error("Expected JSON response");
-
-            const body2 = (await retryResp.json()) as unknown;
-            if (
-              !body2 ||
-              typeof body2 !== "object" ||
-              !Array.isArray((body2 as PaginationResultDto<UserRow>).data)
-            )
-              throw new Error("Malformed API response");
-
-            return body2 as PaginationResultDto<UserRow>;
           }
         }
-      }
 
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => "");
-        throw new Error(
-          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
-        );
-      }
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
+        }
 
-      const ct = resp.headers.get("content-type") ?? "";
-      if (!ct.includes("application/json"))
-        throw new Error("Expected JSON response");
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
 
-      const body = (await resp.json()) as unknown;
-      if (
-        !body ||
-        typeof body !== "object" ||
-        !Array.isArray((body as PaginationResultDto<UserRow>).data)
-      )
-        throw new Error("Malformed API response");
+        const body = (await resp.json()) as unknown;
+        if (
+          !body ||
+          typeof body !== "object" ||
+          !Array.isArray((body as PaginationResultDto<UserRow>).data)
+        )
+          throw new Error("Malformed API response");
 
-      return body as PaginationResultDto<UserRow>;
-    } catch (err) {
-      if ((err as DOMException)?.name === "AbortError") {
+        return body as PaginationResultDto<UserRow>;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
         return null;
+      } finally {
+        clearTimeout(timeout);
       }
-      return null;
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
+    },
+    [context, search]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
 
     fetchUsers(page, size, controller.signal)
       .then((res) => {
@@ -171,12 +175,15 @@ export default function ListadoPersonas() {
           setTotalPages(res.totalPages ?? 1);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+      });
 
     return () => {
       controller.abort();
     };
-  }, [page, size, search]);
+  }, [page, size, search, fetchUsers]);
 
   const columnToAttribute: Record<string, string> = {
     Nombre: "nombre",
@@ -250,7 +257,24 @@ export default function ListadoPersonas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users && users.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="px-6 py-4">
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[140px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[160px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[110px]" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Skeleton className="h-4 w-[48px] ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : users && users.length > 0 ? (
                 users.map((user, i) => (
                   <TableRow
                     key={i}

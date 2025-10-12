@@ -59,7 +59,7 @@ export default function ListadoIntervenciones({
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -102,13 +102,6 @@ export default function ListadoIntervenciones({
         qs.set("months", selectedMonths.join(","));
       if (selectedStatuses && selectedStatuses.length)
         qs.set("statuses", selectedStatuses.join(","));
-      console.log("Fetching interventions with params:", {
-        page: p,
-        size: s,
-        query: query?.trim(),
-        months: selectedMonths,
-        statuses: selectedStatuses,
-      });
       const url = `/api/intervention?${qs.toString()}`;
 
       const controller = new AbortController();
