@@ -27,7 +27,7 @@ vi.mock("@/app/models/user.entity", () => ({ User: { findOne: vi.fn() } }));
 
 vi.mock("@/app/models/perro.entity", () => ({ Perro: { findOne: vi.fn() } }));
 
-import { InscripcionService } from "./inscripcion.service";
+import { InscripcionService } from "./inscription.service";
 import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { UsrPerro } from "@/app/models/usrperro.entity";

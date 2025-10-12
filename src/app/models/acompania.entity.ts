@@ -3,7 +3,6 @@ import {
   DataType,
   Column,
   CreatedAt,
-  DataType,
   DeletedAt,
   ForeignKey,
   Model,

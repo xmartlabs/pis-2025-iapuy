@@ -2,23 +2,51 @@ import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Acompania } from "@/app/models/acompania.entity";
 import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
-import type { InscripcionDto } from "../dtos/inscripcion.dto";
+import type { InscripcionDto } from "../dtos/inscription.dto";
 
 export class InscripcionService {
   async inscribirse(
     datos: InscripcionDto
   ){
-    const user = await User.findOne({ where: { ci: datos.ci } });
-    if (!user) throw new Error("Usuario no encontrado");
-    const guia = await UsrPerro.findOne({ where: { userId: datos.ci } });
-    const acomp = await Acompania.findOne({ where: { userId: datos.ci } });
-    if(guia || acomp) throw new Error("La persona ya participa de la intervención");
+    const user = await User.findOne({
+    where: { ci: datos.ci },
+    include: [
+        {
+            model: UsrPerro,
+            as: 'usrPerro',
+            required: false,
+        },
+        {
+            model: Acompania,
+            as: 'acompania',
+            required: false,
+        },
+    ],
+    });
 
+    if (!user) throw new Error('Usuario no encontrado');
+
+    const yaGuia = Array.isArray(user.usrPerro) ? user.usrPerro.length > 0 : !!user.usrPerro;
+    const yaAcomp = Array.isArray(user.acompania) ? user.acompania.length > 0 : !!user.acompania;
+
+    if (yaGuia || yaAcomp) {
+        throw new Error('La persona ya participa de la intervención');
+    }
+    
     if(datos.tipo === "guia"){
-        const perro = await Perro.findOne({ where: { id: datos.perro } });
+        const perro = await Perro.findOne({
+            where: { id: datos.perro,  },
+            include: [
+                {
+                    model: UsrPerro,
+                    as: 'usrPerro',
+                    required: false,
+                    where: { intervencionId: datos.intervencion },
+                },
+            ],
+        });
         if (!perro) throw new Error("Perro no encontrado");
-        const partPerro = await UsrPerro.findOne({ where: { perroId: datos.perro } });
-        if(partPerro) throw new Error("El perro ya participa de la intervención");
+        if(perro.usrPerro && perro.usrPerro.length > 0) throw new Error("El perro ya participa de la intervención");
         try{
             const usrPerro = new UsrPerro({
                 userId: datos.ci,

@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, it, expect, vi } from "vitest";
-import { InscripcionController } from "./inscripcion.controller";
+import { InscripcionController } from "./inscription.controller";
 
 class MockInscripcionService {
   inscribirse = vi.fn();

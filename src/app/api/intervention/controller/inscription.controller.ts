@@ -1,6 +1,6 @@
 import type { NextRequest} from "next/server";
-import { InscripcionService } from "../service/inscripcion.service";
-import type { InscripcionDto } from "../dtos/inscripcion.dto"
+import { InscripcionService } from "../service/inscription.service";
+import type { InscripcionDto } from "../dtos/inscription.dto"
 
 export class InscripcionController {
   constructor(

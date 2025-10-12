@@ -1,5 +1,5 @@
 import { initDatabase } from "@/lib/init-database";
-import { InscripcionController } from "../controller/inscripcion.controller";
+import { InscripcionController } from "../controller/inscription.controller";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
