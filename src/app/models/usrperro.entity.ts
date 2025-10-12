@@ -1,5 +1,6 @@
 /* eslint-disable new-cap */
 import {
+  DataType,
   Column,
   CreatedAt,
   DataType,
@@ -11,7 +12,7 @@ import {
   UpdatedAt,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import { Intervencion } from "./intervencion.entity";
+import { Intervention } from "./intervention.entity";
 import { Perro } from "./perro.entity";
 import type { CreationOptional } from "sequelize";
 
@@ -29,8 +30,8 @@ export class UsrPerro extends Model {
   @Column({ type: DataType.STRING })
   declare perroId: string;
 
-  @ForeignKey(() => Intervencion)
-  @Column({ type: DataType.STRING })
+  @ForeignKey(() => Intervention)
+  @Column
   declare intervencionId: string;
 
   @CreatedAt

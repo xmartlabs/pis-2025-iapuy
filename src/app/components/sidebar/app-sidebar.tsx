@@ -53,7 +53,7 @@ export function AppSidebar() {
       url:
         type === UserType.Administrator
           ? "/app/admin/intervenciones/listado"
-          : "/app/colaboradores/Intervenciones/listado",
+          : "/app/colaboradores/intervenciones/listado",
       icon: CalendarRange,
       onlyAdmin: false,
     },
@@ -68,13 +68,15 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className=" h-[261px]">
         <div className="w-[258px] h-[133px]">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={150}
-            height={150}
-            style={{ marginLeft: "16px", marginTop: "48px" }}
-          />
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={150}
+              height={150}
+              style={{ marginLeft: "16px", marginTop: "48px" }}
+            />
+          </Link>
         </div>
       </SidebarHeader>
       <SidebarContent className="!px-4">

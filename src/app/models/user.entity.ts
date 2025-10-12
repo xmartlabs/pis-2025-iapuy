@@ -7,7 +7,7 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
-  DataType
+  DataType,
 } from "sequelize-typescript";
 
 @Table({ tableName: "users" })

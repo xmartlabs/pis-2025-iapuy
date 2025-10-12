@@ -3,12 +3,11 @@ import type { InstitutionDto } from "@/app/app/admin/intervenciones/dtos/institu
 export class InterventionDto {
   id: string;
   timeStamp: Date;
-  cost: number;
-  tipo: "educativa" | "recreativa" | "terapeutica";
+  tipo: "Educativa" | "Recreativa" | "Terapeutica";
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
-  Institucions: InstitutionDto[];
+  institutions: InstitutionDto;
   pairsQuantity: number;
   status: string;
   createdAt?: Date;
@@ -16,11 +15,11 @@ export class InterventionDto {
   deletedAt?: Date;
 
   constructor(
-    institucions: InstitutionDto[],
+    institutions: InstitutionDto,
     id: string,
     timeStamp: Date,
     cost: number,
-    tipo: "educativa" | "recreativa" | "terapeutica",
+    tipo: "Educativa" | "Recreativa" | "Terapeutica",
     postEvaluacion: string | undefined,
     photosUrls: string[],
     userId: string,
@@ -28,11 +27,10 @@ export class InterventionDto {
     status: string,
     createdAt?: Date,
     updatedAt?: Date,
-    deletedAt?: Date,
+    deletedAt?: Date
   ) {
     this.id = id;
     this.timeStamp = timeStamp;
-    this.cost = cost;
     this.tipo = tipo;
     this.postEvaluacion = postEvaluacion;
     this.photosUrls = photosUrls;
@@ -40,7 +38,7 @@ export class InterventionDto {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.deletedAt = deletedAt;
-    this.Institucions = institucions;
+    this.institutions = institutions;
     this.pairsQuantity = pairsQuantity;
     this.status = status;
   }
