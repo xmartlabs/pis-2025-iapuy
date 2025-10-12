@@ -59,6 +59,6 @@ export async function PUT(request: NextRequest) {
 
     return new NextResponse(null, { status: 204 });
   } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return NextResponse.json({ error: "Bad request" }, { status: 500 });
   }
 }
