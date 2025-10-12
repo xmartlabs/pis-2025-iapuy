@@ -1,20 +1,40 @@
 import { initDatabase } from "@/lib/init-database";
-import { GastosController } from "./controller/gastos.controller";
+import { ExpensesController } from "./controller/expenses.controller";
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
-import type { Gasto } from "@/app/models/gastos.entity";
+import { NextResponse } from "next/server";
+import type { Expense } from "@/app/models/expense.entity";
 
-const gastoController = new GastosController();
+const expensesController = new ExpensesController();
 await initDatabase();
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  try {
+    return String(error);
+  } catch {
+    return "Unknown error";
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
 
-    return gastoController.getGastos(pagination);
-  } catch {
-    return new Response(undefined, { status: 400 });
+    return expensesController.getExpenses(pagination);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const expense = await expensesController.createExpense(request);
+    return NextResponse.json(expense, { status: 201 });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -23,8 +43,9 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const raw = (await request.json()) as unknown;
     const data = (
-      raw && typeof raw === "object" ? (raw as any).gasto ?? raw : raw
-    ) as Partial<Gasto>;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
+    ) as Partial<Expense>;
     const id = searchParams.get("id");
     if (!id) {
       return NextResponse.json(
@@ -48,13 +69,13 @@ export async function PUT(request: NextRequest) {
       if (!Number.isNaN(num)) toUpdate.monto = num;
     }
 
-    const res = await gastoController.updateGasto(
+    const res = await expensesController.updateExpense(
       id,
-      toUpdate as Partial<Gasto>
+      toUpdate as Partial<Expense>
     );
 
     if (!res) {
-      return NextResponse.json({ error: "Gasto not found" }, { status: 404 });
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
 
     return new NextResponse(null, { status: 204 });

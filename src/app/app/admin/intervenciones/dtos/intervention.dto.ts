@@ -3,7 +3,6 @@ import type { InstitutionDto } from "@/app/app/admin/intervenciones/dtos/institu
 export class InterventionDto {
   id: string;
   timeStamp: Date;
-  cost: number;
   tipo: "educativa" | "recreativa" | "terapeutica";
   postEvaluacion?: string;
   photosUrls: string[];
@@ -19,7 +18,6 @@ export class InterventionDto {
     institutions: InstitutionDto,
     id: string,
     timeStamp: Date,
-    cost: number,
     tipo: "educativa" | "recreativa" | "terapeutica",
     postEvaluacion: string | undefined,
     photosUrls: string[],
@@ -32,7 +30,6 @@ export class InterventionDto {
   ) {
     this.id = id;
     this.timeStamp = timeStamp;
-    this.cost = cost;
     this.tipo = tipo;
     this.postEvaluacion = postEvaluacion;
     this.photosUrls = photosUrls;
