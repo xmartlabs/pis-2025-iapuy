@@ -38,6 +38,10 @@ export class InterventionController {
     );
     return interventions;
   }
+  async getInterventionDetails(id: string) {
+    return await this.interventionService.getInterventionDetails(id);
+  }
+
   async getInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,

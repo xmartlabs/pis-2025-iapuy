@@ -16,7 +16,7 @@ import type { CreationOptional } from "sequelize";
 import { Institucion } from "./institucion.entity";
 import { InstitucionIntervencion } from "./institucion-intervenciones.entity";
 
-export type TipoIntervention = "educativa" | "recreativa" | "terapeutica";
+export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
 @Table({ tableName: "intervenciones" })
 export class Intervention extends Model {
@@ -33,10 +33,7 @@ export class Intervention extends Model {
   })
   declare timeStamp: Date;
 
-  @Column
-  declare costo: number;
-
-  @Column
+  @Column({ type: DataType.STRING })
   declare status: string;
 
   @Column({
@@ -46,24 +43,24 @@ export class Intervention extends Model {
   declare pairsQuantity: number;
 
   @Column({
-    type: DataType.ENUM("educativa", "recreativa", "terapeutica"),
+    type: DataType.ENUM("Educativa", "Recreativa", "Terapeutica"),
     allowNull: false,
     validate: {
-      isIn: [["educativa", "recreativa", "terapeutica"]],
+      isIn: [["Educativa", "Recreativa", "Terapeutica"]],
     },
   })
   declare tipo: TipoIntervention;
-  @Column
+  @Column({ type: DataType.STRING })
   declare description: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare post_evaluacion?: string;
 
   @Column({ type: DataType.ARRAY(DataType.STRING) })
   declare fotosUrls: string[];
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @CreatedAt

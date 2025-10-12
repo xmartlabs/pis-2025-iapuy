@@ -340,7 +340,6 @@ export class InterventionService {
       const intervention = await Intervention.create(
         {
           timeStamp: request.timeStamp,
-          costo: request.cost,
           tipo: request.type,
           pairsQuantity: request.pairsQuantity,
           description: request.description,
@@ -448,7 +447,7 @@ export class InterventionService {
 
   async findAllPathologiesbyId(id: string) {
     const intervention = await Intervention.findByPk(id);
-    if (intervention?.tipo !== "terapeutica") {
+    if (intervention?.tipo !== "Terapeutica") {
       return [];
     }
     const relation = await InstitucionIntervencion.findOne({
@@ -515,5 +514,39 @@ export class InterventionService {
     if (res === 0) {
       throw new Error(`Intervention not found with id ${id}`);
     }
+  }
+
+  async getInterventionDetails(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: PerroExperiencia,
+          as: "DogExperiences",
+          attributes: ["id", "perro_id", "experiencia"],
+          where: { intervencion_id: id },
+          required: false,
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["perroId", "userId"],
+          include: [
+            { model: Perro, as: "Perro", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: User,
+          as: "Users",
+          attributes: ["ci", "nombre"],
+        },
+      ],
+    });
+    return intervention;
   }
 }
