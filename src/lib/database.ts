@@ -1,7 +1,7 @@
 import { Acompania } from "@/app/models/acompania.entity";
 import { Banio } from "@/app/models/banio.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
-import { Gasto } from "@/app/models/gastos.entity";
+import { Expense } from "@/app/models/expense.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { Institucion } from "@/app/models/institucion.entity";
 import { Intervention } from "@/app/models/intervention.entity";
@@ -28,7 +28,7 @@ const sequelize = new Sequelize({
     User,
     Intervention,
     Acompania,
-    Gasto,
+    Expense,
     Perro,
     UsrPerro,
     RegistroSanidad,
