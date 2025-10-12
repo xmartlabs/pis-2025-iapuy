@@ -19,6 +19,8 @@ import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
+import AddIntervencionButton from "./nueva-intervencion-btn";
+import InterventionActionButton from "./intervention-actions";
 
 const statusToColor: Record<string, string> = {
   "Pendiente de asignacion": "#FECACA",
@@ -46,8 +48,6 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
-import AddIntervencionButton from "./nueva-intervencion-btn";
-import InterventionActionButton from "./intervention-actions";
 
 export default function ListadoIntervenciones({
   isColab,
@@ -62,7 +62,6 @@ export default function ListadoIntervenciones({
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [reload] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
@@ -95,17 +94,22 @@ export default function ListadoIntervenciones({
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL(
-        "/api/intervention",
-        (typeof window !== "undefined" && window.location?.origin) || ""
-      );
-      url.searchParams.set("page", String(p));
-      url.searchParams.set("size", String(s));
-      if (query?.trim().length) url.searchParams.set("query", query.trim());
+      const qs = new URLSearchParams();
+      qs.set("page", String(p));
+      qs.set("size", String(s));
+      if (query?.trim().length) qs.set("query", query.trim());
       if (selectedMonths && selectedMonths.length)
-        url.searchParams.set("months", selectedMonths.join(","));
+        qs.set("months", selectedMonths.join(","));
       if (selectedStatuses && selectedStatuses.length)
-        url.searchParams.set("statuses", selectedStatuses.join(","));
+        qs.set("statuses", selectedStatuses.join(","));
+      console.log("Fetching interventions with params:", {
+        page: p,
+        size: s,
+        query: query?.trim(),
+        months: selectedMonths,
+        statuses: selectedStatuses,
+      });
+      const url = `/api/intervention?${qs.toString()}`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -221,6 +225,9 @@ export default function ListadoIntervenciones({
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
+          if (page > (res.totalPages ?? 1)) {
+            setPage(1);
+          }
           if (availableMonths.length === 0) {
             try {
               const map = new Map<string, number>();
@@ -253,7 +260,7 @@ export default function ListadoIntervenciones({
     return () => {
       controller.abort();
     };
-  }, [page, size, search, reload, fetchIntervenciones, availableMonths.length]);
+  }, [page, size, search, fetchIntervenciones, availableMonths.length]);
 
   const onFilterSelectionChange = (
     monthsSelected: string[],
@@ -261,7 +268,6 @@ export default function ListadoIntervenciones({
   ) => {
     setSelectedMonths(monthsSelected);
     setSelectedStatuses(statusesSelected);
-    setPage(1);
   };
 
   return (
