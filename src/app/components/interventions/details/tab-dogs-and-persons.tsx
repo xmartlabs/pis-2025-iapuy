@@ -1,5 +1,5 @@
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import Dupla from "./dupla";
+import Dupla from "@/app/components/interventions/details/dupla";
 
 type DetallesIntervencionDto = {
   id: string;

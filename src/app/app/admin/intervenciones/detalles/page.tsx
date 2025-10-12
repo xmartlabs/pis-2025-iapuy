@@ -6,10 +6,10 @@ import { Pencil } from "lucide-react";
 import { LoginContext } from "@/app/context/login-context";
 import { useSearchParams } from "next/navigation";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
-import TabSelector from "./tab-selector";
-import DeleteIntervention from "./delete-intervention";
-import DogsNPersons from "./tab-dogs-and-persons";
-import InterventionDay from "./tab-intervention-day";
+import TabSelector from "@/app/components/interventions/details/tab-selector";
+import DeleteIntervention from "@/app/components/interventions/details/delete-intervention";
+import DogsNPersons from "@/app/components/interventions/details/tab-dogs-and-persons";
+import InterventionDay from "@/app/components/interventions/details/tab-intervention-day";
 
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
@@ -60,6 +60,8 @@ const interventionDefault = {
   ] as dupla[],
   companions: ["Carla Sosa", "Daniela Nuñez"],
 };
+
+const tabsTitles = ["Personas y perros", "Día de la intervención"];
 
 export default function IntervencionPage() {
   const [activeTab, setActiveTab] = useState("Personas y perros");
@@ -134,7 +136,7 @@ export default function IntervencionPage() {
       />
 
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-green-900">
+        <h1 className="text-3xl font-bold text-[#1B2F13]">
           {`${infoIntervention.org} ${infoIntervention.date}`}
         </h1>
         <Button className="bg-[#5B9B40] hover:bg-green-800 text-white">
@@ -145,25 +147,30 @@ export default function IntervencionPage() {
 
       <div className="py-3 flex flex-col gap-4 ">
         <Dato
-          titulo="Tipo de intervención"
+          titulo="TIPO DE INTERVENCIÓN"
           valor={infoIntervention.tipo ? infoIntervention.tipo : ""}
         />
         <Dato
-          titulo="Descripción"
+          titulo="DESCRIPCIÓN"
           valor={
             infoIntervention.descripcion ? infoIntervention.descripcion : ""
           }
         />
       </div>
 
-      <TabSelector
-        Titles={["Personas y perros", "Día de la intervención"]}
-        onTabChange={handleTabChange}
+      <TabSelector Titles={tabsTitles} onTabChange={handleTabChange} />
+
+      <DogsNPersons
+        infoIntervention={infoIntervention}
+        shown={activeTab === tabsTitles[0]}
       />
 
-      <DogsNPersons infoIntervention={infoIntervention} shown={activeTab === "Personas y perros"} />
-
-      <InterventionDay shown={activeTab === "Día de la intervención"} />
+      <InterventionDay
+        shown={activeTab === tabsTitles[1]}
+        patients={[]}
+        dogs={[]}
+        link={""}
+      />
 
       <DeleteIntervention />
     </div>
