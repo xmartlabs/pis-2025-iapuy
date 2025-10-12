@@ -49,8 +49,7 @@ module.exports = {
       {
         id: int3,
         timeStamp: new Date("2025-02-20T11:00:00"),
-        costo: 1500,
-        tipo: "Terapeutica",
+        tipo: "terapeutica",
         post_evaluacion: "Algo123",
         //fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),
