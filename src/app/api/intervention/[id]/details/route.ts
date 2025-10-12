@@ -15,9 +15,11 @@ export async function GET(
     const data = await interventionController.getInterventionDetails(id);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching intervention details:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }

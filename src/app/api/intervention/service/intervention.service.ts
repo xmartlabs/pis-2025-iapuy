@@ -3,7 +3,7 @@ import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
@@ -446,7 +446,9 @@ export class InterventionService {
           model: UsrPerro,
           as: "UsrPerroIntervention",
           attributes: ["perroId", "userId"],
-          include: [{ model: Perro, as: "Perro", attributes: ["nombre"] }],
+          include: [
+            { model: Perro, as: "Perro", attributes: ["id", "nombre"] },
+          ],
         },
         {
           model: User,
