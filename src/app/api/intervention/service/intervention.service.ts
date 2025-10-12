@@ -18,6 +18,7 @@ import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
+import { User } from "@/app/models/user.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -422,5 +423,39 @@ export class InterventionService {
     if (res === 0) {
       throw new Error(`Intervention not found with id ${id}`);
     }
+  }
+
+  async getInterventionDetails(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: PerroExperiencia,
+          as: "DogExperiences",
+          attributes: ["id", "perro_id", "experiencia"],
+          where: { intervencion_id: id },
+          required: false,
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["perroId", "userId"],
+          include: [
+            { model: Perro, as: "Perro", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: User,
+          as: "Users",
+          attributes: ["ci", "nombre"],
+        },
+      ],
+    });
+    return intervention;
   }
 }
