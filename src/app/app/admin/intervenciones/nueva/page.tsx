@@ -149,7 +149,6 @@ export default function NewIntervention() {
         type: values.type.toLowerCase(),
         institution: values.institution,
         description: values.description,
-        cost: 0,
         fotosUrls: [],
         state: "Pendiente",
       };
