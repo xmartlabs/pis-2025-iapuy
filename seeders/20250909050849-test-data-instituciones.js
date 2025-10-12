@@ -37,7 +37,7 @@ module.exports = {
         institutionId: inst2,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ]);
 
     // Create patologias

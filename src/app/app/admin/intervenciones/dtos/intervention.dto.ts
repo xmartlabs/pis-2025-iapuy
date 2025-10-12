@@ -3,7 +3,7 @@ import type { InstitutionDto } from "@/app/app/admin/intervenciones/dtos/institu
 export class InterventionDto {
   id: string;
   timeStamp: Date;
-  tipo: "educativa" | "recreativa" | "terapeutica";
+  tipo: "Educativa" | "Recreativa" | "Terapeutica";
   postEvaluacion?: string;
   photosUrls: string[];
   userId: string;
@@ -18,7 +18,8 @@ export class InterventionDto {
     institutions: InstitutionDto,
     id: string,
     timeStamp: Date,
-    tipo: "educativa" | "recreativa" | "terapeutica",
+    cost: number,
+    tipo: "Educativa" | "Recreativa" | "Terapeutica",
     postEvaluacion: string | undefined,
     photosUrls: string[],
     userId: string,

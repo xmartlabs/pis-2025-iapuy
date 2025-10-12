@@ -48,7 +48,9 @@ module.exports = {
       {
         id: "a1111111-1111-1111-1111-111111111111",
         timeStamp: new Date("2025-09-01T10:00:00Z"),
-        tipo: "educativa",
+        costo: "1500.50",
+        tipo: "Educativa",
+        status: "Cerrada",
         post_evaluacion: "Evaluación positiva, asistentes comprometidos",
         fotosUrls: [
           "https://example.com/photo1.jpg",
@@ -62,7 +64,9 @@ module.exports = {
       {
         id: "b2222222-2222-2222-2222-222222222222",
         timeStamp: new Date("2025-09-07T15:30:00Z"),
-        tipo: "recreativa",
+        costo: "200.00",
+        tipo: "Recreativa",
+        status: "Suspendida",
         post_evaluacion: null,
         fotosUrls: Sequelize.literal("ARRAY[]::text[]"),
         userId: "22222222",
@@ -117,7 +121,7 @@ module.exports = {
           ],
         },
       },
-      {},
+      {}
     );
 
     await queryInterface.bulkDelete(
@@ -130,13 +134,13 @@ module.exports = {
           ],
         },
       },
-      {},
+      {}
     );
 
     await queryInterface.bulkDelete(
       "users",
       { ci: { [Op.in]: ["11111111", "22222222", "33333333"] } },
-      {},
+      {}
     );
   },
 };

@@ -356,7 +356,7 @@ export class InterventionService {
 
   async findAllPathologiesbyId(id: string) {
     const intervention = await Intervention.findByPk(id);
-    if (intervention?.tipo !== "terapeutica") {
+    if (intervention?.tipo !== "Terapeutica") {
       return [];
     }
     const relation = await InstitucionIntervencion.findOne({

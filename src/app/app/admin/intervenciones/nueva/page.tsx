@@ -146,7 +146,7 @@ export default function NewIntervention() {
       const backendData = {
         timeStamp: combinedDateTime.toISOString(),
         pairsQuantity: values.pairQuantity,
-        type: values.type.toLowerCase(),
+        type: values.type,
         institution: values.institution,
         description: values.description,
         fotosUrls: [],
@@ -221,11 +221,8 @@ export default function NewIntervention() {
         );
       }
       setInstitution(null);
-      toast("Intervención creada con éxito", {
-        description: "La intervención ha sido creada exitosamente.",
-      });
       setRetrying(false);
-      router.push("/app/admin/intervenciones/listado");
+      router.push("/app/admin/intervenciones/listado?success=1");
     } catch {
       toast("Error creando intervención");
     }
@@ -370,19 +367,20 @@ export default function NewIntervention() {
         onSubmit={onSubmit}
       />
       <div className="flex justify-start items-center mt-2">
-          <Button
-            type="button"
-            onClick={() => {
-              formRef.current?.submitForm().catch(() => {});
-            }}
-            className="max-w-[148px] max-h-[40px] min-w-[80px] px-3 py-2
+        <Button
+          type="button"
+          onClick={() => {
+            formRef.current?.submitForm().catch(() => {});
+          }}
+          className="max-w-[148px] max-h-[40px] min-w-[80px] px-3 py-2
                       flex items-center justify-center gap-1
                       rounded-md
                       bg-[#5B9B40] text-white
-                      opacity-50">
-            Crear Intervención
-          </Button>
-        </div>
+                      opacity-50"
+        >
+          Crear Intervención
+        </Button>
+      </div>
       <Toaster richColors position="bottom-right" />
     </div>
   );
