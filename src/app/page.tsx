@@ -109,11 +109,7 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        if (res.status === 402)
-          setLoginError("Contraseña inválida, por favor revisá los datos.");
-        else
-          setLoginError("Este usuario no existe, por favor revisá los datos.");
-        return;
+        setLoginError("Este usuario no existe, por favor revisá los datos.");
       }
 
       const response = (await res.json()) as LoginResponse;

@@ -19,7 +19,7 @@ import {
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import {UserType} from "@/app/page"
 type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
@@ -31,6 +31,7 @@ export default function DetallePersona() {
   const [error, setError] = useState<string | null>(null);
 
   const userCi = context?.userCI;
+  const userType:UserType |null=context?.userType ??null;
 
   const fetchUser = useCallback(
     async (
@@ -179,22 +180,24 @@ export default function DetallePersona() {
             <Label htmlFor="text">Nombre</Label>
             <Input type="text" id="nombre" defaultValue={user?.nombre || ""} />
           </div>
-          <div className=" items-center gap-3">
-            <Label htmlFor="text">Rol</Label>
-            <RadioGroup
-              className="flex pt-5"
-              value={user?.esAdmin ? "administrador" : "colaborador"}
-            >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="administrador" id="r1" />
-                <Label htmlFor="r1">Administrador</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="colaborador" id="r2" />
-                <Label htmlFor="r2">Colaborador</Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {userType===UserType.Administrator &&(
+            <div className=" items-center gap-3">
+              <Label htmlFor="text">Rol</Label>
+              <RadioGroup
+                className="flex pt-5"
+                value={user?.esAdmin ? "administrador" : "colaborador"}
+              >
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="administrador" id="r1" />
+                  <Label htmlFor="r1">Administrador</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="colaborador" id="r2" />
+                  <Label htmlFor="r2">Colaborador</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}  
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid  items-center gap-3">
@@ -236,9 +239,9 @@ export default function DetallePersona() {
                   <SelectLabel>Perros</SelectLabel>
                   {user && Array.isArray(user.perros) && user.perros.length > 0
                     ? user.perros.map((p, index) =>
-                        p?.nombre ? (
-                          <SelectItem key={index} value={p.nombre}>
-                            {p.nombre}
+                        p?(
+                          <SelectItem key={index} value={p}>
+                            {p}
                           </SelectItem>
                         ) : null
                       )

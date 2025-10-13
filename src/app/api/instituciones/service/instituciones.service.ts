@@ -179,7 +179,13 @@ export class InstitucionesService {
           width: wmWidth,
           height: wmHeight,
           opacity: 0.12,
-        } as any);
+        } as {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+          opacity: number;
+        });
 
         // brand text to the right of the logo (top-left area)
         currentPage.drawText("IAPUy", {
@@ -211,25 +217,16 @@ export class InstitucionesService {
     }
 
     // Table headers - giving more space to "Descripción"
-    const headers = [
-      "Fecha",
-      "Tipo",
-      "Status",
-      "Costo",
-      "Pares",
-      "Descripción",
-    ];
+    const headers = ["Fecha", "Tipo", "Status", "Pares", "Descripción"];
     const startY = height - margin - fontSizeTitle - 25;
     let y = startY;
 
-    // Adjusted column widths - giving more space to "Descripción" column
     const colWidths = [
-      70, // Fecha - reduced
-      60, // Tipo - reduced
-      60, // Status - reduced
-      50, // Costo - reduced
-      40, // Pares - reduced
-      width - margin * 2 - (70 + 60 + 60 + 50 + 40), // Descripción - gets remaining space
+      70, // Fecha
+      60, // Tipo
+      60, // Status
+      40, // Pares
+      width - margin * 2 - (70 + 60 + 60 + 40), // Descripción - remaining space
     ];
 
     const xPositions: number[] = [];
@@ -245,7 +242,7 @@ export class InstitucionesService {
         page.drawText(headers[i], {
           x: xPositions[i] + 2,
           y,
-          size: i === 5 ? fontSizeHeader : 10, // "Descripción" has font size 12, others 10
+          size: i === headers.length - 1 ? fontSizeHeader : 10, // "Descripción" has font size 12, others 10
           font: timesRomanFont,
           color: rgb(0.2, 0.2, 0.2),
         });
@@ -292,26 +289,23 @@ export class InstitucionesService {
         : "";
       const tipo = (interv.tipo as unknown as string) ?? "";
       const status = (interv.status as unknown as string) ?? "";
-      const costo =
-        interv.costo !== null && interv.costo !== undefined
-          ? String(interv.costo)
-          : "";
       const pares =
         interv.pairsQuantity !== null && interv.pairsQuantity !== undefined
           ? String(interv.pairsQuantity)
           : "";
       const desc = interv.description ? String(interv.description) : "";
 
-      // Wrap text for ALL columns to prevent overflow
+      // Wrap text for ALL non-description columns to prevent overflow
       const wrappedValues: string[][] = [];
+      const nonDescValues = [dateStr, tipo, status, pares];
       for (let i = 0; i < colWidths.length - 1; i++) {
-        const value = [dateStr, tipo, status, costo, pares][i];
+        const value = nonDescValues[i] ?? "";
         const maxWidth = colWidths[i] - 4;
         wrappedValues.push(wrapText(value, timesRomanFont, fontSize, maxWidth));
       }
 
       // Wrap description separately with more space
-      const descMaxWidth = colWidths[5] - 4;
+      const descMaxWidth = colWidths[colWidths.length - 1] - 4;
       const descLines = wrapText(desc, timesRomanFont, fontSize, descMaxWidth);
       wrappedValues.push(descLines);
 
@@ -344,7 +338,7 @@ export class InstitucionesService {
       y -= neededHeight;
     }
 
-    const pdfBytes = (await pdfDoc.save()) as Uint8Array;
+    const pdfBytes = await pdfDoc.save();
     return pdfBytes;
   }
 }

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogTrigger,
+  DialogOverlay,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -32,6 +33,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { LoginContext } from "@/app/context/login-context";
+import { SanidadContext } from "@/app/context/sanidad-context";
 import { useSearchParams } from "next/navigation";
 
 //! Para que el id del perro venga del URL sacar comentario
@@ -41,6 +43,7 @@ export default function RegistroSanidad() {
   const [tab, setTab] = React.useState<Tab>("vacuna");
   const [open, setOpen] = React.useState(false);
   const context = useContext(LoginContext);
+  const sanidadContext = useContext(SanidadContext);
 
   const vacunaSchema = z.object({
     fechaInVac: z
@@ -163,6 +166,7 @@ export default function RegistroSanidad() {
       if (res.ok) {
         setOpen(false);
         form.reset();
+        if (sanidadContext) sanidadContext.refresh();
         toast.success(`¡Datos de Sanidad guardados correctamente!`, {
           duration: 5000,
           icon: null,
@@ -195,279 +199,285 @@ export default function RegistroSanidad() {
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50" />
         <DialogTrigger asChild>
           <Button
             className="
-                            !text-sm !leading-6 !tracking-normal 
-                            !flex !items-center !justify-center !gap-1
-                            !px-3 !md:px-4 !lg:px-6 !py-2
-                            !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]
-                            !rounded-md !h-10
-                            !w-auto"
+                      !text-sm !leading-6 !tracking-normal 
+                      !flex !items-center !justify-center !gap-1
+                      !bg-[#5B9B40] !text-white !hover:bg-[#4b8034]
+                      !rounded-md !h-10
+                      !w-auto"
           >
             <HeartPulse size={16} />
             Registrar Sanidad
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="max-w-[422px]">
+        <DialogContent className="!w-[422px] !h-[478px] flex flex-col !pb-0">
+          <DialogHeader className="!w-full  !items-center !m-0 shrink-0">
+            <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
+              Registrar Sanidad
+            </DialogTitle>
+          </DialogHeader>
           <Form {...form}>
-            <DialogHeader className="!w-full !p-6 !items-center !m-0">
-              <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">
-                Registrar Sanidad
-              </DialogTitle>
-            </DialogHeader>
-            <div className="!px-6 !pt-0 !pb-4">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  form
-                    .handleSubmit(submitHandler)(e)
-                    .catch((err) => {
-                      reportError(err);
-                    });
-                }}
-              >
-                <Tabs
-                  defaultValue="regSanidad"
-                  className="!rounded-md !w-full"
-                  value={tab}
-                  onValueChange={(newTab) => {
-                    setTab(newTab as Tab);
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto">
+                <form
+                  id="sanidadForm"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    form
+                      .handleSubmit(submitHandler)(e)
+                      .catch((err) => {
+                        reportError(err);
+                      });
                   }}
                 >
-                  <TabsList className="!w-full bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between">
-                    <TabsTrigger
-                      value="vacuna"
-                      className="flex-1 text-center !px-4 !py-2
-                                            data-[state=active]:bg-white data-[state=active]:text-black 
-                                            data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md"
-                    >
-                      Vacuna
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="banio"
-                      className="flex-1 text-center !px-4 !py-2
-                                            data-[state=active]:bg-white data-[state=active]:text-black 
-                                            data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md"
-                    >
-                      Baño
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="desparasitacion"
-                      className="flex-1 text-center !px-4 !py-2
-                                            data-[state=active]:bg-white data-[state=active]:text-black 
-                                            data-[state=inactive]:text-[#5B9B40]
-                                            !rounded-md"
-                    >
-                      Desparasitación
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="vacuna" className="!w-[422px]">
-                    <Card className="!border-none !shadow-none">
-                      <CardContent className="grid gap-6 !pb-6 !pt-4">
-                        <FormField
-                          control={form.control}
-                          name="fechaInVac"
-                          render={({ field }) => (
-                            <FormItem className="grid gap-2">
-                              <FormLabel>Fecha*</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="marcaInVac"
-                          render={({ field }) => (
-                            <FormItem className="grid gap-2">
-                              <FormLabel>Marca</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="carnetInVac"
-                          render={({ field }) => {
-                            const filename =
-                              (field.value as File | null)?.name ??
-                              "Nada cargado todavía";
-
-                            return (
-                              <FormItem>
-                                <FormLabel>Carnet de vacuna*</FormLabel>
+                  <Tabs
+                    defaultValue="regSanidad"
+                    className="!rounded-md !w-full"
+                    value={tab}
+                    onValueChange={(newTab) => {
+                      setTab(newTab as Tab);
+                    }}
+                  >
+                    <TabsList className="!w-[266px] bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between !gap-0">
+                      <TabsTrigger
+                        value="vacuna"
+                        className="flex-1 !gap-0 !w-[72px] !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
+                                    data-[state=active]:bg-white data-[state=active]:text-black 
+                                    data-[state=inactive]:text-[#5B9B40]
+                                    !rounded-md
+                                    font-medium text-sm leading-5 tracking-normal text-center"
+                      >
+                        Vacuna
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="banio"
+                        className="flex-1 !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
+                                  data-[state=active]:bg-white data-[state=active]:text-black 
+                                  data-[state=inactive]:text-[#5B9B40]
+                                  !rounded-md
+                                  font-medium text-sm leading-5 tracking-normal text-center"
+                      >
+                        Baño
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="desparasitacion"
+                        className="flex-1 !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
+                                  data-[state=active]:bg-white data-[state=active]:text-black 
+                                  data-[state=inactive]:text-[#5B9B40]
+                                  !rounded-md
+                                  font-medium text-sm leading-5 tracking-normal text-center"
+                      >
+                        Desparasitación
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="vacuna">
+                      <Card className="!border-none !shadow-none">
+                        <CardContent className="grid gap-6 !pb-6 !px-0">
+                          <FormField
+                            control={form.control}
+                            name="fechaInVac"
+                            render={({ field }) => (
+                              <FormItem className="grid gap-2">
+                                <FormLabel>Fecha*</FormLabel>
                                 <FormControl>
-                                  <div className="flex items-center w-full border border-gray-200 rounded-md overflow-hidden">
-                                    <label
-                                      className="flex-shrink-0 px-4 py-2 select-none cursor-pointer text-sm font-medium"
-                                      aria-hidden={false}
-                                    >
-                                      Adjuntar archivo
-                                      <input
-                                        type="file"
-                                        className="sr-only"
-                                        onChange={(e) => {
-                                          const file =
-                                            e.target.files?.[0] ?? null;
-                                          field.onChange(file);
-                                        }}
-                                      />
-                                    </label>
-
-                                    <div
-                                      className="flex-1 px-3 py-2 text-sm text-gray-500 truncate"
-                                      aria-live="polite"
-                                    >
-                                      {filename}
-                                    </div>
-                                  </div>
+                                  <Input type="date" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
-                            );
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="banio">
-                    <Card className="!border-none !shadow-none">
-                      <CardContent className="grid !pb-6 !pt-4">
-                        <FormField
-                          control={form.control}
-                          name="fechaInBanio"
-                          render={({ field }) => (
-                            <FormItem className="grid gap-2">
-                              <FormLabel>Fecha*</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="desparasitacion">
-                    <Card className="!border-none !shadow-none !pb-6 !pt-4">
-                      <CardContent className="grid !gap-6">
-                        <FormField
-                          control={form.control}
-                          name="desparasitacionTipo"
-                          render={({ field }) => (
-                            <FormItem className="flex gap-4">
-                              <RadioGroup
-                                value={field.value}
-                                onValueChange={field.onChange}
-                                defaultValue="interna"
-                                className="flex gap-4"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <RadioGroupItem
-                                    value="Interna"
-                                    id="r1"
-                                    className="
-                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
-                                                            data-[state=checked]:!border-[#5B9B40]
-                                                            data-[state=checked]:!text-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                                                        "
-                                  />
-                                  <Label htmlFor="r1">Interna</Label>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <RadioGroupItem
-                                    value="Externa"
-                                    id="r2"
-                                    className="
-                                                            !bg-white !border-2 !border-[#5B9B40] !rounded-full
-                                                            data-[state=checked]:!border-[#5B9B40]
-                                                            data-[state=checked]:!text-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                                                        "
-                                  />
-                                  <Label htmlFor="r2">Externa</Label>
-                                </div>
-                              </RadioGroup>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="marcaInVac"
+                            render={({ field }) => (
+                              <FormItem className="grid gap-2">
+                                <FormLabel>Marca</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="carnetInVac"
+                            render={({ field }) => {
+                              const filename =
+                                (field.value as File | null)?.name ??
+                                "Nada cargado todavía";
 
-                        <FormField
-                          control={form.control}
-                          name="fechaInDes"
-                          render={({ field }) => (
-                            <FormItem className="grid gap-2">
-                              <FormLabel>Fecha*</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                              return (
+                                <FormItem>
+                                  <FormLabel>Carnet de vacuna*</FormLabel>
+                                  <FormControl>
+                                    <div className="flex items-center w-full border border-gray-200 rounded-md overflow-hidden">
+                                      <label
+                                        className="flex-shrink-0 px-4 py-2 select-none cursor-pointer text-sm font-medium"
+                                        aria-hidden={false}
+                                      >
+                                        Adjuntar archivo
+                                        <input
+                                          type="file"
+                                          className="sr-only"
+                                          onChange={(e) => {
+                                            const file =
+                                              e.target.files?.[0] ?? null;
+                                            field.onChange(file);
+                                          }}
+                                        />
+                                      </label>
 
-                        <FormField
-                          control={form.control}
-                          name="marcaInDes"
-                          render={({ field }) => (
-                            <FormItem className="grid gap-2">
-                              <FormLabel>Marca</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
+                                      <div
+                                        className="flex-1 px-3 py-2 text-sm text-gray-500 truncate"
+                                        aria-live="polite"
+                                      >
+                                        {filename}
+                                      </div>
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="banio">
+                      <Card className="!border-none !shadow-none">
+                        <CardContent className="grid gap-6 !pb-6 !px-0">
+                          <FormField
+                            control={form.control}
+                            name="fechaInBanio"
+                            render={({ field }) => (
+                              <FormItem className="grid gap-2">
+                                <FormLabel>Fecha*</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="desparasitacion">
+                      <Card className="!border-none !shadow-none !pb-6 !pt-4">
+                        <CardContent className="grid gap-6 !pb-6 !px-0">
+                          <FormField
+                            control={form.control}
+                            name="desparasitacionTipo"
+                            render={({ field }) => (
+                              <FormItem className="flex gap-4">
+                                <RadioGroup
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  defaultValue="interna"
+                                  className="flex gap-4"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <RadioGroupItem
+                                      value="Interna"
+                                      id="r1"
+                                      className="
+                                                              !bg-white !border-2 !border-[#5B9B40] !rounded-full
+                                                              data-[state=checked]:!border-[#5B9B40]
+                                                              data-[state=checked]:!text-[#5B9B40]
+                                                              data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                                              data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                                                          "
+                                    />
+                                    <Label htmlFor="r1">Interna</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <RadioGroupItem
+                                      value="Externa"
+                                      id="r2"
+                                      className="
+                                                              !bg-white !border-2 !border-[#5B9B40] !rounded-full
+                                                              data-[state=checked]:!border-[#5B9B40]
+                                                              data-[state=checked]:!text-[#5B9B40]
+                                                              data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                                              data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                                                          "
+                                    />
+                                    <Label htmlFor="r2">Externa</Label>
+                                  </div>
+                                </RadioGroup>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                <DialogFooter className="!w-full !flex flex-row !items-center !justify-between gap-3 mt-2 !pb-6">
-                  <DialogClose asChild>
-                    <Button
-                      onClick={() => {
-                        form.reset();
-                      }}
-                      variant="outline"
-                      className="
-                                                !w-[96px] h-10 text-sm px-3 rounded-md
-                                                border-[#5B9B40] text-[#5B9B40] bg-white
-                                                hover:bg-[#edd4d1] hover:text-[#bd2717] 
-                                                hover:border-[#bd2717] transition-colors
-                                            "
-                    >
-                      Cancelar
-                    </Button>
-                  </DialogClose>
+                          <FormField
+                            control={form.control}
+                            name="fechaInDes"
+                            render={({ field }) => (
+                              <FormItem className="grid gap-2">
+                                <FormLabel>Fecha*</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="marcaInDes"
+                            render={({ field }) => (
+                              <FormItem className="grid gap-2">
+                                <FormLabel>Marca</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                </form>
+              </div>
+              <DialogFooter className="!w-full !flex flex-row !items-center !justify-between gap-3 mt-2 !pb-6">
+                <DialogClose asChild>
                   <Button
-                    type="submit"
+                    onClick={() => {
+                      form.reset();
+                    }}
+                    variant="outline"
                     className="
-                                            !w-[96px] h-10 text-sm px-3 rounded-md
-                                            !font-sans !font-medium text-sm !leading-6 
-                                            !tracking-normal !px-3 !rounded-md !bg-[#5B9B40] 
-                                            !text-white hover:bg-[#4b8034] transition-colors
-                                        "
+                              !w-[96px] h-10 text-sm px-3 rounded-md
+                              border-[#5B9B40] text-[#5B9B40] bg-white
+                              hover:bg-[#edd4d1] hover:text-[#bd2717] 
+                              hover:border-[#bd2717] transition-colors
+                              "
                   >
-                    Confirmar
+                    Cancelar
                   </Button>
-                </DialogFooter>
-              </form>
+                </DialogClose>
+                <Button
+                  form="sanidadForm"
+                  type="submit"
+                  className="
+                            !w-[96px] h-10 text-sm px-3 rounded-md
+                            !font-sans !font-medium text-sm !leading-6 
+                            !tracking-normal !px-3 !rounded-md !bg-[#5B9B40] 
+                            !text-white hover:bg-[#4b8034] transition-colors
+                            "
+                >
+                  Confirmar
+                </Button>
+              </DialogFooter>
             </div>
           </Form>
         </DialogContent>

@@ -37,7 +37,7 @@ module.exports = {
         institutionId: inst2,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ]);
 
     // Create patologias
@@ -75,7 +75,6 @@ module.exports = {
       {
         id: int1,
         timeStamp: new Date("2025-01-10T14:30:00"),
-        costo: 1200,
         tipo: "educativa",
         post_evaluacion: "Mejor concentración en clase",
         fotosUrls: ["foto1.jpg", "foto2.jpg"], // Postgres array
@@ -85,7 +84,6 @@ module.exports = {
       {
         id: int2,
         timeStamp: new Date("2025-02-05T09:00:00"),
-        costo: 800,
         tipo: "recreativa",
         post_evaluacion: "Mayor interacción social",
         fotosUrls: ["foto3.jpg"],
@@ -95,7 +93,6 @@ module.exports = {
       {
         id: int3,
         timeStamp: new Date("2025-02-20T11:00:00"),
-        costo: 1500,
         tipo: "terapeutica",
         post_evaluacion: "Reducción de síntomas de ansiedad",
         fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
