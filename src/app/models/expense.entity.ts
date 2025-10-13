@@ -42,7 +42,9 @@ export class Expense extends Model {
   declare userId: string;
 
   @ForeignKey(() => Intervention)
-  @Column
+  @Column({
+    allowNull: true,
+  })
   declare interventionId: string;
 
   @Column({

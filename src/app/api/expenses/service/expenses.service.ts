@@ -43,7 +43,13 @@ export class ExpensesService {
         attributes: ["ci"],
       }),
     ]);
-    if (!intervention) {
+    if (
+      request.type !== "Baño" &&
+      request.type !== "Vacunacion" &&
+      request.type !== "Desparasitacion Interna" &&
+      request.type !== "Desparasitacion Externa" &&
+      !intervention
+    ) {
       throw new Error(
         `Intervention with id "${request.interventionId}" not found`
       );
