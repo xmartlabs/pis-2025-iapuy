@@ -21,7 +21,13 @@ export default function Detalle() {
       const dates = dateStrings
         .map((dateStr) => {
           const trimmed = dateStr.trim();
-          return new Date(trimmed);
+          const date = new Date(trimmed);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+            //Parse as local date to avoid timezone shifts
+            const [year, month, day] = trimmed.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+          return date;
         })
         .filter((date) => !isNaN(date.getTime()));
       return dates;

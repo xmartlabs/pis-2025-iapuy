@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import React, { useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
+import { Printer } from "lucide-react";
 
 interface LoginContextType {
   tokenJwt?: string | null;
@@ -137,5 +138,13 @@ export function DownloadButton({ id, dates }: DownloadButtonProps) {
     handleDownload({ id, dates }, context).catch(() => {});
   };
 
-  return <Button onClick={handleClick}>Descargar PDF</Button>;
+  return (
+    <Button
+      onClick={handleClick}
+      className="rounded-lg border-2 border-[var(--custom-green)] bg-white p-2 hover:bg-[var(--custom-green)] hover:text-white flex items-center gap-2 text-[var(--custom-green)]"
+    >
+      <Printer className="h-5 w-5 text-[var(--custom-green)]" />
+      Imprimir estado de cuenta
+    </Button>
+  );
 }
