@@ -35,8 +35,8 @@ export class InstitucionesController {
   }
 
   async interventionsPDF(req: NextRequest, id: string) {
-    const { fechas } = (await req.json()) as { fechas: Date[] };
+    const { dates } = (await req.json()) as { dates: Date[] };
 
-    return await this.institutionsService.interventionsPDF(id, fechas);
+    return await this.institutionsService.interventionsPDF(id, dates);
   }
 }

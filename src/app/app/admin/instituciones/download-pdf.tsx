@@ -21,7 +21,7 @@ async function downloadLogic(
       Authorization: `Bearer ${context?.tokenJwt}`,
     },
     body: JSON.stringify({
-      fechas: dates.map((date) => date.toISOString()),
+      dates: dates.map((date) => date.toISOString()),
     }),
   });
 
