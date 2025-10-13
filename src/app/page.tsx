@@ -25,19 +25,19 @@ const FormSchema = z.object({
     .string()
     .min(8, { message: "El largo de la cédula no es válido." })
     .max(8, { message: "El largo de la cédula no es válido." }),
-  contrasenia: z.string().min(1, { message: "Debe ingresar la contraseña" }),
+  password: z.string().min(1, { message: "Debe ingresar la contraseña" }),
 });
-export enum TipoUsuario {
-  Colaborador = "Colaborador",
-  Administrador = "Administrador",
+export enum UserType {
+  Collaborator = "Colaborador",
+  Administrator = "Administrador",
 }
 export interface LoginResponse {
   accessToken: string;
 }
 export interface JwtPayload {
   ci: string;
-  nombre: string; //name
-  tipo: TipoUsuario;//type
+  name: string;
+  type: UserType;
 }
 const LoginDialogTrigger = ({ onOpen }: { onOpen: () => void }) => (
   <button
@@ -57,7 +57,7 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { ci: "", contrasenia: "" },
+    defaultValues: { ci: "", password: "" },
   });
 
   const handleLoginSuccess = useCallback(
@@ -65,14 +65,14 @@ export default function Home() {
       const decoded = jwtDecode<JwtPayload>(data.accessToken);
 
       context?.setToken(data.accessToken);
-      context?.setType(decoded.tipo);
-      context?.setUserName(decoded.nombre);
+      context?.setType(decoded.type);
+      context?.setUserName(decoded.name);
       context?.setCI(decoded.ci);
 
-      if (decoded.tipo === TipoUsuario.Administrador) {
+      if (decoded.type === UserType.Administrator) {
         router.push("/app/admin/intervenciones/listado");
       } else {
-        router.push("/app/colaboradores/Intervenciones/listado");
+        router.push("/app/colaboradores/intervenciones/listado");
       }
     },
     [context, router]
@@ -105,12 +105,11 @@ export default function Home() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ci: data.ci, password: data.contrasenia }),
+        body: JSON.stringify({ ci: data.ci, password: data.password }),
       });
 
       if (!res.ok) {
         setLoginError("Este usuario no existe, por favor revisá los datos.");
-        return;
       }
 
       const response = (await res.json()) as LoginResponse;
@@ -140,7 +139,11 @@ export default function Home() {
           className="max-w-[564px] max-h-[729px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
           justify-between opacity-100 shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]"
         >
-          <div className={`w-[436px] flex flex-col items-start justify-start !mx-[64px] ${loginError ?'my-[42px]' :'my-[58px]'} gap-8`}>
+          <div
+            className={`w-[436px] flex flex-col items-start justify-start !mx-[64px] ${
+              loginError ? "my-[42px]" : "my-[58px]"
+            } gap-8`}
+          >
             <Image src="/logo.png" alt="Logo" width={150} height={150} />
             <h1 className="h-[48px]  font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">
               Iniciar Sesión
@@ -173,7 +176,7 @@ export default function Home() {
                 />
                 <FormField
                   control={form.control}
-                  name="contrasenia"
+                  name="password"
                   render={({ field }) => (
                     <FormItem className="flex flex-col gap-2 relative">
                       <FormLabel>Contraseña</FormLabel>
@@ -184,7 +187,7 @@ export default function Home() {
                           className="w-full p-2 border rounded mt-1"
                         />
                       </FormControl>
-                      <FormMessage className="absolute -bottom-6"/>
+                      <FormMessage className="absolute -bottom-6" />
                     </FormItem>
                   )}
                 />
@@ -210,7 +213,8 @@ export default function Home() {
                     Iniciar
                   </Button>
                   {loginError && (
-                    <div className="w-[436px] h-[24px] opacity-100 font-sans font-medium 
+                    <div
+                      className="w-[436px] h-[24px] opacity-100 font-sans font-medium 
                                     text-sm leading-6 tracking-[0] text-center text-[var(--destructive,#DC2626)]"
                     >
                       {loginError}

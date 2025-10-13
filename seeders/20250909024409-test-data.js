@@ -11,7 +11,8 @@ module.exports = {
         nombre: "Santiago",
         celular: "099111111",
         cuentaBancaria: "UY123456789",
-        password: "$2a$10$Ni0Yq3F4wfUjYpIQUgF9fuHr3wSNXKE0mxvTW5WBHujUoxtCAK6N6",
+        password:
+          "$2a$10$Ni0Yq3F4wfUjYpIQUgF9fuHr3wSNXKE0mxvTW5WBHujUoxtCAK6N6",
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
@@ -21,7 +22,8 @@ module.exports = {
         nombre: "María",
         celular: "099222222",
         cuentaBancaria: "UY987654321",
-        password: "$2a$10$SLtoSdasY7h.jprZng8o6.sVnKA7bdcAt20aQ.Or.I9yz4BPDExli",
+        password:
+          "$2a$10$SLtoSdasY7h.jprZng8o6.sVnKA7bdcAt20aQ.Or.I9yz4BPDExli",
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
@@ -31,7 +33,8 @@ module.exports = {
         nombre: "Carlos",
         celular: "099333333",
         cuentaBancaria: "UY111222333",
-        password: "$2a$10$sKqGKOMy5TC3Xvd6NfNe9.yY/w6/ZF/cZLSafo6QulGBaJVvMQRC2",
+        password:
+          "$2a$10$sKqGKOMy5TC3Xvd6NfNe9.yY/w6/ZF/cZLSafo6QulGBaJVvMQRC2",
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
@@ -45,8 +48,8 @@ module.exports = {
       {
         id: "a1111111-1111-1111-1111-111111111111",
         timeStamp: new Date("2025-09-01T10:00:00Z"),
-        costo: "1500.50",
-        tipo: "educativa",
+        tipo: "Educativa",
+        status: "Cerrada",
         post_evaluacion: "Evaluación positiva, asistentes comprometidos",
         fotosUrls: [
           "https://example.com/photo1.jpg",
@@ -60,10 +63,9 @@ module.exports = {
       {
         id: "b2222222-2222-2222-2222-222222222222",
         timeStamp: new Date("2025-09-07T15:30:00Z"),
-        costo: "200.00",
-        tipo: "recreativa",
+        tipo: "Recreativa",
+        status: "Suspendida",
         post_evaluacion: null,
-        // <-- use literal so Postgres knows it's a text[] even when empty
         fotosUrls: Sequelize.literal("ARRAY[]::text[]"),
         userId: "22222222",
         createdAt: now,

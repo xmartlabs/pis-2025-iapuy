@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogOverlay
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -36,8 +36,8 @@ import {
 } from "@/components/ui/select";
 import { useContext, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
 import { LoginContext } from "@/app/context/login-context";
+import type { PerroDTO } from "./DTOS/perro.dto";
 
 type UserPair = {
   ci: string; //! chequear seguridad (es correcto manipular el id o solo manipular el JWT)
@@ -57,16 +57,17 @@ type dataPerro = {
   nombre: string;
   descripcion?: string;
   fortalezas?: string;
-  duenioId: string;
+  duenioId?: string;
 };
-
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 interface AgregarPerroProps {
   reload: boolean;
   setReload: (product: boolean) => void;
+  open: boolean;
+  setOpen: (o: boolean) => void;
+  onCreated?: (p: { id: string; nombre: string }) => void;
+  ownerRequired?: boolean;
+  ownerDisabled?: boolean;
 }
 
 export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
@@ -74,10 +75,21 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   reload,
   // eslint-disable-next-line react/prop-types
   setReload,
+  // eslint-disable-next-line react/prop-types
+  open,
+  // eslint-disable-next-line react/prop-types
+  setOpen,
+  // eslint-disable-next-line react/prop-types
+  onCreated,
+  // eslint-disable-next-line react/prop-types
+  ownerRequired = true,
+  // eslint-disable-next-line react/prop-types
+  ownerDisabled = false,
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
-  const [open, setOpen] = useState(false);
   const context = useContext(LoginContext);
+  const [descChars, setDescChars] = useState(0);
+  const [fuertesChars, setFuertesChars] = useState(0);
 
   useEffect(() => {
     const llamadaApi = async () => {
@@ -89,13 +101,10 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         };
         const response = await fetch("/api/users", { headers: baseHeaders });
         if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
-          );
+          const resp2 = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { Accept: "application/json" },
+          });
 
           if (resp2.ok) {
             const refreshBody = (await resp2.json().catch(() => null)) as {
@@ -143,15 +152,25 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
     llamadaApi().catch((err) => {
       reportError(err);
     });
-  }, []);
+  }, [context]);
 
-  const createPerroSchema = z.object({
+  const createPerroBase = z.object({
     nombrePerro: z.string().min(2, {
       message: "Este campo es obligatorio.",
     }),
-    dueno: z.string().min(1, { message: "Selecciona un dueño." }),
+    dueno: z.string().optional(),
     descripcion: z.string().optional(),
     fuertes: z.string().optional(),
+  });
+
+  const createPerroSchema = createPerroBase.superRefine((val, ctx) => {
+    if (ownerRequired && (!val.dueno || val.dueno.trim() === "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dueno"],
+        message: "Selecciona un dueño.",
+      });
+    }
   });
 
   const form = useForm<z.infer<typeof createPerroSchema>>({
@@ -164,14 +183,32 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
     },
   });
 
+  useEffect(() => {
+    const vals = form.getValues();
+    setDescChars((vals.descripcion ?? "").length);
+    setFuertesChars((vals.fuertes ?? "").length);
+
+    const subscription = form.watch((value, { name }) => {
+      if (name === "descripcion")
+        setDescChars((value?.descripcion ?? "").length);
+      if (name === "fuertes") setFuertesChars((value?.fuertes ?? "").length);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [form, open]);
+
   // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: z.infer<typeof createPerroSchema>) {
     try {
       const dataFormat: dataPerro = {
         nombre: data.nombrePerro,
-        descripcion: data.descripcion,
-        fortalezas: data.fuertes,
-        duenioId: data.dueno,
+        descripcion: data.descripcion || undefined,
+        fortalezas: data.fuertes || undefined,
+        ...(data.dueno && data.dueno.trim() !== ""
+          ? { duenioId: data.dueno }
+          : {}),
       };
 
       //! las desc y fortalezas si se dejan vacíos se estan insertando como ''
@@ -187,7 +224,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       });
 
       if (res.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
+        const resp2 = await fetch("/api/auth/refresh", {
           method: "POST",
           headers: { Accept: "application/json" },
         });
@@ -210,8 +247,15 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       }
 
       if (res.ok) {
+        const created = (await res.json().catch(() => null)) as PerroDTO;
+        if (created?.id && created?.nombre) {
+          onCreated?.({ id: created.id, nombre: created.nombre });
+        }
+
         setOpen(false);
         form.reset();
+        setDescChars(0);
+        setFuertesChars(0);
 
         toast.success(`¡Guau! Agregaste a "${data.nombrePerro}" al equipo.`, {
           duration: 5000,
@@ -226,6 +270,11 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         });
 
         setReload(!reload);
+        try {
+          await context?.refreshPerros?.();
+        } catch {
+          // ignore refresh errors
+        }
       } else {
         toast.message(`NO se pudo agregar a "${data.nombrePerro}" al equipo.`, {
           duration: 5000,
@@ -247,18 +296,10 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            className="ml-4 text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
-          >
-            <Plus size={16} />
-            Agregar perro
-          </Button>
-        </DialogTrigger>
-
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50"/>
         <DialogContent
           className="
-                        !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
+                        mt-27 !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
                         !h-auto !md:h-[362px] !max-h-[80vh] !overflow-y-auto !overflow-x-hidden
                         !bg-white !border !border-[#D4D4D4] !rounded-md
                         !top-[50%] md:!top-[228px] !left-1/2 !-translate-x-1/2
@@ -315,9 +356,14 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
+                              disabled={ownerDisabled}
                             >
                               <SelectTrigger className="!w-full !md:max-w-[320px] !h-10">
-                                <SelectValue />
+                                <SelectValue
+                                  placeholder={
+                                    ownerDisabled ? "No requerido" : undefined
+                                  }
+                                />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
@@ -347,12 +393,20 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                       name="descripcion"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Descripción</FormLabel>
+                          <div className="!flex !justify-between !items-center">
+                            <FormLabel>Descripción</FormLabel>
+                            <span className="text-sm">{descChars}/400</span>
+                          </div>
                           <FormControl>
                             <Textarea
                               className="!w-full !md:max-w-[320px] !min-h-[80px] !md:h-[80px]"
                               placeholder=""
                               {...field}
+                              maxLength={400}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                setDescChars(e.target.value.length);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -367,13 +421,20 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                       name="fuertes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Fuertes</FormLabel>
+                          <div className="!flex !justify-between !items-center">
+                            <FormLabel>Fuertes</FormLabel>
+                            <span className="text-sm">{fuertesChars}/400</span>
+                          </div>
                           <FormControl>
                             <Textarea
                               className="!w-full !md:max-w-[320px] !min-h-[80px] !md:h-[80px]"
                               placeholder=""
                               {...field}
-                              maxLength={255}
+                              maxLength={400}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                setFuertesChars(e.target.value.length);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -388,6 +449,8 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                     <Button
                       onClick={() => {
                         form.reset();
+                        setDescChars(0);
+                        setFuertesChars(0);
                       }}
                       variant="outline"
                       className="

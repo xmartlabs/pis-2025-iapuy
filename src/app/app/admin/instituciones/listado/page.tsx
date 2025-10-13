@@ -1,13 +1,4 @@
-import DetalleInstitucion from "../DetalleInstitucion";
-import ListadoInstitucion from "../ListadoInstituciones";
-import NuevaInstitucion from "../NuevaInstitucion";
-
+import InstitutionList from "../listado-instituciones";
 export default function PantallaInsituciones() {
-  return (
-    <>
-      <DetalleInstitucion />
-      <ListadoInstitucion />
-      <NuevaInstitucion />*
-    </>
-  );
+  return (<InstitutionList />);
 }

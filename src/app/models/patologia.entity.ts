@@ -1,6 +1,8 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   Model,
   PrimaryKey,
@@ -11,7 +13,10 @@ import {
 @Table({ tableName: "patologias" })
 export class Patologia extends Model {
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
   declare id: string;
 
   @Column

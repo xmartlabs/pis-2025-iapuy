@@ -19,15 +19,11 @@ import {
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import {UserType} from "@/app/page"
 type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
 };
-
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 export default function DetallePersona() {
   const context = useContext(LoginContext);
@@ -35,12 +31,15 @@ export default function DetallePersona() {
   const [error, setError] = useState<string | null>(null);
 
   const userCi = context?.userCI;
+  const userType:UserType |null=context?.userType ??null;
 
   const fetchUser = useCallback(
     async (
       signal?: AbortSignal,
       triedRefresh = false
     ): Promise<UserData | null> => {
+      /* Broken when refreshing webpage, because context is empty at first
+      TODO: implement later since its not a priority
       if (!userCi) {
         if (!context?.tokenJwt) {
           setError("Debes iniciar sesión para ver tu perfil");
@@ -50,9 +49,9 @@ export default function DetallePersona() {
           );
         }
         return null;
-      }
+      }*/
 
-      const url = new URL(`/api/users/${userCi}`, BASE_API_URL);
+      const url = `/api/users/profile`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -74,14 +73,11 @@ export default function DetallePersona() {
         });
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
+          const resp2 = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            signal: combinedSignal,
+          });
 
           if (resp2.ok) {
             const refreshBody = (await resp2.json().catch(() => null)) as {
@@ -170,9 +166,9 @@ export default function DetallePersona() {
   return (
     <div className="!overflow-x-auto">
       {error && <p className="text-red-500 text-center">{error}</p>}
-      <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+      <div className="w-full mb-4 sm:mb-[20px] pt-3 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
         <h1
-          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center"
+          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em] flex items-center pb-3"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Mi Perfil
@@ -184,22 +180,24 @@ export default function DetallePersona() {
             <Label htmlFor="text">Nombre</Label>
             <Input type="text" id="nombre" defaultValue={user?.nombre || ""} />
           </div>
-          <div className=" items-center gap-3">
-            <Label htmlFor="text">Rol</Label>
-            <RadioGroup
-              className="flex pt-5"
-              value={user?.esAdmin ? "administrador" : "colaborador"}
-            >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="administrador" id="r1" />
-                <Label htmlFor="r1">Administrador</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="colaborador" id="r2" />
-                <Label htmlFor="r2">Colaborador</Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {userType===UserType.Administrator &&(
+            <div className=" items-center gap-3">
+              <Label htmlFor="text">Rol</Label>
+              <RadioGroup
+                className="flex pt-5"
+                value={user?.esAdmin ? "administrador" : "colaborador"}
+              >
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="administrador" id="r1" />
+                  <Label htmlFor="r1">Administrador</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="colaborador" id="r2" />
+                  <Label htmlFor="r2">Colaborador</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}  
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid  items-center gap-3">
@@ -241,9 +239,9 @@ export default function DetallePersona() {
                   <SelectLabel>Perros</SelectLabel>
                   {user && Array.isArray(user.perros) && user.perros.length > 0
                     ? user.perros.map((p, index) =>
-                        p?.nombre ? (
-                          <SelectItem key={index} value={p.nombre}>
-                            {p.nombre}
+                        p?(
+                          <SelectItem key={index} value={p}>
+                            {p}
                           </SelectItem>
                         ) : null
                       )
@@ -258,7 +256,34 @@ export default function DetallePersona() {
           </div>
         </div>
 
-        <div className="flex justify-start items-center">
+        <div className="flex w-hug justify-start items-center my-7">
+          <Alert>
+            <Info />
+            {user?.esAdmin ? (
+              <>
+                <AlertTitle>
+                  Si necesitás una nueva contraseña, Hacé{" "}
+                  <a href="/perfil/cambiar-contraseña" className="!underline">
+                    click acá
+                  </a>
+                  .
+                </AlertTitle>
+              </>
+            ) : (
+              <>
+                <AlertTitle>
+                  Si necesitás una nueva contraseña, ponete en contacto con
+                  IAPUy
+                </AlertTitle>
+                <AlertDescription>
+                  Celular de contacto: 98554662
+                </AlertDescription>
+              </>
+            )}
+          </Alert>
+        </div>
+
+        <div className="flex justify-start items-center hidden">
           <Button
             asChild
             className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
@@ -268,17 +293,6 @@ export default function DetallePersona() {
             </span>
           </Button>
         </div>
-        {!user?.esAdmin && (
-          <div className="flex w-[732px] justify-start items-center mt-3">
-            <Alert>
-              <Info />
-              <AlertTitle>
-                Si necesitás una nueva contraseña, ponete en contacto con IAPUy
-              </AlertTitle>
-              <AlertDescription>Celular de contacto: 98554662</AlertDescription>
-            </Alert>
-          </div>
-        )}
       </div>
     </div>
   );

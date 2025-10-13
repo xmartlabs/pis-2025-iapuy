@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   Column,
   CreatedAt,
@@ -6,7 +7,7 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
-  DataType
+  DataType,
 } from "sequelize-typescript";
 
 @Table({ tableName: "users" })
@@ -24,13 +25,13 @@ export class User extends Model {
   @Column({ type: DataType.STRING })
   declare banco: string;
 
-  @Column
+  @Column({ type: DataType.STRING })
   declare cuentaBancaria: string;
 
   @Column({ type: DataType.STRING })
   declare password: string;
 
-  @Column
+  @Column({ type: DataType.BOOLEAN })
   declare esAdmin: boolean;
 
   @CreatedAt
