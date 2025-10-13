@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign } from 'lucide-react';
+import { BadgeDollarSign, Plus, Settings } from 'lucide-react';
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
@@ -21,6 +21,7 @@ import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
 import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
+import { Button } from "@/components/ui/button";
 
 const statuses = ["Pendiente", "Finalizada", "Suspendida"];
 
@@ -259,14 +260,37 @@ export default function ExpensesList() {
             Gastos
           </h1>
         </div>
-        <div className="flex justify-end mb-2 p-3">
-          { /*
-          <AddIntervencionButton
-            onClick={() => {
-              router.push("/app/admin/intervenciones/nueva");
-            }}
-          />
-          */ }
+        
+        <div className="flex justify-end gap-4">
+
+          {/* visual example to see how it looks Agregar Gasto button */}
+          <Button
+            type="button"
+            className="h-10 max-w-[141px] min-w-[80px] rounded-md flex 
+                      gap-1 p-2.5 bg-[#5B9B40]
+                      font-sans font-medium text-sm leading-6 text-[#EFF5EC]
+                      transition-colors hover:bg-[#478032] hover:text-white"
+          >
+            <span className="flex text-[#EFF5EC]">
+              <Plus size={16} />
+            </span>
+            Agregar Gasto
+          </Button>
+            
+          <Button
+            className="
+              bg-[#DEEBD9] text-[#5B9B40]
+              flex
+              w-10 h-10
+              border-2
+              rounded-md gap-2
+              opacity-100
+              hover:bg-[#5B9B40] hover:text-white hover:border-white
+              transition duration-300 ease-in-out
+            "
+          >
+            <Settings className="w-[20px] h-[20px]" />
+          </Button>
         </div>
       </div>
       <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
