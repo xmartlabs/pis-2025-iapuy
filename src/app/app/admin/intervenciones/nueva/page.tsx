@@ -146,10 +146,9 @@ export default function NewIntervention() {
       const backendData = {
         timeStamp: combinedDateTime.toISOString(),
         pairsQuantity: values.pairQuantity,
-        type: values.type.toLowerCase(),
+        type: values.type,
         institution: values.institution,
         description: values.description,
-        cost: 0,
         fotosUrls: [],
         state: "Pendiente",
       };
@@ -222,11 +221,8 @@ export default function NewIntervention() {
         );
       }
       setInstitution(null);
-      toast("Intervención creada con éxito", {
-        description: "La intervención ha sido creada exitosamente.",
-      });
       setRetrying(false);
-      router.push("/app/admin/intervenciones/listado");
+      router.push("/app/admin/intervenciones/listado?success=1");
     } catch {
       toast("Error creando intervención");
     }
@@ -342,9 +338,19 @@ export default function NewIntervention() {
   }, [fetchInstitutions, context?.tokenJwt]);
   return (
     <div className="mr-[20px]">
+      
+      <CustomBreadCrumb link={["/app/admin/intervenciones/listado", "Intervenciones"]} current={"Nueva intervención"} className={"mb-8"}></CustomBreadCrumb>
+      <div className="w-full sm:mb-[20px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+        <h1
+          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          Nueva Intervención
+        </h1>
+      </div>
       {error && <p className="text-red-500 text-center">{error}</p>}
       {repeatedIntervention !== null && institution !== null && (
-        <div className="grid border border-red-500 rounded-md p-2 w-full">
+        <div className="grid border border-red-500 rounded-md p-2 w-full mb-8">
           <div className="flex">
             <AlertCircleIcon className="text-red-500 mr-1" />{" "}
             <p className="text-red-500"> Posible intervención duplicada: </p>
@@ -355,34 +361,26 @@ export default function NewIntervention() {
           />
         </div>
       )}
-      <CustomBreadCrumb link={["/app/admin/intervenciones/listado", "Intervenciones"]} current={"Nueva intervención"} className={"mb-8"}></CustomBreadCrumb>
-      <div className="w-full sm:mb-[20px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
-        <h1
-          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Nueva Intervención
-        </h1>
-      </div>
       <NuevaIntervencionForm
         ref={formRef}
         institutions={institutions || []}
         onSubmit={onSubmit}
       />
       <div className="flex justify-start items-center mt-2">
-          <Button
-            type="button"
-            onClick={() => {
-              formRef.current?.submitForm().catch(() => {});
-            }}
-            className="max-w-[148px] max-h-[40px] min-w-[80px] px-3 py-2
+        <Button
+          type="button"
+          onClick={() => {
+            formRef.current?.submitForm().catch(() => {});
+          }}
+          className="max-w-[148px] max-h-[40px] min-w-[80px] px-3 py-2
                       flex items-center justify-center gap-1
                       rounded-md
                       bg-[#5B9B40] text-white
-                      opacity-50">
-            Crear Intervención
-          </Button>
-        </div>
+                      opacity-50"
+        >
+          Crear Intervención
+        </Button>
+      </div>
       <Toaster richColors position="bottom-right" />
     </div>
   );
