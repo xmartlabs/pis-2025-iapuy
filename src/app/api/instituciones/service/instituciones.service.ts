@@ -270,7 +270,7 @@ export class InstitucionesService {
 
       for (let i = 1; i < words.length; i++) {
         const word = words[i];
-        const testLine = `${currentLine  } ${  word}`;
+        const testLine = `${currentLine} ${word}`;
         const testWidth = font.widthOfTextAtSize(testLine, size);
 
         if (testWidth <= maxW) {
