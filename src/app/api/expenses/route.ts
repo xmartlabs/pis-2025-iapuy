@@ -42,10 +42,11 @@ export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const raw = (await request.json()) as unknown;
-    const data = (
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
-    ) as Partial<Expense>;
+    const data =
+    (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
+      ) as Partial<Expense>;
     const id = searchParams.get("id");
     if (!id) {
       return NextResponse.json(
@@ -54,7 +55,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const allowed = ["concepto", "estado", "monto", "intervencionId", "userId"];
+    const allowed = [
+      "concept",
+      "type",
+      "state",
+      "amount",
+      "interventionId",
+      "userId",
+    ];
 
     const toUpdate: Record<string, unknown> = {};
     const dataObj = data as Record<string, unknown>;
@@ -79,7 +87,10 @@ export async function PUT(request: NextRequest) {
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ error: "Bad request" }, { status: 500 });
   }
 }
