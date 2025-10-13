@@ -22,6 +22,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogOverlay
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -295,6 +296,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50"/>
         <DialogContent
           className="
                         mt-27 !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6

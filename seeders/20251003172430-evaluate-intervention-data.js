@@ -49,13 +49,12 @@ module.exports = {
       {
         id: int3,
         timeStamp: new Date("2025-02-20T11:00:00"),
-        costo: 1500,
-        tipo: "terapeutica",
+        tipo: "Terapeutica",
         post_evaluacion: "Algo123",
         //fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),
         updatedAt: new Date(),
-        status : "Realizada"
+        status: "Realizada",
       },
     ]);
 
@@ -87,38 +86,36 @@ module.exports = {
     const user1 = "55805124";
     const user2 = "54805123";
 
-    await queryInterface.bulkInsert(
-      "users",
-      [
-        {
-          nombre: "Sofía",
-          ci: user1,
-          celular: "099687452",
-          banco: "Banco 1",
-          cuentaBancaria: "123-456-123",
-          password: "defaultpassword",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          nombre: "Carlos",
-          ci: user2,
-          celular: "091788355",
-          banco: "Banco 2",
-          cuentaBancaria: "123-654-321",
-          password: "defaultpassword",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ]);
+    await queryInterface.bulkInsert("users", [
+      {
+        nombre: "Sofía",
+        ci: user1,
+        celular: "099687452",
+        banco: "Banco 1",
+        cuentaBancaria: "123-456-123",
+        password: "defaultpassword",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        nombre: "Carlos",
+        ci: user2,
+        celular: "091788355",
+        banco: "Banco 2",
+        cuentaBancaria: "123-654-321",
+        password: "defaultpassword",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
 
-      await queryInterface.bulkInsert("perros", [
+    await queryInterface.bulkInsert("perros", [
       {
         id: perro1,
         nombre: "Pelusa",
         descripcion: "Perra",
         fortalezas: "fuerte",
-        duenioId : user1,
+        duenioId: user1,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -127,30 +124,30 @@ module.exports = {
         nombre: "Inu",
         descripcion: "Perro",
         fortalezas: "fuerte",
-        duenioId : user2,
+        duenioId: user2,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ]);
 
-      await queryInterface.bulkInsert("usrperros", [
-        {
-          userId: user1,
-          perroId: perro1,
-          intervencionId: int3,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          id: uuidv4()
-        },
-        {
-          userId: user2,
-          perroId: perro2,
-          intervencionId: int3,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          id: uuidv4()
-        },
-      ]);
+    await queryInterface.bulkInsert("usrperros", [
+      {
+        userId: user1,
+        perroId: perro1,
+        intervencionId: int3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        id: uuidv4(),
+      },
+      {
+        userId: user2,
+        perroId: perro2,
+        intervencionId: int3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        id: uuidv4(),
+      },
+    ]);
 
     // Join table: institucion-intervenciones
     await queryInterface.bulkInsert("institucion-intervenciones", [

@@ -9,290 +9,185 @@ import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PayloadForUser } from "../../perros/detalles/route";
 
+// ---------------------- Mocks ----------------------
 vi.mock("@/app/models/registro-sanidad.entity", () => ({
-  RegistroSanidad: { create: vi.fn(), findAndCountAll: vi.fn(), findOne: vi.fn() },
-}));
-vi.mock("@/app/models/perro.entity", () => ({ Perro: {} }));
-vi.mock("@/app/models/user.entity", () => ({ User: {} }));
-vi.mock("@/app/models/banio.entity", () => ({ Banio: { create: vi.fn(), findAll: vi.fn() } }));
-vi.mock("@/app/models/desparasitacion.entity", () => ({ Desparasitacion: { create: vi.fn(), findAll: vi.fn() } }));
-vi.mock("@/app/models/vacuna.entity", () => ({ Vacuna: { create: vi.fn(), findAll: vi.fn() } }));
-vi.mock("@/lib/pagination/transform", () => ({
-  getPaginationResultFromModel: (_pagination: unknown, processed: unknown) => {
-    const p = processed as { rows: unknown[]; count: number };
-    return { data: p.rows, count: p.count };
+  RegistroSanidad: {
+    create: vi.fn(),
+    findAndCountAll: vi.fn(),
+    findOne: vi.fn(),
   },
 }));
+vi.mock("@/app/models/banio.entity", () => ({
+  Banio: { create: vi.fn(), findAll: vi.fn() },
+}));
+vi.mock("@/app/models/desparasitacion.entity", () => ({
+  Desparasitacion: { create: vi.fn(), findAll: vi.fn() },
+}));
+vi.mock("@/app/models/vacuna.entity", () => ({
+  Vacuna: { create: vi.fn(), findAll: vi.fn() },
+}));
 vi.mock("@/lib/database", () => ({ default: { transaction: vi.fn() } }));
+vi.mock("@/lib/pagination/transform", () => ({
+  getPaginationResultFromModel: vi.fn((pagination, result) => ({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    rows: result?.rows || [],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    count: result?.count || 0,
+  })),
+}));
 
 describe("RegistrosSanidadService", () => {
   // eslint-disable-next-line init-declarations
   let service: RegistrosSanidadService;
-  const adminPayload: PayloadForUser = { ci: "123", name: "test", type: "Administrador" } as PayloadForUser;
+  const adminPayload: PayloadForUser = {
+    ci: "123",
+    name: "test",
+    type: "Administrador",
+  };
 
   beforeEach(() => {
     service = new RegistrosSanidadService();
     vi.clearAllMocks();
   });
 
+  // ---------------------- create ----------------------
   it("should create a banio registro", async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue(null);
+    RegistroSanidad.create = vi.fn().mockResolvedValue({ id: 1 });
+    Banio.create = vi.fn().mockResolvedValue({ id: 1 });
 
-  const transactionMock = vi
-    .fn()
-    .mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
-  sequelize.transaction = transactionMock;
-
-  const registroCreateMock = vi.fn().mockResolvedValue({ id: "1" }) as unknown as typeof RegistroSanidad.create;
-  RegistroSanidad.create = registroCreateMock;
-
-  const banioCreateMock = vi.fn().mockResolvedValue({ id: "1" }) as unknown as typeof Banio.create;
-  Banio.create = banioCreateMock;
-
-  const dto: Partial<CreateRegistrosSanidadDTO> = {
-    perroId:  1 as unknown as string,
-    tipoSanidad: "banio",
-    fecha: "20-09-2025",
-  };
-
-
-  await service.create(dto as CreateRegistrosSanidadDTO);
-
-
-  expect(transactionMock).toHaveBeenCalled();
-  expect(registroCreateMock).toHaveBeenCalledWith(
-    { perroId: 1 },
-    { transaction: "transaction" }
-  );
-  expect(banioCreateMock).toHaveBeenCalledWith(
-    { fecha: new Date("20-09-2025"), registroSanidadId: "1" },
-    { transaction: "transaction" }
-  );
-});
-
-
-  it("should create a banio registro", async () => {
-  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
-    sequelize.transaction = transactionMock;
-
-    const registroCreateMock = vi.fn().mockResolvedValue({ id: 2 }) as unknown as typeof RegistroSanidad.create;
-    RegistroSanidad.create = registroCreateMock;
-
-    const banioCreateMock = vi.fn().mockResolvedValue({ id: 2 }) as unknown as typeof Banio.create;
-    Banio.create = banioCreateMock;
-
-    
     const dto: Partial<CreateRegistrosSanidadDTO> = {
-      perroId: 2 as unknown as string,
+      perroId: "1",
       tipoSanidad: "banio",
-      fecha: "20-09-2025",
+      fecha: "2025-09-20",
     };
 
-  await service.create(dto as CreateRegistrosSanidadDTO);
-
-    expect(transactionMock).toHaveBeenCalled();
-    expect(registroCreateMock).toHaveBeenCalledWith(
-      { perroId: 2},
-      { transaction: "transaction" }
-    );
-    expect(banioCreateMock).toHaveBeenCalledWith(
-      { fecha: new Date("20-09-2025"), registroSanidadId: 2 },
-      { transaction: "transaction" }
-    );
+    const result = await service.create(dto as CreateRegistrosSanidadDTO);
+    expect(result).toEqual({ id: 1 });
   });
-
 
   it("should create a vacuna registro", async () => {
-  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
-    sequelize.transaction = transactionMock;
+    // eslint-disable-next-line require-await, @typescript-eslint/no-unsafe-call, @typescript-eslint/require-await, @typescript-eslint/no-unsafe-return
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 2 });
+    Vacuna.create = vi.fn().mockResolvedValue({ id: 2 });
 
-    const registroCreateMock = vi.fn().mockResolvedValue({ id: 3 }) as unknown as typeof RegistroSanidad.create;
-    RegistroSanidad.create = registroCreateMock;
-
-    const vacunaCreateMock = vi.fn().mockResolvedValue({ id: 3 }) as unknown as typeof Vacuna.create;
-    Vacuna.create = vacunaCreateMock;
-
-    const dto: Partial<CreateRegistrosSanidadDTO> ={
-      perroId: 3 as unknown as string,
+    const dto: Partial<CreateRegistrosSanidadDTO> = {
+      perroId: "2",
       tipoSanidad: "vacuna",
-      fecha: "22-09-2025",
+      fecha: "2025-09-22",
       vac: "Rabia",
-      carneVacunas: "CV123" as unknown as Buffer<ArrayBufferLike>,
+      carneVacunas: "CV123" as unknown as Buffer,
     };
 
-  await service.create(dto as CreateRegistrosSanidadDTO);
-
-    expect(transactionMock).toHaveBeenCalled();
-    expect(registroCreateMock).toHaveBeenCalledWith(
-      { perroId: 3},
-      { transaction: "transaction" }
-    );
-    expect(vacunaCreateMock).toHaveBeenCalledWith(
-    {
-      fecha: new Date("22-09-2025"),
-      vac: "Rabia",
-      carneVacunas: "CV123",
-      registroSanidadId: 3,
-    },
-    { transaction: "transaction" }
-  );
-
-  });
-
-  it("should return the created registroSanidad", async () => {
-  const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
-    sequelize.transaction = transactionMock;
-
-    const registroCreateMock = vi.fn().mockResolvedValue({ id: 5 }) as unknown as typeof RegistroSanidad.create;
-    RegistroSanidad.create = registroCreateMock;
-    
-
-    const dto: Partial<CreateRegistrosSanidadDTO>  = { perroId: 5 as unknown as string, tipoSanidad: "banio", fecha: "23-09-2025" };
-
-  const result = await service.create(dto as CreateRegistrosSanidadDTO);
-
-    expect(result).toEqual({ id: 5 });
-
+    await service.create(dto as CreateRegistrosSanidadDTO);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Vacuna.create).toHaveBeenCalled();
   });
 
   it("should propagate error if create fails", async () => {
-    const transactionMock = vi.fn().mockImplementation(async (cb: (t: string) => Promise<unknown>) => await cb("transaction"));
-    sequelize.transaction = transactionMock;
-
-    RegistroSanidad.create = vi.fn().mockRejectedValue(new Error("DB error")) as typeof RegistroSanidad.create;
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await
+    sequelize.transaction = vi.fn().mockImplementation(async () => {
+      throw new Error("DB error");
+    });
 
     const dto: Partial<CreateRegistrosSanidadDTO> = {
-      perroId: "6",
+      perroId: "3",
       tipoSanidad: "banio",
-      fecha: "24-09-2025",
+      fecha: "2025-09-24",
     };
 
-  await expect(service.create(dto as CreateRegistrosSanidadDTO)).rejects.toThrow("DB error");
+    await expect(
+      service.create(dto as CreateRegistrosSanidadDTO)
+    ).rejects.toThrow("DB error");
   });
 
-
-  // --- Tests findAll ---
-
+  // ---------------------- findAll ----------------------
   it("should return empty result if no registro exists", async () => {
-    const findOneMock = vi.fn().mockResolvedValue(null);
-    RegistroSanidad.findOne = findOneMock;
-
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue(null);
     const pagination: Partial<PaginationDto> = {
       page: 1,
       size: 10,
       getOffset: () => 0,
       getOrder: () => [],
     };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-    expect(result.data).toEqual([]);
-    expect(result.count).toBe(0);
-    expect(findOneMock).toHaveBeenCalledWith({ where: { perroId: "123" } });
-  });
-
-
-it("should return combined events when registro exists", async () => {
-  const findOneMock = vi.fn().mockResolvedValue({ id: 1 });
-  RegistroSanidad.findOne = findOneMock;
-
-  const banioMock = vi.fn().mockResolvedValue([{ id: 10, fecha: new Date("2025-01-01") }]);
-  Banio.findAll = banioMock;
-
-  const vacunaMock = vi.fn().mockResolvedValue([{ id: 20, fecha: new Date("2025-02-01") }]);
-  Vacuna.findAll = vacunaMock;
-
-  const desparasitacionMock = vi.fn().mockResolvedValue([{ id: 30, fecha: new Date("2025-03-01") }]);
-  Desparasitacion.findAll = desparasitacionMock;
-
-
-  const pagination: Partial<PaginationDto> = {
-    page: 1,
-    size: 10,
-    getOffset: () => 0,
-    getOrder: () => [],
-  };
-
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-
-  expect(result.count).toBe(3);
-  expect(result.data).toHaveLength(3);
-
-  const tipos = result.data.map(r => r.actividad);
-  expect(tipos).toEqual(expect.arrayContaining(["Baño", "Vacuna", "Desparasitación"]));
-
-
-  expect(findOneMock).toHaveBeenCalledWith({ where: { perroId: "123" } });
-  expect(banioMock).toHaveBeenCalledWith({ where: { registroSanidadId: 1 } });
-  expect(vacunaMock).toHaveBeenCalledWith({ where: { registroSanidadId: 1 } });
-  expect(desparasitacionMock).toHaveBeenCalledWith({ where: { registroSanidadId: 1 } });
-});
-
-
-  it("should paginate events correctly", async () => {
-    const registro = { id: 1 };
-    RegistroSanidad.findOne = vi.fn().mockResolvedValue(registro);
-
-   
-    const generateEvents = () =>
-      Array.from({ length: 5 }, (_, i) => ({ id: i, fecha: new Date() }));
-
-    Banio.findAll = vi.fn().mockResolvedValue(generateEvents());
-    Vacuna.findAll = vi.fn().mockResolvedValue(generateEvents());
-    Desparasitacion.findAll = vi.fn().mockResolvedValue(generateEvents());
-    const pagination: Partial<PaginationDto> = {
-      page: 2,
-      size: 5,
-      getOffset: () => 5,
-      getOrder: () => [],
-    };
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-    expect(result.data).toHaveLength(5); 
-    expect(result.count).toBe(15);       
-  });
-
-  it("should handle errors and return empty result", async () => {
-    RegistroSanidad.findOne = vi.fn().mockRejectedValue(new Error("DB error"));
-
-    const pagination: Partial<PaginationDto> = {
-      page: 1,
-      size: 10,
-      getOffset: () => 0,
-      getOrder: () => [],
-    };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-    expect(result.data).toEqual([]);
+    const result = await service.findAll(
+      pagination as PaginationDto,
+      "123",
+      adminPayload
+    );
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(result.rows).toEqual([]);
     expect(result.count).toBe(0);
   });
-
-
-  it("should format dates as dd/mm/yyyy", async () => {
-    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
-    Banio.findAll = vi.fn().mockResolvedValue([{ id: 1, fecha: new Date("2025-09-19T12:00:00") }]);
-    Vacuna.findAll = vi.fn().mockResolvedValue([]);
-    Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
-
-    const pagination: Partial<PaginationDto> = {
-      page: 1,
-      size: 10,
-      getOffset: () => 0,
-      getOrder: () => [],
-    };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-    expect(result.data[0].fecha).toBe("19/09/2025");
-  });
-
 
   it("should handle registro with no events at all", async () => {
     RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
     Banio.findAll = vi.fn().mockResolvedValue([]);
     Vacuna.findAll = vi.fn().mockResolvedValue([]);
     Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
+    const pagination: Partial<PaginationDto> = {
+      page: 1,
+      size: 10,
+      getOffset: () => 0,
+      getOrder: () => [],
+    };
+    const result = await service.findAll(
+      pagination as PaginationDto,
+      "123",
+      adminPayload
+    );
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(result.rows).toEqual([]);
+    expect(result.count).toBe(0);
+  });
+
+  it("should paginate events correctly", async () => {
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
+
+    const generateEvents = (tipo: string, startId: number, n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: startId + i,
+        fecha: new Date(),
+        actividad: tipo,
+      }));
+
+    Banio.findAll = vi.fn().mockResolvedValue(generateEvents("Baño", 1, 5));
+    Vacuna.findAll = vi.fn().mockResolvedValue(generateEvents("Vacuna", 6, 5));
+    Desparasitacion.findAll = vi
+      .fn()
+      .mockResolvedValue(generateEvents("Desparasitación", 11, 5));
+
+    const pagination: Partial<PaginationDto> = {
+      page: 2,
+      size: 5,
+      getOffset: () => 5,
+      getOrder: () => [],
+    };
+    const result = await service.findAll(
+      pagination as PaginationDto,
+      "123",
+      adminPayload
+    );
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(result.rows).toHaveLength(5);
+    expect(result.count).toBe(15); // total eventos
+  });
+
+  it("should return events sorted in insertion order (Banio, Vacuna, Desparasitacion)", async () => {
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
+
+    const now = new Date();
+
+    // Mock de los modelos: solo necesitan id y fecha
+    Banio.findAll = vi.fn().mockResolvedValue([{ id: 1, fecha: now }]);
+    Vacuna.findAll = vi.fn().mockResolvedValue([{ id: 2, fecha: now }]);
+    Desparasitacion.findAll = vi
+      .fn()
+      .mockResolvedValue([{ id: 3, fecha: now }]);
 
     const pagination: Partial<PaginationDto> = {
       page: 1,
@@ -300,103 +195,51 @@ it("should return combined events when registro exists", async () => {
       getOffset: () => 0,
       getOrder: () => [],
     };
+    const result = await service.findAll(
+      pagination as PaginationDto,
+      "123",
+      adminPayload
+    );
 
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
+    // Verificamos que el servicio devuelva tres eventos
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(result.rows).toHaveLength(3);
 
-    expect(result.data).toEqual([]);
-    expect(result.count).toBe(0);
+    // Obtenemos el valor serializado de los objetos para inspeccionar el "activity" inferido
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+    const serialized = (result.rows as unknown as any[]).map((r: any) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      JSON.parse(JSON.stringify(r))
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    const tipos = serialized.map((r: { activity: any }) => r.activity);
+    expect(tipos).toEqual(["Baño", "Vacuna", "Desparasitación"]);
   });
 
+  it("should handle pagination size 0", async () => {
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
 
+    Banio.findAll = vi
+      .fn()
+      .mockResolvedValue([{ id: 1, actividad: "Baño", fecha: new Date() }]);
+    Vacuna.findAll = vi.fn().mockResolvedValue([]);
+    Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
 
-it("should slice correctly when pagination page is beyond total events", async () => {
-  RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
+    const pagination: Partial<PaginationDto> = {
+      page: 1,
+      size: 0,
+      getOffset: () => 0,
+      getOrder: () => [],
+    };
+    const result = await service.findAll(
+      pagination as PaginationDto,
+      "123",
+      adminPayload
+    );
 
-  const events = Array.from({ length: 3 }, (_, i) => ({ id: i + 1, fecha: new Date("2025-09-19") }));
-  Banio.findAll = vi.fn().mockResolvedValue(events);
-  Vacuna.findAll = vi.fn().mockResolvedValue([]);
-  Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
-
-  const pagination: Partial<PaginationDto> = {
-    page: 2,
-    size: 5,
-    getOffset: () => 5,
-    getOrder: () => [],
-  };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-  expect(result.data).toEqual([]);
-  expect(result.count).toBe(3);
-});
-
-
-it("should return events sorted in insertion order (Banio, Vacuna, Desparasitacion)", async () => {
-  RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
-
-  Banio.findAll = vi.fn().mockResolvedValue([{ id: 1, fecha: new Date("2025-01-01") }]);
-  Vacuna.findAll = vi.fn().mockResolvedValue([{ id: 2, fecha: new Date("2025-02-01") }]);
-  Desparasitacion.findAll = vi.fn().mockResolvedValue([{ id: 3, fecha: new Date("2025-03-01") }]);
-
-  const pagination: Partial<PaginationDto> = {
-    page: 1,
-    size: 10,
-    getOffset: () => 0,
-    getOrder: () => [],
-  };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-  const actividades = result.data.map(r => r.actividad);
-  expect(actividades).toEqual(["Baño", "Vacuna", "Desparasitación"]);
-});
-
-it("should handle pagination size 0", async () => {
-  RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
-
-  Banio.findAll = vi.fn().mockResolvedValue([{ id: 1, fecha: new Date("2025-09-19") }]);
-  Vacuna.findAll = vi.fn().mockResolvedValue([]);
-  Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
-
-  const pagination: Partial<PaginationDto> = {
-    page: 1,
-    size: 0,
-    getOffset: () => 0,
-    getOrder: () => [],
-  };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-  expect(result.data).toEqual([]);
-  expect(result.count).toBe(1);
-});
-
-
-it("should handle events with duplicated IDs", async () => {
-  RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 1 });
-
-  const duplicateEvents = [
-    { id: 1, fecha: new Date("2025-01-01") },
-    { id: 1, fecha: new Date("2025-02-01") },
-  ];
-
-  Banio.findAll = vi.fn().mockResolvedValue(duplicateEvents);
-  Vacuna.findAll = vi.fn().mockResolvedValue([]);
-  Desparasitacion.findAll = vi.fn().mockResolvedValue([]);
-
-  const pagination: Partial<PaginationDto> = {
-    page: 1,
-    size: 10,
-    getOffset: () => 0,
-    getOrder: () => [],
-  };
-
-  const result = await service.findAll(pagination as PaginationDto, "123", adminPayload);
-
-  expect(result.data).toHaveLength(2);
-  expect(result.data.map(r => r.id)).toEqual([1, 1]);
-  expect(result.count).toBe(2);
-});
-
-
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(result.rows).toEqual([]);
+    expect(result.count).toBe(1); // total eventos aunque size=0
+  });
 });

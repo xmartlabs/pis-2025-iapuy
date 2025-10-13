@@ -3,12 +3,12 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import { LoginContext } from "@/app/context/login-context";
 import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { UserType } from "@/app/page";
+import { forbidden } from 'next/navigation'
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -109,10 +109,9 @@ export default function DetallePerro() {
             className="mb-8"
           />
         )}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1
-            className="text-3xl font-serif font-bold text-[#1B2F13]"
-            style={{ fontFamily: "Poppins, sans-serif" }}
+            className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle"
           >
             {infoPerro.nombre}
           </h1>
@@ -135,26 +134,13 @@ export default function DetallePerro() {
             titulo="DUEÑO"
             valor={infoPerro.duenioNombre ? infoPerro.duenioNombre : ""}
           />
-          <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
-          <Dato titulo="FUERTES" valor={infoPerro.fortalezas} />
+          {infoPerro.descripcion &&(<Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />)}
+          {infoPerro.descripcion &&(<Dato titulo="FUERTES" valor={infoPerro.fortalezas} />)}
         </div>
       </div>
 
       {isOpenError && (
-        <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">Error</h2>
-            <p>Hubo un problema cargando el Perro</p>
-            <div className="mt-6 flex justify-center">
-              <Link
-                href="/app/admin/perros"
-                className="bg-red-400 text-white px-4 py-2 rounded"
-              >
-                Regresar
-              </Link>
-            </div>
-          </div>
-        </div>
+        forbidden()
       )}
     </>
   );

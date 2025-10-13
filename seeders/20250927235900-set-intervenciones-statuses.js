@@ -5,25 +5,25 @@ module.exports = {
   async up(queryInterface) {
     await queryInterface.bulkUpdate(
       "intervenciones",
-      { status: "Pendiente" },
+      { status: "Pendiente de asignacion" },
       { timeStamp: new Date("2025-01-10T14:30:00") }
     );
 
     await queryInterface.bulkUpdate(
       "intervenciones",
-      { status: "Finalizada" },
+      { status: "Cupo completo" },
       { timeStamp: new Date("2025-02-05T09:00:00") }
     );
 
     await queryInterface.bulkUpdate(
       "intervenciones",
-      { status: "Suspendida" },
+      { status: "Realizada" },
       { timeStamp: new Date("2025-02-20T11:00:00") }
     );
 
     await queryInterface.bulkUpdate(
       "intervenciones",
-      { status: "Pendiente" },
+      { status: "Finalizada" },
       { id: "a1111111-1111-1111-1111-111111111111" }
     );
 
