@@ -1,13 +1,10 @@
 /* eslint-disable check-file/folder-naming-convention */
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { Plus } from "lucide-react";
-import ListadoIntervencionesColab from "@/app/app/colaboradores/intervenciones/list-colab";
-//import ListadoIntervenciones from "../../../../components/listado-intervenciones";
+import ListadoIntervenciones from "@/app/components/intervenciones/listado-intervenciones";
 
 export default function PantallaIntervencionesCollaborador() {
   const router = useRouter();
@@ -40,7 +37,7 @@ export default function PantallaIntervencionesCollaborador() {
 
   return (
     <>
-      <ListadoIntervencionesColab />
+      <ListadoIntervenciones isColab={true} />
       <Toaster position="bottom-right" richColors />
     </>
   );

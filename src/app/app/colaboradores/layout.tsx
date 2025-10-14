@@ -1,21 +1,20 @@
 "use client";
 import { useContext, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
 import {UserType} from "@/app/page"
+import { forbidden } from 'next/navigation'
 interface Props {
   children: React.ReactNode;
 }
 export default function AdminLayout({ children }: Props) {
-    const router = useRouter();
     const context = useContext(LoginContext);
     const userType:UserType |null=context?.userType ??null;
     useEffect(() => {
         
         if (userType === UserType.Administrator) {
-        router.push("/"); 
+          forbidden(); 
         }
-    }, [userType, router]);
+    }, [userType]);
     if (userType === null) return null;
     return <>{children}</>;
 }

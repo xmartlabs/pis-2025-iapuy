@@ -12,10 +12,11 @@ import { Institucion } from "@/app/models/institucion.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 
-import { Gasto } from "@/app/models/gastos.entity";
+import { Expense } from "@/app/models/expense.entity";
 import type { ModelStatic, Model } from "sequelize";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
+import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -45,8 +46,8 @@ const registerUserAssociations = () => {
     });
   }
 
-  if (!hasAssociation(User, Gasto)) {
-    User.hasMany(Gasto, {
+  if (!hasAssociation(User, Expense)) {
+    User.hasMany(Expense, {
       foreignKey: "userId",
       sourceKey: "ci",
       as: "Gastos",
@@ -106,6 +107,12 @@ const registerIntervencionAssociations = () => {
       foreignKey: "intervencionId",
     });
   }
+  if (!hasAssociation(Intervention, PerroExperiencia)) {
+    Intervention.hasMany(PerroExperiencia, {
+      as: "DogExperiences",
+      foreignKey: "intervencion_id",
+    });
+  }
 };
 
 const registerInstitucionIntervencionAssociations = () => {
@@ -159,7 +166,7 @@ const registerInstitucionAssociations = () => {
       otherKey: "intervencionId",
       foreignKey: "institucionId",
     });
-    
+
     Institucion.belongsToMany(Patologia, {
       through: InstitucionPatologias,
       foreignKey: "institucionId",
@@ -187,17 +194,17 @@ const registerInstitutionContactsAssociations = () => {
     });
   }
 };
-const registerGastoAssociations = () => {
-  if (!hasAssociation(Gasto, User)) {
-    Gasto.belongsTo(User, {
+const registerExpenseAssociations = () => {
+  if (!hasAssociation(Expense, User)) {
+    Expense.belongsTo(User, {
       foreignKey: "userId",
       targetKey: "ci",
       as: "User",
     });
   }
-  if (!hasAssociation(Gasto, Intervention)) {
-    Gasto.belongsTo(Intervention, {
-      foreignKey: "intervencionId",
+  if (!hasAssociation(Expense, Intervention)) {
+    Expense.belongsTo(Intervention, {
+      foreignKey: "interventionId",
       targetKey: "id",
       as: "Intervencion",
     });
@@ -221,7 +228,7 @@ export async function initDatabase(): Promise<void> {
     registerRegistroSanidadAssociations();
     registerInstitucionAssociations();
     registerInstitucionIntervencionAssociations();
-    registerGastoAssociations();
+    registerExpenseAssociations();
     registerInstitutionContactsAssociations();
     initialized = true;
     initPromise = null;

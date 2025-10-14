@@ -200,7 +200,7 @@ export default function InstitutionList() {
   return (
     <div className=" max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1 mb-[32px]">
+        <div className="w-full h-[48px] flex justify-between opacity-100 mb-[32px]">
           <div className="flex items-center gap-3">
             <Building className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
             <h1 className="text-5xl font-extrabold tracking-tight ">
@@ -224,6 +224,10 @@ export default function InstitutionList() {
             Agregar institución
           </Button>
         </div>
+      </div>
+
+      <div className="flex justify-end items-end gap-4 mb-4">
+        <CustomSearchBar searchInput={""} setSearchInput={() => {}} />
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="w-full overflow-x-auto">
