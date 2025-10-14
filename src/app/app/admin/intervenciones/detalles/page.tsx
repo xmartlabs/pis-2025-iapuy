@@ -10,6 +10,7 @@ import TabSelector from "@/app/components/interventions/details/tab-selector";
 import DeleteIntervention from "@/app/components/interventions/details/delete-intervention";
 import DogsNPersons from "@/app/components/interventions/details/tab-dogs-and-persons";
 import InterventionDay from "@/app/components/interventions/details/tab-intervention-day";
+import type { ApiResponse } from "@/app/components/interventions/details/types";
 
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
@@ -27,45 +28,12 @@ function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   );
 }
 
-type ApiResponse = {
-  intervention: DetallesIntervencionDto;
-  error: string;
-  status: number;
-};
-
-type dupla = {
-  guide: string;
-  dog: string;
-};
-
-type DetallesIntervencionDto = {
-  id: string;
-  org: string;
-  tipo: string;
-  descripcion: string;
-  date: string;
-  duplas: dupla[];
-  companions: string[];
-};
-
-const interventionDefault = {
-  id: "",
-  org: "casmu",
-  tipo: "educativa",
-  descripcion: "desc",
-  date: "11/06/25 15:00",
-  duplas: [
-    { guide: "Carla Sosa", dog: "Mara" },
-    { guide: "Juan Pérez", dog: "Rex" },
-  ] as dupla[],
-  companions: ["Carla Sosa", "Daniela Nuñez"],
-};
-
 const tabsTitles = ["Personas y perros", "Día de la intervención"];
 
 export default function IntervencionPage() {
   const [activeTab, setActiveTab] = useState("Personas y perros");
-  const [infoIntervention, setInfoIntervention] = useState(interventionDefault);
+  const [infoIntervention, setInfoIntervention] = useState<ApiResponse>();
+  const [interventionName, setInterventionName] = useState<string>("");
   const context = useContext(LoginContext);
 
   function handleTabChange(tab: string) {
@@ -81,7 +49,6 @@ export default function IntervencionPage() {
       };
       const triedRefresh = false;
 
-      // TODO: check correct endpoint when merged to dev
       const resp = await fetch(`/api/intervention/${id}/details`, {
         method: "GET",
         headers: baseHeaders,
@@ -122,25 +89,39 @@ export default function IntervencionPage() {
   useEffect(() => {
     fetchDetallesIntervencion(id)
       .then((pageResult: ApiResponse) => {
-        setInfoIntervention(pageResult.intervention || interventionDefault);
+        setInfoIntervention(pageResult);
+        setInterventionName(
+          `${pageResult.Institucions[0]?.nombre} ${new Date(
+            pageResult.timeStamp
+          ).toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`
+        );
       })
       .catch(() => {});
   }, [fetchDetallesIntervencion, id]);
 
+  if (!infoIntervention) {
+    return <div>Cargando...</div>;
+  }
   return (
     <div className="w-[98%]">
       <CustomBreadCrumb
         link={["/app/admin/intervenciones/listado", "Intervenciones"]}
-        current={`${infoIntervention.org} ${infoIntervention.date}`}
+        current={`${interventionName}`}
         className="mb-8"
       />
 
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-[#1B2F13]">
-          {`${infoIntervention.org} ${infoIntervention.date}`}
+        <h1 className="text-5xl font-semibold text-[#1B2F13] tracking-[-2.5%] leading-none">
+          {`${interventionName}`}
         </h1>
         <Button className="bg-[#5B9B40] hover:bg-green-800 text-white">
-          <Pencil className="w-4 h-4 mr-2" />
+          <Pencil className="w-3 h-4 mr-1" />
           Editar
         </Button>
       </div>
@@ -153,7 +134,10 @@ export default function IntervencionPage() {
         <Dato
           titulo="DESCRIPCIÓN"
           valor={
-            infoIntervention.descripcion ? infoIntervention.descripcion : ""
+            infoIntervention.description &&
+            infoIntervention.description.length > 0
+              ? infoIntervention.description
+              : "Sin descripción."
           }
         />
       </div>
@@ -167,12 +151,15 @@ export default function IntervencionPage() {
 
       <InterventionDay
         shown={activeTab === tabsTitles[1]}
-        patients={[]}
-        dogs={[]}
-        link={""}
+        patients={infoIntervention.Pacientes || []}
+        dogs={infoIntervention.UsrPerroIntervention || []}
+        photos={infoIntervention.fotosUrls}
+        link={infoIntervention.driveLink ? infoIntervention.driveLink : ""}
       />
 
-      <DeleteIntervention />
+      <div className="mt-2">
+        <DeleteIntervention />
+      </div>
     </div>
   );
 }

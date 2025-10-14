@@ -10,20 +10,20 @@ export default function Dupla({
   dog?: string;
 }) {
   return (
-    <Card className="shadow-sm border rounded-2xl">
+    <Card className="border border-[#BDD7B3] rounded-lg">
       <CardTitle
-        className="px-6 text-lg font-semibold text-[#1B2F13]"
+        className="px-6 text-xl leading-7 font-semibold text-[#1B2F13]"
         style={{ fontFamily: "Archivo, sans-serif" }}
       >{`Dupla ${number}`}</CardTitle>
       <CardContent className="px-6">
-        <div className="text-sm flex flex-row gap-7">
+        <div className="flex flex-row gap-7">
           <div className="flex flex-col gap-2">
-            <span className="font-semibold text-gray-700">Guía:</span>
-            <span>{guide}</span>
+            <span className="text-xs">GUÍA</span>
+            <span className="leading-7 text-[#121F0D]">{guide}</span>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="font-semibold text-gray-700">Perro:</span>
-            <span>{dog}</span>
+            <span className="text-xs">PERRO</span>
+            <span className="leading-7 text-[#121F0D]">{dog}</span>
           </div>
         </div>
       </CardContent>

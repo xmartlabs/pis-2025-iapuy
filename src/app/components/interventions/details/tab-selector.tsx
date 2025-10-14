@@ -14,16 +14,15 @@ export default function TabSelector({
     onTabChange(tab);
   };
 
-  const selectedClasses =
-    "bg-white text-green-900 font-semibold shadow-lg ease-in-out";
+  const selectedClasses = "bg-white text-[#121F0D] ease-in-out";
   const unselectedClasses =
-    "text-green-800/70 hover:text-green-900 transition-colors";
+    "text-[#5B9B40] hover:text-green-900 transition-colors";
   const baseClasses =
-    "rounded-md text-lg cursor-pointer text-center whitespace-nowrap py-2 px-2";
+    "rounded-md font-medium text-sm leading-5 cursor-pointer text-center whitespace-nowrap py-1.5 px-1";
 
   return (
-    <div className="mb-6">
-      <div className="py-1 h-14 w-fit bg-[#DEEBD9] overflow-hidden rounded-md items-center flex gap-3 px-2">
+    <div className="my-5">
+      <div className="h-10 w-fit bg-[#DEEBD9] overflow-hidden rounded-md items-center flex gap-3 px-1">
         {Titles.map((title, index) => (
           <button
             key={index}
