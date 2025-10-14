@@ -37,7 +37,7 @@ export class ExpensesService {
 
   let fechaWhere: Record<string, unknown> | undefined = undefined;
   if (months && months.trim()) {
-    const [year, month] = months.split("-").map(Number); // ej: "2025-10"
+    const [year, month] = months.split("-").map(Number); //! "2025-10"
     if (year && month) {
       const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
       const end = new Date(year, month, 0, 23, 59, 59, 999);

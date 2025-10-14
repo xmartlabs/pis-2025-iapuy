@@ -5,9 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Funnel } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
+export interface pairPerson {
+  userId :string;
+  nombre : string;
+}
+
 type Props = {
   months: string[];
-  people: string[];
+  people: pairPerson[];
   statuses: string[];
   initialSelectedMonths?: string[];
   initialSelectedStatuses?: string[];
@@ -165,10 +170,10 @@ export default function FilterDropdown({
             <div className="space-y-1">
               {people.map((person) => (
                 <CheckboxRow
-                  key={person}
-                  label={person}
-                  checked={localSelectedPeople.includes(person)}
-                  onCheckedChange={(checked) => { setPersonChecked(person, checked); }}
+                  key={person.userId}
+                  label={person.nombre}
+                  checked={localSelectedPeople.includes(person.userId)}
+                  onCheckedChange={(checked) => { setPersonChecked(person.userId, checked); }}
                 />
               ))}
             </div>

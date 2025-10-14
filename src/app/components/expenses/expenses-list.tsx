@@ -19,7 +19,7 @@ import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
-import FilterDropdown from "@/app/components/expenses/filter-dropdown";
+import FilterDropdown, { type pairPerson } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 
@@ -40,7 +40,7 @@ export default function ExpensesList() {
 
   const [expense, setExpense] = useState<ExpenseDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
-  const [peopleWhoHaveExpent , setPeopleWhoHaveExpent] = useState<string[]>([]);
+  const [peopleWhoHaveExpent , setPeopleWhoHaveExpent] = useState<pairPerson[]>([]);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -95,6 +95,8 @@ export default function ExpensesList() {
         {url.searchParams.set("statuses", selectedStatuses.join(","))};
       if (selectedPeople && selectedPeople.length)
         {url.searchParams.set("people", selectedPeople.join(","))};
+
+      console.log(selectedPeople)
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -208,14 +210,22 @@ export default function ExpensesList() {
     fetchExpenses(page, size, search, controller.signal)
       .then((res) => {
         if (res) {
+
           setExpense(res.data);
           setTotalPages(res.totalPages ?? 1);
 
-          const availablePeople = Array.from(
-            new Set(res.data.map((exp) => exp.user?.nombre ?? exp.userId))
-          );
-          setPeopleWhoHaveExpent(availablePeople);
-
+          if (peopleWhoHaveExpent.length === 0) {
+          const mapPeople = new Map<string, pairPerson>();
+          res.data.forEach((exp) => {
+            if (exp.user) {
+              mapPeople.set(exp.user.ci, { userId: exp.user.ci, nombre: exp.user.nombre });
+            } else {
+              mapPeople.set(exp.userId, { userId: exp.userId, nombre: exp.userId });
+            }
+          });
+          setPeopleWhoHaveExpent(Array.from(mapPeople.values()));
+          }
+          
           if (availableMonths.length === 0) {
             try {
               const map = new Map<string, number>();
@@ -301,7 +311,7 @@ export default function ExpensesList() {
       <FilterDropdown
         months={availableMonths}
         statuses={statuses}
-        people={peopleWhoHaveExpent}
+        people= {peopleWhoHaveExpent}
         initialSelectedMonths={selectedMonths}
         initialSelectedStatuses={selectedStatuses}
         initialSelectedPeople={selectedPeople}
