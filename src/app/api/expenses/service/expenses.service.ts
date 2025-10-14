@@ -43,7 +43,13 @@ export class ExpensesService {
         attributes: ["ci"],
       }),
     ]);
-    if (!intervention) {
+    if (
+      request.type !== "Baño" &&
+      request.type !== "Vacunacion" &&
+      request.type !== "Desparasitacion Interna" &&
+      request.type !== "Desparasitacion Externa" &&
+      !intervention
+    ) {
       throw new Error(
         `Intervention with id "${request.interventionId}" not found`
       );
@@ -61,5 +67,22 @@ export class ExpensesService {
     });
 
     return expense;
+  }
+
+  async update(id: string, data: Partial<Expense>): Promise<Expense | null> {
+    const expense = await Expense.findByPk(id);
+    if (!expense) return null;
+    const toUpdate: Partial<Expense> = { ...data };
+    if (toUpdate.amount && typeof toUpdate.amount === "string") {
+      const parsed = Number(toUpdate.amount as unknown as string);
+      if (!Number.isNaN(parsed)) {
+        (toUpdate as unknown as Record<string, unknown>).amount = parsed;
+      }
+    }
+
+    const updated = await expense.update(
+      toUpdate as unknown as Partial<Expense>
+    );
+    return updated;
   }
 }
