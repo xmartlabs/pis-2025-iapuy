@@ -7,10 +7,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 type Props = {
   months: string[];
+  people: string[];
   statuses: string[];
   initialSelectedMonths?: string[];
   initialSelectedStatuses?: string[];
-  onSelectionChangeAction?: (months: string[], statuses: string[]) => void;
+  initialSelectedPeople? : string[];
+  onSelectionChangeAction?: (months: string[], statuses: string[], people : string[] ) => void;
 };
 
 const CheckboxRow: React.FC<{
@@ -34,8 +36,10 @@ const CheckboxRow: React.FC<{
 export default function FilterDropdown({
   months,
   statuses,
+  people,
   initialSelectedMonths,
   initialSelectedStatuses,
+  initialSelectedPeople,
   onSelectionChangeAction,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,12 +51,15 @@ export default function FilterDropdown({
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>(
     initialSelectedStatuses ?? [],
   );
+  const [localSelectedPeople, setLocalSelectedPeople] = useState<string[]>(
+    initialSelectedPeople ?? [],
+  );
 
   useEffect(() => {
     if (onSelectionChangeAction) {
-      onSelectionChangeAction(localSelectedMonths, localSelectedStatuses);
+      onSelectionChangeAction(localSelectedMonths, localSelectedStatuses,localSelectedPeople);
     }
-  }, [localSelectedMonths, localSelectedStatuses, onSelectionChangeAction]);
+  }, [localSelectedMonths, localSelectedStatuses,localSelectedPeople,onSelectionChangeAction]);
 
   const setMonthChecked = (month: string, checked: boolean) => {
     setLocalSelectedMonths((prev) =>
@@ -63,6 +70,12 @@ export default function FilterDropdown({
   const setStatusChecked = (status: string, checked: boolean) => {
     setLocalSelectedStatuses((prev) =>
       checked ? (prev.includes(status) ? prev : [...prev, status]) : prev.filter((s) => s !== status),
+    );
+  };
+
+  const setPersonChecked = (person: string, checked: boolean) => {
+    setLocalSelectedPeople((prev) =>
+      checked ? (prev.includes(person) ? prev : [...prev, person]) : prev.filter((s) => s !== person),
     );
   };
 
@@ -138,6 +151,24 @@ export default function FilterDropdown({
                   label={status}
                   checked={localSelectedStatuses.includes(status)}
                   onCheckedChange={(checked) => { setStatusChecked(status, checked); }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <hr className="my-2 border-gray-200" />
+
+          <div className="p-2">
+            <h3 className="font-bold text-gray-800 text-base pb-2 pl-2">
+              Personas
+            </h3>
+            <div className="space-y-1">
+              {people.map((person) => (
+                <CheckboxRow
+                  key={person}
+                  label={person}
+                  checked={localSelectedPeople.includes(person)}
+                  onCheckedChange={(checked) => { setPersonChecked(person, checked); }}
                 />
               ))}
             </div>

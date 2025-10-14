@@ -9,6 +9,7 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  BelongsTo,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 import { Intervention } from "./intervention.entity";
@@ -41,9 +42,15 @@ export class Expense extends Model {
   @Column({ type: DataType.STRING })
   declare userId: string;
 
+  @BelongsTo(() => User, { as: "user" })
+  declare user?: User;
+
   @ForeignKey(() => Intervention)
   @Column
   declare interventionId: string;
+
+  @BelongsTo(() => Intervention, { as: "intervention" })
+  declare intervention?: Intervention;
 
   @Column({
     type: DataType.ENUM(...EXPENSE_TYPES),
@@ -66,6 +73,9 @@ export class Expense extends Model {
 
   @Column
   declare amount: number;
+
+  @Column
+  declare dateSanity: Date;
 
   @CreatedAt
   declare createdAt: Date;
