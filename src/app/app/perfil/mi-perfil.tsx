@@ -260,7 +260,7 @@ export default function DetallePersona() {
               <>
                 <AlertTitle>
                   Si necesitás una nueva contraseña, Hacé{" "}
-                  <a href="/perfil/cambiar-contraseña" className="!underline">
+                  <a href="/app/perfil/change-password" className="!underline">
                     click acá
                   </a>
                   .
