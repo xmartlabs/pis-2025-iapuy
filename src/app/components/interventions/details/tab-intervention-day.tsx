@@ -1,5 +1,6 @@
 import Dogs from "./dogs";
 import Pacientes from "./patient";
+import type { UsrDogIntervention, Patient } from "./types";
 
 export default function InterventionDay({
   shown,
@@ -9,8 +10,8 @@ export default function InterventionDay({
   link,
 }: {
   shown: boolean;
-  patients: any[];
-  dogs: any[];
+  patients: Patient[];
+  dogs: UsrDogIntervention[];
   photos: string[];
   link: string;
 }) {
