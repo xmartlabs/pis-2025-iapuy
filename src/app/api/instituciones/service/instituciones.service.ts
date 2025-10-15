@@ -29,6 +29,13 @@ export class InstitucionesService {
         {
           model: Patologia,
           as: "Patologias",
+          attributes: ["id", "nombre"],
+          through: { attributes: [] },
+        },
+        {
+          model: InstitutionContact,
+          as: "InstitutionContacts",
+          attributes: ["id", "name", "contact"],
         },
       ],
       limit: pagination.size,

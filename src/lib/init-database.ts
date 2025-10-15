@@ -17,6 +17,7 @@ import type { ModelStatic, Model } from "sequelize";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
+import { Paciente } from "@/app/models/pacientes.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -68,6 +69,13 @@ const registerPerroAssociations = () => {
       as: "RegistroSanidad",
     });
   }
+  if (!hasAssociation(Perro, PerroExperiencia)) {
+    Perro.hasMany(PerroExperiencia, {
+      foreignKey: "perro_id",
+      sourceKey: "id",
+      as: "DogExperiences",
+    });
+  }
 };
 
 const registerUsrPerroAssociations = () => {
@@ -111,6 +119,18 @@ const registerIntervencionAssociations = () => {
     Intervention.hasMany(PerroExperiencia, {
       as: "DogExperiences",
       foreignKey: "intervencion_id",
+    });
+  }
+  if (!hasAssociation(Intervention, Paciente)) {
+    Intervention.hasMany(Paciente, {
+      as: "Pacientes",
+      foreignKey: "intervencion_id",
+    });
+  }
+  if (!hasAssociation(Intervention, Acompania)) {
+    Intervention.hasMany(Acompania, {
+      as: "Acompania",
+      foreignKey: "intervencionId",
     });
   }
 };
@@ -188,6 +208,10 @@ const registerInstitutionContactsAssociations = () => {
     InstitutionContact.belongsTo(Institucion, {
       foreignKey: "institutionId",
     });
+    Institucion.hasMany(InstitutionContact, {
+      foreignKey: "institutionId",
+      as: "InstitutionContacts",
+    });
   }
 };
 const registerExpenseAssociations = () => {
@@ -203,6 +227,34 @@ const registerExpenseAssociations = () => {
       foreignKey: "interventionId",
       targetKey: "id",
       as: "Intervencion",
+    });
+  }
+};
+const registerPatientsAssociations = () => {
+  if (!hasAssociation(Paciente, Intervention)) {
+    Paciente.belongsTo(Intervention, {
+      foreignKey: "intervencion_id",
+      targetKey: "id",
+      as: "Intervention",
+    });
+  }
+  if (!hasAssociation(Paciente, Patologia)) {
+    Paciente.hasMany(Patologia, {
+      foreignKey: "id",
+      sourceKey: "patologia_id",
+      as: "Patologia",
+    });
+  }
+};
+
+const registerCompanionAssociations = () => {
+  if (!hasAssociation(Acompania, User)) {
+    Acompania.belongsTo(User, { foreignKey: "userId", as: "User" });
+  }
+  if (!hasAssociation(Acompania, Intervention)) {
+    Acompania.belongsTo(Intervention, {
+      foreignKey: "intervencionId",
+      as: "Intervention",
     });
   }
 };
@@ -226,6 +278,8 @@ export async function initDatabase(): Promise<void> {
     registerInstitucionIntervencionAssociations();
     registerExpenseAssociations();
     registerInstitutionContactsAssociations();
+    registerPatientsAssociations();
+    registerCompanionAssociations();
     initialized = true;
     initPromise = null;
   })();
