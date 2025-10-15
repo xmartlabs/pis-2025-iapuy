@@ -16,6 +16,10 @@ import { Intervention } from "@/app/models/intervention.entity";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as fs from "fs";
 import * as path from "path";
+import { UsrPerro } from "@/app/models/usrperro.entity";
+import { Paciente } from "@/app/models/pacientes.entity";
+import { User } from "@/app/models/user.entity";
+import { Perro } from "@/app/models/perro.entity";
 
 export class InstitucionesService {
   async findAll(
@@ -146,6 +150,25 @@ export class InstitucionesService {
           required: true,
           attributes: [],
         },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["id"],
+          include: [
+            {
+              model: User,
+              as: "User",
+            },
+            {
+              model: Perro,
+              as: "Perro",
+            },
+          ],
+        },
+        {
+          model: Paciente,
+          as: "PacienteIntervencion",
+        },
       ],
     });
 
@@ -157,7 +180,7 @@ export class InstitucionesService {
     const fontSizeTitle = 18;
     const fontSizeHeader = 12;
     const fontSize = 10;
-    const rowHeight = 22; // increased spacing between rows
+    const rowHeight = 22;
 
     const timesRomanFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
@@ -216,17 +239,16 @@ export class InstitucionesService {
       });
     }
 
-    // Table headers - giving more space to "Descripción"
-    const headers = ["Fecha", "Tipo", "Status", "Pares", "Descripción"];
+    // Table headers - Fecha y hora, Guías, Perros, Pacientes
+    const headers = ["Fecha y hora", "Guías", "Perros", "Pacientes"];
     const startY = height - margin - fontSizeTitle - 25;
     let y = startY;
 
     const colWidths = [
-      70, // Fecha
-      60, // Tipo
-      60, // Status
-      40, // Pares
-      width - margin * 2 - (70 + 60 + 60 + 40), // Descripción - remaining space
+      140, // Fecha y hora
+      160, // Guías
+      120, // Perros
+      width - margin * 2 - (140 + 160 + 120), // Pacientes - remaining space
     ];
 
     const xPositions: number[] = [];
@@ -242,7 +264,7 @@ export class InstitucionesService {
         page.drawText(headers[i], {
           x: xPositions[i] + 2,
           y,
-          size: i === headers.length - 1 ? fontSizeHeader : 10, // "Descripción" has font size 12, others 10
+          size: fontSizeHeader,
           font: timesRomanFont,
           color: rgb(0.2, 0.2, 0.2),
         });
@@ -281,44 +303,109 @@ export class InstitucionesService {
       return lines;
     };
 
-    // Draw rows with multi-line wrapping for all columns to prevent text overflow
-    for (const interv of interventions) {
+  // Table geometry helpers
+  const tableLeft = xPositions[0] - 4;
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0) + 4;
+  const rowPadding = 6;
+
+  // Track per-page bounds so we can draw an outer rounded border per page
+  let pageMinBottom: number | null = null;
+  let pageTop = startY + rowPadding;
+
+    // Helper to construct an SVG path for a rounded rectangle
+    const roundedRectPath = (px: number, py: number, w: number, h: number, r: number) => {
+      const fmt = (n: number) => Number(n.toFixed(2));
+      const x1 = fmt(px);
+      const y1 = fmt(py);
+      const x2 = fmt(px + w);
+      const y2 = fmt(py + h);
+      const rx = fmt(Math.min(r, w / 2));
+      const ry = fmt(Math.min(r, h / 2));
+
+      return (
+        `M ${fmt(x1 + rx)} ${y1}` +
+        ` H ${fmt(x2 - rx)}` +
+        ` A ${rx} ${ry} 0 0 1 ${x2} ${fmt(y1 + ry)}` +
+        ` V ${fmt(y2 - ry)}` +
+        ` A ${rx} ${ry} 0 0 1 ${fmt(x2 - rx)} ${y2}` +
+        ` H ${fmt(x1 + rx)}` +
+        ` A ${rx} ${ry} 0 0 1 ${x1} ${fmt(y2 - ry)}` +
+        ` V ${fmt(y1 + ry)}` +
+        ` A ${rx} ${ry} 0 0 1 ${fmt(x1 + rx)} ${y1}` +
+        ` Z`
+      );
+    };
+
+    // Draw rows with multi-line wrapping for the 4 columns
+  for (const interv of interventions) {
       // Prepare row values
       const dateStr = interv.timeStamp
-        ? new Date(interv.timeStamp).toLocaleString().split(",")[0]
+        ? new Date(interv.timeStamp).toLocaleString()
         : "";
-      const tipo = (interv.tipo as unknown as string) ?? "";
-      const status = (interv.status as unknown as string) ?? "";
-      const pares =
-        interv.pairsQuantity !== null && interv.pairsQuantity !== undefined
-          ? String(interv.pairsQuantity)
-          : "";
-      const desc = interv.description ? String(interv.description) : "";
 
-      // Wrap text for ALL non-description columns to prevent overflow
+      // Guides (Usuarios) and Perros come from UsrPerroIntervention
+      const usrPerros: UsrPerro[] = (interv.UsrPerroIntervention as UsrPerro[]) || [];
+      const guidesArr = usrPerros
+        .map((up) => up.User && (up.User.nombre ?? String(up.User.ci)))
+        .filter(Boolean) as string[];
+      const guides = Array.from(new Set(guidesArr)).join(", ");
+
+      const perrosArr = usrPerros
+        .map((up) => up.Perro && (up.Perro.nombre ?? ""))
+        .filter(Boolean) as string[];
+      const perros = Array.from(new Set(perrosArr)).join(", ");
+
+      const pacientesArr = (interv.PacienteIntervencion || [])
+        .map((p: Paciente) => p.nombre)
+        .filter(Boolean);
+      const pacientes = Array.from(new Set(pacientesArr)).join(", ");
+
+      const values = [dateStr, guides, perros, pacientes];
+
       const wrappedValues: string[][] = [];
-      const nonDescValues = [dateStr, tipo, status, pares];
-      for (let i = 0; i < colWidths.length - 1; i++) {
-        const value = nonDescValues[i] ?? "";
-        const maxWidth = colWidths[i] - 4;
+      for (let i = 0; i < colWidths.length; i++) {
+        const value = values[i] ?? "";
+        const maxWidth = colWidths[i] - 6;
         wrappedValues.push(wrapText(value, timesRomanFont, fontSize, maxWidth));
       }
-
-      // Wrap description separately with more space
-      const descMaxWidth = colWidths[colWidths.length - 1] - 4;
-      const descLines = wrapText(desc, timesRomanFont, fontSize, descMaxWidth);
-      wrappedValues.push(descLines);
 
       // Calculate total lines needed for this row
       const maxLines = Math.max(...wrappedValues.map((lines) => lines.length));
       const neededHeight = maxLines * rowHeight;
 
-      // If not enough space, add new page and draw header
+      // If not enough space, draw outer border for current page (if any rows drawn), then add new page and draw header
       if (y - neededHeight < margin) {
+        if (pageMinBottom !== null) {
+          const outerBottom = pageMinBottom - rowPadding;
+          const outerHeight = pageTop - outerBottom + rowPadding;
+          const svgPath = roundedRectPath(tableLeft, outerBottom, tableWidth, outerHeight, 8);
+          currentPage.drawSvgPath(svgPath, {
+            borderColor: rgb(0, 0, 0),
+            borderWidth: 1,
+          });
+        }
+
         currentPage = pdfDoc.addPage();
         y = height - margin - fontSizeTitle - 25;
         drawTableHeader(currentPage);
+        // reset per-page bounds
+        pageMinBottom = null;
+        pageTop = startY + rowPadding;
       }
+
+      // Draw rounded rect for this row
+      const rectX = tableLeft;
+      const rectBottom = y - neededHeight - rowPadding / 2;
+      const rectHeight = neededHeight + rowPadding;
+      const rectWidth = tableWidth;
+      const svgPath = roundedRectPath(rectX, rectBottom, rectWidth, rectHeight, 6);
+      currentPage.drawSvgPath(svgPath, {
+        borderColor: rgb(0.85, 0.85, 0.85),
+        borderWidth: 0.6,
+      });
+
+      // update page min bottom for outer border
+      pageMinBottom = pageMinBottom === null ? rectBottom : Math.min(pageMinBottom, rectBottom);
 
       // Draw all columns with proper text wrapping
       for (let col = 0; col < wrappedValues.length; col++) {
@@ -336,6 +423,17 @@ export class InstitucionesService {
 
       // advance y by lines used
       y -= neededHeight;
+    }
+
+    // Draw outer border for last page if needed
+    if (pageMinBottom !== null) {
+      const outerBottom = pageMinBottom - rowPadding;
+      const outerHeight = pageTop - outerBottom + rowPadding;
+      const svgPath = roundedRectPath(tableLeft, outerBottom, tableWidth, outerHeight, 8);
+      currentPage.drawSvgPath(svgPath, {
+        borderColor: rgb(0, 0, 0),
+        borderWidth: 1,
+      });
     }
 
     const pdfBytes = await pdfDoc.save();

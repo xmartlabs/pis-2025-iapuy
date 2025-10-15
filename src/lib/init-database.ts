@@ -17,6 +17,7 @@ import type { ModelStatic, Model } from "sequelize";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
+import { Paciente } from "@/app/models/pacientes.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -93,6 +94,7 @@ const registerIntervencionAssociations = () => {
       foreignKey: "intervencionId",
     });
   }
+
   if (!hasAssociation(Intervention, Institucion)) {
     Intervention.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
@@ -113,6 +115,14 @@ const registerIntervencionAssociations = () => {
       foreignKey: "intervencion_id",
     });
   }
+
+  if (!hasAssociation(Intervention, Paciente)) {
+    Intervention.hasMany(Paciente, {
+      as: "PacienteIntervencion",
+      foreignKey: "intervencion_id",
+    });
+  }
+
 };
 
 const registerInstitucionIntervencionAssociations = () => {
