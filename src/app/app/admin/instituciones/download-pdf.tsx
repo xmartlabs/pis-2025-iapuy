@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { LoginContext } from "@/app/context/login-context";
-import { Printer } from "lucide-react";
+import { Printer, Loader2 } from "lucide-react";
 
 interface LoginContextType {
   tokenJwt?: string | null;
@@ -128,6 +128,7 @@ interface DownloadButtonProps {
 
 export function DownloadButton({ id, dates }: DownloadButtonProps) {
   const context = useContext(LoginContext);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleClick = () => {
     if (!context) {
@@ -135,16 +136,30 @@ export function DownloadButton({ id, dates }: DownloadButtonProps) {
       return;
     }
 
-    handleDownload({ id, dates }, context).catch(() => {});
+    if (isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
+    handleDownload({ id, dates }, context)
+      .catch(() => {})
+      .finally(() => {
+        setIsDownloading(false);
+      });
   };
 
   return (
     <Button
       onClick={handleClick}
-      className="rounded-lg border-2 border-[var(--custom-green)] bg-white p-2 hover:bg-[var(--custom-green)] hover:text-white flex items-center gap-2 text-[var(--custom-green)]"
+      disabled={isDownloading}
+      className="rounded-lg border-2 border-[var(--custom-green)] bg-white p-2 hover:bg-[var(--custom-green)] hover:text-white flex items-center gap-2 text-[var(--custom-green)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[var(--custom-green)]"
     >
-      <Printer className="h-5 w-5 text-[var(--custom-green)]" />
-      Imprimir estado de cuenta
+      {isDownloading ? (
+        <Loader2 className="h-5 w-5 text-[var(--custom-green)] animate-spin" />
+      ) : (
+        <Printer className="h-5 w-5 text-[var(--custom-green)]" />
+      )}
+      {isDownloading ? "Descargando..." : "Imprimir historial"}
     </Button>
   );
 }
