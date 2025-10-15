@@ -54,3 +54,4 @@ node_modules/
 
 # Secret / config files
 /auth-admin.json
+/auth-colab.json
