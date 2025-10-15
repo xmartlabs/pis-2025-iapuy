@@ -40,4 +40,7 @@ export class UsrPerro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
+  declare Perro?: Perro;
 }
