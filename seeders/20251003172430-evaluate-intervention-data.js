@@ -49,7 +49,7 @@ module.exports = {
       {
         id: int3,
         timeStamp: new Date("2025-02-20T11:00:00"),
-        tipo: "terapeutica",
+        tipo: "Terapeutica",
         post_evaluacion: "Algo123",
         //fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),

@@ -19,6 +19,7 @@ import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity"
 import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { User } from "@/app/models/user.entity";
+import { Acompania } from "@/app/models/acompania.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -526,24 +527,40 @@ export class InterventionService {
           attributes: ["id", "nombre"],
         },
         {
-          model: PerroExperiencia,
-          as: "DogExperiences",
-          attributes: ["id", "perro_id", "experiencia"],
-          where: { intervencion_id: id },
-          required: false,
-        },
-        {
           model: UsrPerro,
           as: "UsrPerroIntervention",
           attributes: ["perroId", "userId"],
           include: [
-            { model: Perro, as: "Perro", attributes: ["id", "nombre"] },
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: PerroExperiencia,
+                  as: "DogExperiences",
+                  attributes: ["id", "experiencia"],
+                  where: { intervencion_id: id },
+                  required: false,
+                },
+              ],
+            },
+            { model: User, as: "User", attributes: ["ci", "nombre"] },
           ],
         },
         {
-          model: User,
-          as: "Users",
-          attributes: ["ci", "nombre"],
+          model: Paciente,
+          as: "Pacientes",
+          attributes: ["id", "nombre", "edad", "patologia_id", "experiencia"],
+          include: [
+            { model: Patologia, as: "Patologia", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: Acompania,
+          as: "Acompania",
+          attributes: ["userId"],
+          include: [{ model: User, as: "User", attributes: ["ci", "nombre"] }],
         },
       ],
     });

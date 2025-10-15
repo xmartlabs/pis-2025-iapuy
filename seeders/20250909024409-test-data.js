@@ -48,7 +48,6 @@ module.exports = {
       {
         id: "a1111111-1111-1111-1111-111111111111",
         timeStamp: new Date("2025-09-01T10:00:00Z"),
-        costo: "1500.50",
         tipo: "Educativa",
         status: "Cerrada",
         post_evaluacion: "Evaluación positiva, asistentes comprometidos",
@@ -64,7 +63,6 @@ module.exports = {
       {
         id: "b2222222-2222-2222-2222-222222222222",
         timeStamp: new Date("2025-09-07T15:30:00Z"),
-        costo: "200.00",
         tipo: "Recreativa",
         status: "Suspendida",
         post_evaluacion: null,

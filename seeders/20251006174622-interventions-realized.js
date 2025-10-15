@@ -50,7 +50,7 @@ module.exports = {
       {
         id: int3,
         timeStamp: new Date("2026-02-20T11:00:00"),
-        tipo: "terapeutica",
+        tipo: "Terapeutica",
         post_evaluacion: "PostEval",
         //fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),
@@ -60,7 +60,7 @@ module.exports = {
       {
         id: int4,
         timeStamp: new Date("2027-02-20T11:00:00"),
-        tipo: "recreativa",
+        tipo: "Recreativa",
         post_evaluacion: "PostEval2",
         //fotosUrls: ["foto4.jpg", "foto5.jpg", "foto6.jpg"],
         createdAt: new Date(),
