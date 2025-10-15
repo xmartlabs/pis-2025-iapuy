@@ -1,9 +1,10 @@
 import { initDatabase } from "@/lib/init-database";
 import { ExpensesController } from "./controller/expenses.controller";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
-import { NextResponse } from "next/server";
 import type { Expense } from "@/app/models/expense.entity";
+import type { PayloadForUser } from "../perros/detalles/route";
+import jwt from "jsonwebtoken";
 
 const expensesController = new ExpensesController();
 await initDatabase();
@@ -19,13 +20,39 @@ function getErrorMessage(error: unknown): string {
 
 export async function GET(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+
+    const payload = jwt.decode(accessToken) as PayloadForUser;
+
     const pagination = await extractPagination(request);
 
-    return expensesController.getExpenses(pagination);
+    const months = request.nextUrl.searchParams.get("months");
+    const statuses = request.nextUrl.searchParams.get("statuses");
+    const people = request.nextUrl.searchParams.get("people");
+
+    const res = await expensesController.getExpenses(
+      pagination,
+      payload,
+      months,
+      statuses,
+      people
+    );
+    return NextResponse.json(res);
   } catch (error) {
-    const message = getErrorMessage(error);
-    return NextResponse.json({ error: message }, { status: 400 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Hubo un error en el servidor" },
+      { status: 500 }
+    );
   }
+
 }
 
 export async function POST(request: NextRequest) {
