@@ -9,7 +9,6 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
-  HasMany,
 } from "sequelize-typescript";
 
 import {
@@ -18,7 +17,6 @@ import {
 import { Sequelize } from "sequelize";
 
 import { User } from "./user.entity";
-import { UsrPerro } from "./usrperro.entity";
 
 @Table({ tableName: "perros" })
 export class Perro extends Model{
@@ -38,9 +36,6 @@ export class Perro extends Model{
   @ForeignKey(() => User)
   @Column({ type: DataType.STRING })
   declare duenioId: string;
-
-  @HasMany(() => UsrPerro, { as: "usrPerro", foreignKey: "perroId", sourceKey: "id" })
-  declare usrPerro?: UsrPerro[];
 
   @CreatedAt
   declare createdAt: CreationOptional<Date>;

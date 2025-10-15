@@ -10,10 +10,8 @@ export class InscripcionController {
     try {
         const req : InscripcionDto = await request.json() as InscripcionDto;
 
-        if(!req.tipo) throw new Error("Tipo de inscripción requerida (opciones válidas; 'guia' o 'acompaniante'");
-        if(!req.ci) throw new Error("Cédula del colaborador requerida");
+        if(req.duplas.length === 0 && req.acompaniantes.length === 0) throw new Error("Se requiere al menos una inscripcion");
         if(!req.intervencion) throw new Error("Id de intervención requerida");
-        if(req.tipo === "guia" && !req.perro) throw new Error("Para inscribirse como guía se requiere perro");
 
         return await this.inscripcionService.inscribirse(req);
     } catch (error) {

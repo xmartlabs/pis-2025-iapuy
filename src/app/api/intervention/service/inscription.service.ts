@@ -3,87 +3,91 @@ import { Acompania } from "@/app/models/acompania.entity";
 import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
 import type { InscripcionDto } from "../dtos/inscription.dto";
+import { Intervention } from "@/app/models/intervention.entity";
+import sequelize from "@/lib/database";
 
 export class InscripcionService {
   async inscribirse(
     datos: InscripcionDto
   ){
-    const user = await User.findOne({
-    where: { ci: datos.ci },
-    include: [
-        {
-            model: UsrPerro,
-            as: 'usrPerro',
-            required: false,
-        },
-        {
-            model: Acompania,
-            as: 'acompania',
-            required: false,
-        },
-    ],
+    const intervention = await Intervention.findOne({
+        where: { id: datos.intervention },
+        include: [
+            {
+                model: UsrPerro,
+                as: 'usrPerro',
+                required: false,
+            },
+            {
+                model: Acompania,
+                as: 'acompania',
+                required: false,
+            },
+        ],
     });
+    if(!intervention) throw new Error('Intervención no encontrada');
+    const transaction = await sequelize.transaction();
 
-    if (!user) throw new Error('Usuario no encontrado');
+    try{
+        await Promise.all(
+            datos.duplas?.map(async (dupla) => {
+                const usr = await User.findOne({
+                    where: { ci: dupla.ci },
+                });
+                if(!usr) throw new Error("Usuario no encontrado");
+                const perro = await Perro.findOne({
+                    where: { id: dupla.perro },
+                });
+                if(!perro) throw new Error("Perro no encontrado");
+                const uG = intervention.usrPerro?.some(
+                    (u: UsrPerro) => u.userId === dupla.ci
+                ) ?? false;
+                const uA = intervention.acompania?.some(
+                    (u: Acompania) => u.userId === dupla.ci
+                ) ?? false;
+                if(uA || uG) throw new Error("El usuario ya participa de la intervención");
+                const pG = intervention.usrPerro?.some(
+                    (u: UsrPerro) => u.perroId === dupla.perro
+                ) ?? false;
+                if(pG) throw new Error("El perro ya participa de la intervención");
 
-    const yaGuia = Array.isArray(user.usrPerro) ? user.usrPerro.length > 0 : !!user.usrPerro;
-    const yaAcomp = Array.isArray(user.acompania) ? user.acompania.length > 0 : !!user.acompania;
+                await UsrPerro.create(
+                    { intervencionId: datos.intervention, perroId: dupla.perro, userId: dupla.ci },
+                    { transaction }
+                );
+            })
+        );
+        await Promise.all(
+            datos.acompaniantes?.map(async (usrCi) => {
+                const usr = await User.findOne({
+                    where: { ci: usrCi },
+                });
+                if(!usr) throw new Error("Usuario no encontrado");
+                const uA = intervention.acompania?.some(
+                    (u: Acompania) => u.userId === usrCi
+                ) ?? false;
+                const uG = intervention.usrPerro?.some(
+                    (u: UsrPerro) => u.userId === usrCi
+                ) ?? false;
+                if(uA || uG) throw new Error("El usuario ya participa de la intervención");
 
-    if (yaGuia || yaAcomp) {
-        throw new Error('La persona ya participa de la intervención');
-    }
-    
-    if(datos.tipo === "guia"){
-        const perro = await Perro.findOne({
-            where: { id: datos.perro,  },
-            include: [
-                {
-                    model: UsrPerro,
-                    as: 'usrPerro',
-                    required: false,
-                    where: { intervencionId: datos.intervencion },
-                },
-            ],
-        });
-        if (!perro) throw new Error("Perro no encontrado");
-        if(perro.usrPerro && perro.usrPerro.length > 0) throw new Error("El perro ya participa de la intervención");
-        try{
-            const usrPerro = new UsrPerro({
-                userId: datos.ci,
-                perroId: datos.perro,
-                intervencionId: datos.intervencion
-            });
+                await Acompania.create(
+                    { userId: usrCi, interventionId: datos.intervention },
+                    { transaction }
+                );
+            })
+        );
 
-            await usrPerro.save();
-        }
-        catch (error){
-            throw new Error(error instanceof Error ? error.message : "Error creando la dupla usr-perro");
-        }
+        await transaction.commit();
+
         return {
-            message: "Inscripción de guía con perro completada correctamente",
+            message: "Inscripciones realizadas con éxito.",
             status: 200
         }
     }
-    if(datos.tipo === "acompaniante"){
-        try{
-            const acompania = new Acompania({
-                userId: datos.ci,
-                intervencionId: datos.intervencion
-            });
-
-            await acompania.save();
-        }
-        catch (error){
-            throw new Error(error instanceof Error ? error.message : "Error creando la inscripción como acompañante");
-        }
-        return {
-            message: "Inscripción de acompañante completada correctamente",
-            status: 200
-        }
-    }
-    return {
-        error: "Tipo de inscripción inválida",
-        status: 400,
+    catch(error){
+        await transaction.rollback();
+        throw error;
     }
   }
 }

@@ -8,10 +8,7 @@ import {
   Table,
   UpdatedAt,
   DataType,
-  HasMany,
 } from "sequelize-typescript";
-import { UsrPerro } from "./usrperro.entity";
-import { Acompania } from "./acompania.entity";
 
 @Table({ tableName: "users" })
 export class User extends Model {
@@ -36,12 +33,6 @@ export class User extends Model {
 
   @Column({ type: DataType.BOOLEAN })
   declare esAdmin: boolean;
-
-  @HasMany(() => UsrPerro,  { as: "usrPerro",  foreignKey: "userId", sourceKey: "ci" })
-  declare usrPerro?: UsrPerro[];
-
-  @HasMany(() => Acompania, { as: "acompania", foreignKey: "userId", sourceKey: "ci" })
-  declare acompania?: Acompania[];
 
   @CreatedAt
   declare createdAt: Date;

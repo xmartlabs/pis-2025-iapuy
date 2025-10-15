@@ -9,9 +9,12 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  HasMany,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
-import type { CreationOptional } from "sequelize";
+import { type CreationOptional } from "sequelize";
+import { UsrPerro } from "./usrperro.entity";
+import { Acompania } from "./acompania.entity";
 
 export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
@@ -59,6 +62,12 @@ export class Intervention extends Model {
   @ForeignKey(() => User)
   @Column({ type: DataType.STRING })
   declare userId: string;
+
+  @HasMany(() => UsrPerro,  { as: "usrPerro",  foreignKey: "intervencionId", sourceKey: "id" })
+  declare usrPerro?: UsrPerro[];
+
+  @HasMany(() => Acompania,  { as: "acompania",  foreignKey: "intervencionId", sourceKey: "id" })
+  declare acompania?: Acompania[];
 
   @CreatedAt
   declare createdAt: Date;

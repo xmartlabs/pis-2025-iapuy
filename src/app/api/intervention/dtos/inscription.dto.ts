@@ -1,6 +1,10 @@
+type Dupla = {
+  ci: string;
+  perro: string;
+};
+
 export class InscripcionDto {
-  declare ci: string;
-  declare intervencion: string;
-  declare perro: string;
-  declare tipo: "guia" | "acompaniante";
+  declare intervention: string;
+  declare acompaniantes: string[];
+  declare duplas: Dupla[];
 }
