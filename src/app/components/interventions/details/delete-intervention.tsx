@@ -71,13 +71,6 @@ export default function DeleteIntervention({
             color: "#121F0D",
           },
         });
-
-        try {
-          await context?.refreshPerros?.();
-        } catch {
-          // ignore refresh errors
-        }
-
         router.push("/app/admin/intervenciones/listado");
       } else {
         toast.error(`No se pudo eliminar la intervención.`, {
