@@ -12,6 +12,8 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 import type { CreationOptional } from "sequelize";
+import { UsrPerro } from "./usrperro.entity";
+import { Paciente } from "./pacientes.entity";
 
 export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
@@ -71,4 +73,7 @@ export class Intervention extends Model {
 
   @Column({ type: DataType.STRING, allowNull: true })
   declare driveLink: CreationOptional<string>;
+
+  declare UsrPerroIntervention?: UsrPerro[];
+  declare PacienteIntervencion?: Paciente[];
 }

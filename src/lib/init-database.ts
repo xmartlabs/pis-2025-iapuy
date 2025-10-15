@@ -101,6 +101,7 @@ const registerIntervencionAssociations = () => {
       foreignKey: "intervencionId",
     });
   }
+
   if (!hasAssociation(Intervention, Institucion)) {
     Intervention.belongsToMany(Institucion, {
       through: InstitucionIntervencion,
