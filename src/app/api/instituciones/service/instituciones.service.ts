@@ -33,6 +33,13 @@ export class InstitucionesService {
         {
           model: Patologia,
           as: "Patologias",
+          attributes: ["id", "nombre"],
+          through: { attributes: [] },
+        },
+        {
+          model: InstitutionContact,
+          as: "InstitutionContacts",
+          attributes: ["id", "name", "contact"],
         },
       ],
       limit: pagination.size,
@@ -167,7 +174,7 @@ export class InstitucionesService {
         },
         {
           model: Paciente,
-          as: "PacienteIntervencion",
+          as: "Pacientes",
         },
       ],
     });
@@ -303,17 +310,23 @@ export class InstitucionesService {
       return lines;
     };
 
-  // Table geometry helpers
-  const tableLeft = xPositions[0] - 4;
-  const tableWidth = colWidths.reduce((a, b) => a + b, 0) + 4;
-  const rowPadding = 6;
+    // Table geometry helpers
+    const tableLeft = xPositions[0] - 4;
+    const tableWidth = colWidths.reduce((a, b) => a + b, 0) + 4;
+    const rowPadding = 6;
 
-  // Track per-page bounds so we can draw an outer rounded border per page
-  let pageMinBottom: number | null = null;
-  let pageTop = startY + rowPadding;
+    // Track per-page bounds so we can draw an outer rounded border per page
+    let pageMinBottom: number | null = null;
+    let pageTop = startY + rowPadding;
 
     // Helper to construct an SVG path for a rounded rectangle
-    const roundedRectPath = (px: number, py: number, w: number, h: number, r: number) => {
+    const roundedRectPath = (
+      px: number,
+      py: number,
+      w: number,
+      h: number,
+      r: number
+    ) => {
       const fmt = (n: number) => Number(n.toFixed(2));
       const x1 = fmt(px);
       const y1 = fmt(py);
@@ -337,14 +350,15 @@ export class InstitucionesService {
     };
 
     // Draw rows with multi-line wrapping for the 4 columns
-  for (const interv of interventions) {
+    for (const interv of interventions) {
       // Prepare row values
       const dateStr = interv.timeStamp
         ? new Date(interv.timeStamp).toLocaleString()
         : "";
 
       // Guides (Usuarios) and Perros come from UsrPerroIntervention
-      const usrPerros: UsrPerro[] = (interv.UsrPerroIntervention as UsrPerro[]) || [];
+      const usrPerros: UsrPerro[] =
+        (interv.UsrPerroIntervention as UsrPerro[]) || [];
       const guidesArr = usrPerros
         .map((up) => up.User && (up.User.nombre ?? String(up.User.ci)))
         .filter(Boolean) as string[];
@@ -378,7 +392,13 @@ export class InstitucionesService {
         if (pageMinBottom !== null) {
           const outerBottom = pageMinBottom - rowPadding;
           const outerHeight = pageTop - outerBottom + rowPadding;
-          const svgPath = roundedRectPath(tableLeft, outerBottom, tableWidth, outerHeight, 8);
+          const svgPath = roundedRectPath(
+            tableLeft,
+            outerBottom,
+            tableWidth,
+            outerHeight,
+            8
+          );
           currentPage.drawSvgPath(svgPath, {
             borderColor: rgb(0, 0, 0),
             borderWidth: 1,
@@ -398,14 +418,23 @@ export class InstitucionesService {
       const rectBottom = y - neededHeight - rowPadding / 2;
       const rectHeight = neededHeight + rowPadding;
       const rectWidth = tableWidth;
-      const svgPath = roundedRectPath(rectX, rectBottom, rectWidth, rectHeight, 6);
+      const svgPath = roundedRectPath(
+        rectX,
+        rectBottom,
+        rectWidth,
+        rectHeight,
+        6
+      );
       currentPage.drawSvgPath(svgPath, {
         borderColor: rgb(0.85, 0.85, 0.85),
         borderWidth: 0.6,
       });
 
       // update page min bottom for outer border
-      pageMinBottom = pageMinBottom === null ? rectBottom : Math.min(pageMinBottom, rectBottom);
+      pageMinBottom =
+        pageMinBottom === null
+          ? rectBottom
+          : Math.min(pageMinBottom, rectBottom);
 
       // Draw all columns with proper text wrapping
       for (let col = 0; col < wrappedValues.length; col++) {
@@ -429,7 +458,13 @@ export class InstitucionesService {
     if (pageMinBottom !== null) {
       const outerBottom = pageMinBottom - rowPadding;
       const outerHeight = pageTop - outerBottom + rowPadding;
-      const svgPath = roundedRectPath(tableLeft, outerBottom, tableWidth, outerHeight, 8);
+      const svgPath = roundedRectPath(
+        tableLeft,
+        outerBottom,
+        tableWidth,
+        outerHeight,
+        8
+      );
       currentPage.drawSvgPath(svgPath, {
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
