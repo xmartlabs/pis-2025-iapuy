@@ -64,7 +64,7 @@ export default function DeleteInstitutionButton({
       }
 
       if (res.ok) {
-        toast.success(`Institucion eliminado correctamente.`, {
+        toast.success(`Institucion eliminada correctamente.`, {
           duration: 5000,
           icon: null,
           className:
@@ -78,7 +78,7 @@ export default function DeleteInstitutionButton({
 
         router.push("/app/admin/instituciones/listado");
       } else {
-        toast.error(`No se pudo eliminar al Institucion.`, {
+        toast.error(`No se pudo eliminar la Institucion.`, {
           duration: 5000,
           icon: null,
           className:
@@ -91,7 +91,7 @@ export default function DeleteInstitutionButton({
         });
       }
     } catch {
-      toast.error(`No se pudo eliminar al Institucion.`, {
+      toast.error(`No se pudo eliminar la Institucion.`, {
         duration: 5000,
         icon: null,
         className:
