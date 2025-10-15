@@ -107,15 +107,15 @@ export class InstitucionesService {
     }
   }
 
-  async interventionsPDF(id: string, fechas: Date[]): Promise<Uint8Array> {
+  async interventionsPDF(id: string, dates: Date[]): Promise<Uint8Array> {
     const interventions = await Intervention.findAll({
       where:
-        fechas && fechas.length > 0
+        dates && dates.length > 0
           ? {
-              [Op.or]: fechas.map((rawFecha) => {
-                const fecha = new Date(rawFecha);
-                const year = fecha.getFullYear();
-                const month = fecha.getMonth() + 1;
+              [Op.or]: dates.map((rawDate) => {
+                const date = new Date(rawDate);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
 
                 return {
                   [Op.and]: [
@@ -284,7 +284,7 @@ export class InstitucionesService {
     // Draw rows with multi-line wrapping for all columns to prevent text overflow
     for (const interv of interventions) {
       // Prepare row values
-      const fechaStr = interv.timeStamp
+      const dateStr = interv.timeStamp
         ? new Date(interv.timeStamp).toLocaleString().split(",")[0]
         : "";
       const tipo = (interv.tipo as unknown as string) ?? "";
@@ -297,7 +297,7 @@ export class InstitucionesService {
 
       // Wrap text for ALL non-description columns to prevent overflow
       const wrappedValues: string[][] = [];
-      const nonDescValues = [fechaStr, tipo, status, pares];
+      const nonDescValues = [dateStr, tipo, status, pares];
       for (let i = 0; i < colWidths.length - 1; i++) {
         const value = nonDescValues[i] ?? "";
         const maxWidth = colWidths[i] - 4;
