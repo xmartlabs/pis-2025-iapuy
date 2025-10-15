@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Plus, Settings } from 'lucide-react';
+import { BadgeDollarSign, Settings } from 'lucide-react';
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import FilterDropdown, { type pairPerson } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
-
+import AddExpenseButton from "@/app/components/expenses/add-expense-button";
 const statuses = ["Pendiente de Pago", "Pagado"];
 
 function formatMonthYear(ts: string | number | Date) {
@@ -34,7 +34,7 @@ function formatMonthYear(ts: string | number | Date) {
   return `${monthCap} ${d.getFullYear()}`;
 }
 
-//! import AddExpenseButton from "...";
+
 
 export default function ExpensesList() {
 
@@ -285,17 +285,7 @@ export default function ExpensesList() {
       </div>
 
       <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          className="h-10 max-w-[141px] min-w-[80px] rounded-md flex gap-1 p-2.5 bg-[#5B9B40]
-                     font-sans font-medium text-sm leading-6 text-[#EFF5EC]
-                     transition-colors hover:bg-[#478032] hover:text-white"
-        >
-          <span className="flex text-[#EFF5EC]">
-            <Plus size={16} />
-          </span>
-          Agregar Gasto
-        </Button>
+        <AddExpenseButton/>
         <Button
           className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
                      opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white
