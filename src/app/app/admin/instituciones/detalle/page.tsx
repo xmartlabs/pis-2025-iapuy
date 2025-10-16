@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { DownloadButton } from "../download-pdf";
+import DeleteInstitutionButton from "../eliminar-institucion";
 
 export default function Detalle() {
   const searchParams = useSearchParams();
@@ -42,6 +43,7 @@ export default function Detalle() {
     <div>
       <h1>Pantalla de Detalle Institucion</h1>
       <DownloadButton id={institutionId} dates={selectedDates} />
+      <DeleteInstitutionButton id={institutionId} />
     </div>
   );
 }
