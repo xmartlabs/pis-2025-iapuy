@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
 import { ExpensesService } from "./expenses.service";
-
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 
-// ---- Mocks ----
 vi.mock("@/app/models/expense.entity", () => ({
   Expense: {
     create: vi.fn(),
@@ -19,6 +16,7 @@ vi.mock("@/app/models/intervention.entity", () => ({
     }),
   },
 }));
+
 vi.mock("@/app/models/user.entity", () => ({
   User: {
     findOne: vi.fn().mockResolvedValue({
@@ -27,9 +25,9 @@ vi.mock("@/app/models/user.entity", () => ({
   },
 }));
 
-// ---- Tests ----
 describe("ExpensesService", () => {
-  let service: ExpensesService = new ExpensesService();
+  // eslint-disable-next-line init-declarations
+  let service: ExpensesService;
 
   beforeEach(() => {
     service = new ExpensesService();
@@ -85,18 +83,23 @@ describe("ExpensesService", () => {
   });
 
   it("should throw an error if intervention does not exist", async () => {
+    const { User } = (await vi.importMock("@/app/models/user.entity")) as {
+      User: { findOne: ReturnType<typeof vi.fn> };
+    };
     const { Intervention } = (await vi.importMock(
       "@/app/models/intervention.entity"
     )) as {
       Intervention: { findOne: ReturnType<typeof vi.fn> };
     };
+
+    User.findOne.mockResolvedValue({ id: "12345678" });
     Intervention.findOne.mockResolvedValue(null);
 
     const newExpense: CreateExpenseDto = {
       userId: "12345678",
       interventionId: "nonexistent-id",
-      type: "Baño",
-      concept: "Lavado y Peinado",
+      type: "Traslado",
+      concept: "Traslado hasta el lugar",
       state: "Pendiente de pago",
       amount: 789,
     };

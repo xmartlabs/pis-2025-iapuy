@@ -15,6 +15,8 @@ import { User } from "./user.entity";
 import type { CreationOptional } from "sequelize";
 import { Institucion } from "./institucion.entity";
 import { InstitucionIntervencion } from "./institucion-intervenciones.entity";
+import { UsrPerro } from "./usrperro.entity";
+import { Paciente } from "./pacientes.entity";
 
 export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
@@ -77,4 +79,6 @@ export class Intervention extends Model {
 
   @BelongsToMany(() => Institucion, () => InstitucionIntervencion)
   declare Institucions?: Institucion[];
+  declare UsrPerroIntervention?: UsrPerro[];
+  declare Pacientes?: Paciente[];
 }
