@@ -34,6 +34,12 @@ vi.mock("@/app/models/institucion-intervenciones.entity", () => ({
   },
 }));
 
+vi.mock("@/app/models/usrperro.entity", () => ({
+  UsrPerro: {
+    findOrCreate: vi.fn(),
+  },
+}));
+
 vi.mock("@/lib/database", () => ({
   default: {
     // eslint-disable-next-line arrow-body-style
