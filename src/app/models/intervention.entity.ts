@@ -1,5 +1,6 @@
 /* eslint-disable new-cap */
 import {
+  BelongsToMany,
   Column,
   CreatedAt,
   DataType,
@@ -12,6 +13,10 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 import type { CreationOptional } from "sequelize";
+import { Institucion } from "./institucion.entity";
+import { InstitucionIntervencion } from "./institucion-intervenciones.entity";
+import { UsrPerro } from "./usrperro.entity";
+import { Paciente } from "./pacientes.entity";
 
 export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
@@ -71,4 +76,9 @@ export class Intervention extends Model {
 
   @Column({ type: DataType.STRING, allowNull: true })
   declare driveLink: CreationOptional<string>;
+
+  @BelongsToMany(() => Institucion, () => InstitucionIntervencion)
+  declare Institucions?: Institucion[];
+  declare UsrPerroIntervention?: UsrPerro[];
+  declare Pacientes?: Paciente[];
 }

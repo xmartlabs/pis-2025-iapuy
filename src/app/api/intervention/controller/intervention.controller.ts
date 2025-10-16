@@ -28,6 +28,16 @@ export class InterventionController {
     );
   }
 
+  async getInterventionsSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ) {
+    const interventions = await this.interventionService.findAllSimple(
+      payload,
+      statuses
+    );
+    return interventions;
+  }
   async getInterventionDetails(id: string) {
     return await this.interventionService.getInterventionDetails(id);
   }
