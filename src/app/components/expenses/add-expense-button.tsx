@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Plus } from "lucide-react";
-
+import ExpenseDialog from "@/app/components/expenses/intervention-expense-dialog"
 import Link from "next/link";
 
 export default function AddExpenseButton() {
@@ -29,8 +29,9 @@ export default function AddExpenseButton() {
             <DropdownMenuItem asChild>
                 <Link href={"/app/perfil"}>Sanidad de un perro</Link>
             </DropdownMenuItem>
+            
             <DropdownMenuItem asChild>
-                <Link href={"/app/perfil"}>Gasto en intervención</Link>
+                <ExpenseDialog/>
             </DropdownMenuItem>
             </DropdownMenuContent>
     </DropdownMenu>
