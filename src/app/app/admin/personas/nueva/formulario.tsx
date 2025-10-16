@@ -444,7 +444,7 @@ export default function Formulario() {
                                 const noTiene = form.watch("noPerro")
                                 return (
                                     <FormItem>
-                                    <FormLabel className="font-sans font-medium text-sm leading-5">
+                                    <FormLabel className={`font-sans font-medium text-sm leading-5 ${noTiene?"opacity-50":""}`}>
                                         Perro
                                     </FormLabel>
                                     <FormControl>
@@ -493,9 +493,25 @@ export default function Formulario() {
                         </div>
                     </div>
                 </div>
-                <Button className="w-3/6 primary gap-1 pt-2 pr-3 pb-2 pl-3 gap-1 rounded-md" type="submit">Crear persona</Button>
+               <Button className="max-w-[122px] h-[40px] min-w-[80px] 
+                                    gap-1 rotate-0 
+                                    pt-2 pr-3 pb-2 pl-3
+                                    rounded-md
+                                    bg-[#5B9B40]
+                                    opacity-50"
+                        type="submit"
+                >
+                    Crear persona
+                </Button>
             </form>
-            <RegistrarPerro reload={reload} setReload={setReload} open={open} setOpen={setOpen} onCreated={handlePerroCreated} ownerRequired={false} ownerDisabled={true}/>
+            <RegistrarPerro 
+                reload={reload} 
+                setReload={setReload} 
+                open={open} 
+                setOpen={setOpen} 
+                onCreated={handlePerroCreated} 
+                ownerRequired={false} 
+                ownerDisabled={true}/>
         </Form>
     );
 }

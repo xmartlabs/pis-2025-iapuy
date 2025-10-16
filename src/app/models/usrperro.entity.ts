@@ -1,5 +1,6 @@
 /* eslint-disable new-cap */
 import {
+  DataType,
   Column,
   CreatedAt,
   DeletedAt,
@@ -20,7 +21,7 @@ export class UsrPerro extends Model {
   declare id: string;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Perro)
@@ -39,4 +40,7 @@ export class UsrPerro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
+  declare Perro?: Perro;
 }

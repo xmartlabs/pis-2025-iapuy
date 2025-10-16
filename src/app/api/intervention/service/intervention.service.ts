@@ -18,6 +18,8 @@ import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
+import { User } from "@/app/models/user.entity";
+import { Acompania } from "@/app/models/acompania.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -248,7 +250,6 @@ export class InterventionService {
       const intervention = await Intervention.create(
         {
           timeStamp: request.timeStamp,
-          costo: request.cost,
           tipo: request.type,
           pairsQuantity: request.pairsQuantity,
           description: request.description,
@@ -356,7 +357,7 @@ export class InterventionService {
 
   async findAllPathologiesbyId(id: string) {
     const intervention = await Intervention.findByPk(id);
-    if (intervention?.tipo !== "terapeutica") {
+    if (intervention?.tipo !== "Terapeutica") {
       return [];
     }
     const relation = await InstitucionIntervencion.findOne({
@@ -416,10 +417,62 @@ export class InterventionService {
       ...intervention.toJSON(),
       institutionName,
     } as InterventionWithInstitution;
-    // async delete(id: string): Promise<void> {
-    //   const res = await Intervention.destroy({ where: { id } });
-    //   if (res === 0) {
-    //     throw new Error(`Intervention not found with id ${id}`);
-    //   }
+  }
+
+  async delete(id: string): Promise<void> {
+    const res = await Intervention.destroy({ where: { id } });
+    if (res === 0) {
+      throw new Error(`Intervention not found with id ${id}`);
+    }
+  }
+
+  async getInterventionDetails(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["perroId", "userId"],
+          include: [
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: PerroExperiencia,
+                  as: "DogExperiences",
+                  attributes: ["id", "experiencia"],
+                  where: { intervencion_id: id },
+                  required: false,
+                },
+              ],
+            },
+            { model: User, as: "User", attributes: ["ci", "nombre"] },
+          ],
+        },
+        {
+          model: Paciente,
+          as: "Pacientes",
+          attributes: ["id", "nombre", "edad", "patologia_id", "experiencia"],
+          include: [
+            { model: Patologia, as: "Patologia", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: Acompania,
+          as: "Acompania",
+          attributes: ["userId"],
+          include: [{ model: User, as: "User", attributes: ["ci", "nombre"] }],
+        },
+      ],
+    });
+    return intervention;
   }
 }

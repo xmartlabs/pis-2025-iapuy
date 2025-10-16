@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+   experimental: {
+    authInterrupts: true,
+  },
 };
+ 
+
 
 export default nextConfig;

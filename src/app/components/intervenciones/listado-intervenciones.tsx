@@ -10,18 +10,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { CalendarRange } from "lucide-react";
 import CustomPagination from "@/app/components/pagination";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import FilterDropdown from "@/app/app/admin/intervenciones/listado/filter-dropdown";
+import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
+import AddIntervencionButton from "./nueva-intervencion-btn";
+import InterventionActionButton from "./intervention-actions";
 
-const statuses = ["Pendiente", "Finalizada", "Suspendida"];
+const statusToColor: Record<string, string> = {
+  "Pendiente de asignacion": "#FECACA",
+  "Cupo completo": "#FDE68A",
+  Realizada: "#BAE6FD",
+  Finalizada: "#DEEBD9",
+  Suspendida: "#D4D4D4",
+  Cerrada: "#F5D0FE",
+};
+
+const statuses = [
+  "Pendiente de asignacion",
+  "Cupo completo",
+  "Realizada",
+  "Finalizada",
+  "Suspendida",
+  "Cerrada",
+];
 
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
@@ -31,18 +48,20 @@ function formatMonthYear(ts: string | number | Date) {
   const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
   return `${monthCap} ${d.getFullYear()}`;
 }
-import AddIntervencionButton from "../app/admin/intervenciones/listado/nueva-intervencion-btn";
 
-export default function ListadoIntervenciones() {
+export default function ListadoIntervenciones({
+  isColab,
+}: {
+  isColab: boolean;
+}) {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [reload] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
@@ -75,17 +94,15 @@ export default function ListadoIntervenciones() {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL(
-        "/api/intervention",
-        (typeof window !== "undefined" && window.location?.origin) || ""
-      );
-      url.searchParams.set("page", String(p));
-      url.searchParams.set("size", String(s));
-      if (query?.trim().length) url.searchParams.set("query", query.trim());
+      const qs = new URLSearchParams();
+      qs.set("page", String(p));
+      qs.set("size", String(s));
+      if (query?.trim().length) qs.set("query", query.trim());
       if (selectedMonths && selectedMonths.length)
-        url.searchParams.set("months", selectedMonths.join(","));
+        qs.set("months", selectedMonths.join(","));
       if (selectedStatuses && selectedStatuses.length)
-        url.searchParams.set("statuses", selectedStatuses.join(","));
+        qs.set("statuses", selectedStatuses.join(","));
+      const url = `/api/intervention?${qs.toString()}`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -201,6 +218,9 @@ export default function ListadoIntervenciones() {
         if (res) {
           setIntervention(res.data);
           setTotalPages(res.totalPages ?? 1);
+          if (page > (res.totalPages ?? 1)) {
+            setPage(1);
+          }
           if (availableMonths.length === 0) {
             try {
               const map = new Map<string, number>();
@@ -233,7 +253,7 @@ export default function ListadoIntervenciones() {
     return () => {
       controller.abort();
     };
-  }, [page, size, search, reload, fetchIntervenciones, availableMonths.length]);
+  }, [page, size, search, fetchIntervenciones, availableMonths.length]);
 
   const onFilterSelectionChange = (
     monthsSelected: string[],
@@ -241,39 +261,61 @@ export default function ListadoIntervenciones() {
   ) => {
     setSelectedMonths(monthsSelected);
     setSelectedStatuses(statusesSelected);
-    setPage(1);
   };
 
   return (
     <div className=" max-w-[92%]">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
-        <h1
-          className="text-5xl font-bold tracking-tight leading-[1.2]"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Intervenciones
-        </h1>
-        <div className="flex justify-end mb-2 p-3">
-          <AddIntervencionButton
-            onClick={() => {
-              router.push("/app/admin/intervenciones/nueva");
-            }}
+        <div className="w-full h-[48px] flex justify-between opacity-100 rotate-0">
+          <div className="flex items-center gap-3">
+            <CalendarRange size={48} />
+            <h1
+              className="var(--accent-foreground, #1B2F13) font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle"
+              style={{ fontFamily: "Poppins" }}
+            >
+              Intervenciones
+            </h1>
+          </div>
+        </div>
+        {!isColab ? (
+          <div className="flex justify-end mb-2">
+            <AddIntervencionButton
+              onClick={() => {
+                router.push("/app/admin/intervenciones/nueva");
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+            <CustomSearchBar
+              searchInput={searchInput}
+              setSearchInput={setSearchInput}
+            />
+            <FilterDropdown
+              months={availableMonths}
+              statuses={statuses}
+              initialSelectedMonths={selectedMonths}
+              initialSelectedStatuses={selectedStatuses}
+              onSelectionChangeAction={onFilterSelectionChange}
+            />
+          </div>
+        )}
+      </div>
+      {!isColab && (
+        <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+          <CustomSearchBar
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+          />
+          <FilterDropdown
+            months={availableMonths}
+            statuses={statuses}
+            initialSelectedMonths={selectedMonths}
+            initialSelectedStatuses={selectedStatuses}
+            onSelectionChangeAction={onFilterSelectionChange}
           />
         </div>
-      </div>
-      <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
-        <CustomSearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-        />
-        <FilterDropdown
-          months={availableMonths}
-          statuses={statuses}
-          initialSelectedMonths={selectedMonths}
-          initialSelectedStatuses={selectedStatuses}
-          onSelectionChangeAction={onFilterSelectionChange}
-        />
-      </div>
+      )}
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
           <Table className="table-fixed border-collapse">
@@ -282,22 +324,22 @@ export default function ListadoIntervenciones() {
                 className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
                 style={{ fontFamily: "Roboto, sans-serif" }}
               >
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Fecha y hora
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Organizacion
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Tipo de intervencion
                 </TableHead>
-                <TableHead className="w-[200px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
-                  Cantidad de duplas necesarias
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                  Duplas necesarias
                 </TableHead>
-                <TableHead className="w-[150px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="w-[183px] pl-3 text-left first:rounded-tl-lg last:rounded-tr-lg">
                   Estado
                 </TableHead>
-                <TableHead className="w-[40px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
+                <TableHead className="w-[183px] mr-0 pl-0 text-left first:rounded-tl-lg last:rounded-tr-lg"></TableHead>
               </TableRow>
             </TableHeader>
 
@@ -377,13 +419,27 @@ export default function ListadoIntervenciones() {
                       {Number(inter.pairsQuantity) || 0}
                     </TableCell>
                     <TableCell className="p-3">
-                      <div className="bg-[#F2F4F8] pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min">
+                      <div
+                        className="pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min"
+                        style={{
+                          backgroundColor:
+                            statusToColor[inter.status || "Realizada"] ||
+                            "#F2F4F8",
+                        }}
+                      >
                         {inter.status || ""}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
-                    </TableCell>
+                    {!isColab ? (
+                      <TableCell className="w-[40px] mr-0"></TableCell>
+                    ) : (
+                      <TableCell className="w-[40px] mr-0">
+                        <InterventionActionButton
+                          status={inter.status || ""}
+                          id={inter.id}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
@@ -403,7 +459,13 @@ export default function ListadoIntervenciones() {
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }
