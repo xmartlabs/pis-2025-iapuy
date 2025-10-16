@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import FilterDropdown, { type pairPerson } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
+import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 
 const statuses = ["Pendiente de Pago", "Pagado"];
 
@@ -95,8 +96,6 @@ export default function ExpensesList() {
         {url.searchParams.set("statuses", selectedStatuses.join(","))};
       if (selectedPeople && selectedPeople.length)
         {url.searchParams.set("people", selectedPeople.join(","))};
-
-      console.log(selectedPeople)
 
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -203,6 +202,142 @@ export default function ExpensesList() {
     [context, selectedMonths, selectedStatuses, selectedPeople]
   );
 
+  const fetchExpensesFilters = useCallback(
+    async (
+      signal?: AbortSignal,
+      triedRefresh = false
+    ): Promise<FiltersExpenseDto | null> => {
+      const url = new URL(
+        "/api/expenses/filter",
+        (typeof window !== "undefined" && window.location?.origin) || ""
+      );
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
+
+      try {
+        const token = context?.tokenJwt;
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
+          signal: combinedSignal,
+        });
+
+        // --- Refresh token si expiró ---
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(
+            new URL(
+              "/api/auth/refresh",
+              (typeof window !== "undefined" && window.location?.origin) || ""
+            ),
+            {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              signal: combinedSignal,
+            }
+          );
+
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              const retryResp = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${newToken}`,
+                },
+                signal: combinedSignal,
+              });
+
+              if (!retryResp.ok) {
+                const txt = await retryResp.text().catch(() => "");
+                throw new Error(
+                  `API ${retryResp.status}: ${retryResp.statusText}${txt ? ` - ${txt}` : ""}`
+                );
+              }
+
+              const ct2 = retryResp.headers.get("content-type") ?? "";
+              if (!ct2.includes("application/json"))
+                throw new Error("Expected JSON response");
+
+              const body2 = (await retryResp.json()) as unknown;
+              if (
+                !body2 ||
+                typeof body2 !== "object" ||
+                !Array.isArray((body2 as FiltersExpenseDto).months)
+              )
+                throw new Error("Malformed API response");
+
+              return body2 as FiltersExpenseDto;
+            }
+          }
+        }
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(`API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`);
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as unknown;
+        if (
+          !body ||
+          typeof body !== "object" ||
+          !Array.isArray((body as FiltersExpenseDto).months)
+        )
+          throw new Error("Malformed API response");
+
+        return body as FiltersExpenseDto;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
+        return null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    [context]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+
+    fetchExpensesFilters(controller.signal)
+      .then((res) => {
+        if (res) {
+          setPeopleWhoHaveExpent(res.people ?? []);
+          setAvailableMonths(res.months ?? []); 
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchExpensesFilters]);
+
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -210,21 +345,8 @@ export default function ExpensesList() {
     fetchExpenses(page, size, search, controller.signal)
       .then((res) => {
         if (res) {
-
           setExpense(res.data);
           setTotalPages(res.totalPages ?? 1);
-
-          if (peopleWhoHaveExpent.length === 0) {
-          const mapPeople = new Map<string, pairPerson>();
-          res.data.forEach((exp) => {
-            if (exp.user) {
-              mapPeople.set(exp.user.ci, { userId: exp.user.ci, nombre: exp.user.nombre });
-            } else {
-              mapPeople.set(exp.userId, { userId: exp.userId, nombre: exp.userId });
-            }
-          });
-          setPeopleWhoHaveExpent(Array.from(mapPeople.values()));
-          }
           
           if (availableMonths.length === 0) {
             try {
@@ -258,7 +380,7 @@ export default function ExpensesList() {
     return () => {
       controller.abort();
     };
-  }, [page, size, search, reload, fetchExpenses, availableMonths.length]);
+  }, [page, size, search, reload, fetchExpenses, availableMonths.length, peopleWhoHaveExpent.length]);
 
   const onFilterSelectionChange = (
     monthsSelected: string[],
