@@ -27,12 +27,13 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Upload, Minus } from "lucide-react";
+import { Plus, Upload, Minus, X, AlertCircleIcon } from "lucide-react";
 import { useEffect, useState, useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription  } from "@/components/ui/alert";
 
 type Pathology = {
   id: string;
@@ -69,6 +70,7 @@ export default function EvaluarIntervencion() {
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
+  const [costsCards, setCostCard] = useState([0]);
   const [interv, setInterv] = useState<Intervention>();
   const context = useContext(LoginContext);
   const searchParams = useSearchParams();
@@ -467,6 +469,55 @@ export default function EvaluarIntervencion() {
       ]);
     }
   };
+
+const addCostCard = () => {
+    const newIndex = costsCards.length;
+
+    setCostCard((prev) => [...prev, newIndex]);
+
+    // const currentPatients = form.getValues("patients") ?? [];
+    // const newPatient = {
+    //   name: "",
+    //   age: "",
+    //   pathology: "",
+    //   feeling: "good",
+    // };
+    // const currentCosts = form.getValues("costs") ?? [];
+    // const newCost = {
+       //
+    // };
+
+    // const udpatedCosts = [...currentCosts, newCost];
+    // form.setValue("costs", currentCosts as FormValues["costs"]);
+
+    form.clearErrors([
+      // `patients.${newIndex}.name`,
+      // `patients.${newIndex}.age`,
+      // `patients.${newIndex}.pathology`,
+      // `patients.${newIndex}.feeling`,
+    ]);
+  };
+
+  const removeCostCard = (index: number) => {
+    if (costsCards.length > 1) {
+      const updatedCards = [...costsCards];
+      updatedCards.splice(index, 1);
+      setCostCard(updatedCards);
+
+      // const currentCosts = form.getValues("costs") ?? [];
+      // const updatedCosts = [...currentCosts];
+      //updatedCosts.splice(index, 1);
+      //form.setValue("costs", updatedCosts);
+
+      form.clearErrors([
+        // `patients.${index}.name`,
+        // `patients.${index}.age`,
+        // `patients.${index}.pathology`,
+        // `patients.${index}.feeling`,
+      ]);
+    }
+  };
+
 
   return (
     <div>
@@ -1008,7 +1059,46 @@ export default function EvaluarIntervencion() {
               <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
                 Costos
               </h3>
+              <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
+                  <AlertCircleIcon />
+                  <AlertDescription>
+                    Solo subí el gasto si lo realizaste para trasladar a un perro.
+                  </AlertDescription>
+                </Alert>
+              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+                  {costsCards.map((_, index) => (
+                    <Card key={index} className="relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none">
+                      {patientsCards.length > 0 && (  //!aca debe ser >1 cambie para probar
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="icon"
+                          onClick={() => { removeCostCard(index); }}
+                          className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                        >
+                          <X color="#5B9B40" strokeWidth={1} />
+                        </Button>
+                      )}
+                      <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                        
 
+                      {/* <CrearGastoIntervencion></CrearGastoIntervencion> */}
+
+
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <div className="flex flex-row md:flex-col gap-2">
+                    <Button 
+                    type="button"
+                    variant="secondary" 
+                    size="icon"  
+                    onClick = {addCostCard} 
+                    className="!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
+                      <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+                    </Button>
+                  </div>
+              </div>
               <Button className="w-[119px] h-[48px] rounded-[6px] px-[20px] py-[12px] bg-[#2D3648] text-white gap-[8px] flex items-center justify-center">
                 <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
                   Confirmar
