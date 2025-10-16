@@ -369,7 +369,7 @@ export class InstitucionesService {
         .filter(Boolean) as string[];
       const perros = Array.from(new Set(perrosArr)).join(", ");
 
-      const pacientesArr = (interv.PacienteIntervencion || [])
+      const pacientesArr = (interv.Pacientes || [])
         .map((p: Paciente) => p.nombre)
         .filter(Boolean);
       const pacientes = Array.from(new Set(pacientesArr)).join(", ");

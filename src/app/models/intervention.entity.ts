@@ -75,5 +75,5 @@ export class Intervention extends Model {
   declare driveLink: CreationOptional<string>;
 
   declare UsrPerroIntervention?: UsrPerro[];
-  declare PacienteIntervencion?: Paciente[];
+  declare Pacientes?: Paciente[];
 }
