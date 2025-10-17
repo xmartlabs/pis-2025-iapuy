@@ -2,11 +2,10 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
-import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 import ConfirmDelete from "../confirm-delete";
 
 type ApiResponse = {
@@ -16,7 +15,6 @@ type ApiResponse = {
 };
 
 export default function EliminarPerro() {
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
   const router = useRouter();
