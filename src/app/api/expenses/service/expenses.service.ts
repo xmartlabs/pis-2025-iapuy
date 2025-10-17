@@ -58,7 +58,7 @@ export class ExpensesService {
   if (statuses && statuses.trim()) {
     const statusesArr = statuses.split(",").map((s) => s.trim()).filter(Boolean);
     if (statusesArr.length) {
-      const parsedStatuses = statusesArr.map((s) => (s==="Pendiente de Pago") ? "no pagado" : "pagado");
+      const parsedStatuses = statusesArr.map((s) => (s==="Pendiente de pago") ? "no pagado" : "pagado");
       whereBase.state = { [Op.in]: parsedStatuses };
     }
   }
@@ -216,7 +216,7 @@ export class ExpensesService {
           userId: exp.userId,
           concept: exp.concept,
           type: exp.type,
-          state: exp.state === "pagado" ? "Pagado" : "Pendiente de Pago",
+          state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
           amount: exp.amount,
           fecha,
           user: userExpense,
@@ -254,7 +254,7 @@ export class ExpensesService {
     }
     const people = Array.from(peopleMap.values());
 
-    const statuses = ["Pagado", "Pendiente de Pago"];
+    const statuses = ["Pagado", "Pendiente de pago"];
 
     const monthSet = new Map<string, number>();
     for (const exp of expenses) {

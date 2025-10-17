@@ -3,7 +3,7 @@ export interface ListExpenseDto {
   userId: string;
   concept: string;
   type: string;
-  state: "Pagado" | "Pendiente de Pago";
+  state: "Pagado" | "Pendiente de pago";
   amount: number;
   fecha: Date | null;
   user?: {

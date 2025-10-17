@@ -24,7 +24,12 @@ import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 
-const statuses = ["Pendiente de Pago", "Pagado"];
+const statusToColor: Record<string, string> = {
+  "Pagado" : "#DEEBD9",
+  "Pendiente de pago" : "#FECACA"
+};
+
+const statuses = ["Pendiente de pago", "Pagado"];
 
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
@@ -509,9 +514,16 @@ export default function ExpensesList() {
                   <TableCell className="p-3">{exp.user?.nombre ?? exp.userId}</TableCell>
 
                   <TableCell className="p-3">
-                    <div className="bg-[#F2F4F8] px-2 py-1 rounded-[10px] w-min">
-                      {exp.state}
-                    </div>
+                    <div
+                        className="pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min"
+                        style={{
+                          backgroundColor:
+                            statusToColor[exp.state || "Pendiente de pago"] ||
+                            "#FECACA",
+                        }}
+                      >
+                        {exp.state || ""}
+                      </div>
                   </TableCell>
 
                   <TableCell className="w-[40px] mr-0">
