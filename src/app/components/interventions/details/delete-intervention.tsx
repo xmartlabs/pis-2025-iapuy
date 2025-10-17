@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { toast } from "sonner";
+import ConfirmDelete from "../../confirm-delete";
 
 type ApiResponse = {
   message?: string;
@@ -100,15 +101,22 @@ export default function DeleteIntervention({
     }
   }
   return (
-    <Button
-      variant="destructive"
-      className="bg-red-600 hover:bg-red-700 text-white flex items-center"
-      onClick={() => {
-        handleDelete().catch(() => {});
-      }}
-    >
-      <Trash2 className="w-4 h-4 mr-2" />
-      Eliminar intervención
-    </Button>
+    <>
+      <ConfirmDelete
+        handleAction={handleDelete}
+        title="¿Eliminar intervención?"
+      >
+        {(open) => (
+          <Button
+            variant="destructive"
+            className="bg-red-600 hover:bg-red-700 text-white flex items-center"
+            onClick={open}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Eliminar intervención
+          </Button>
+        )}
+      </ConfirmDelete>
+    </>
   );
 }
