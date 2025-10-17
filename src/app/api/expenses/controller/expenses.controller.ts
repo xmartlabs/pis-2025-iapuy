@@ -12,22 +12,23 @@ export class ExpensesController {
   ) {}
 
   async getExpenses(
-      pagination: PaginationDto,
-      payload: PayloadForUser,
-      months: string | null,
-      statuses: string | null,
-      people: string | null
-    ) {
-      return await this.expensesService.findAll(
-        pagination,
-        payload,
-        months,
-        statuses,
-        people
-      );
-    }
+  pagination: PaginationDto,
+  payload: PayloadForUser,
+  months: string | null,
+  statuses: string | null,
+  people: string | null
+) {
+  return await this.expensesService.findAll(
+    pagination,
+    payload,
+    months,
+    statuses,
+    people
+  );
+}
     
-    async getExpensesInitialFilters(): Promise<FiltersExpenseDto> {
+
+  async getExpensesInitialFilters(): Promise<FiltersExpenseDto> {
     const filters = await this.expensesService.findInitialValuesForFilter();
     return filters;
   }

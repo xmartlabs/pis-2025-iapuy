@@ -81,7 +81,6 @@ export default function ExpensesList() {
     ): Promise<PaginationResultDto<ExpenseDto> | null> => {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
-
       const url = new URL(
         "/api/expenses",
         (typeof window !== "undefined" && window.location?.origin) || ""
@@ -115,6 +114,7 @@ export default function ExpensesList() {
           headers: baseHeaders,
           signal: combinedSignal,
         });
+
 
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
@@ -231,7 +231,6 @@ export default function ExpensesList() {
           signal: combinedSignal,
         });
 
-        // --- Refresh token si expiró ---
         if (!resp.ok && !triedRefresh && resp.status === 401) {
           const resp2 = await fetch(
             new URL(
@@ -348,6 +347,10 @@ export default function ExpensesList() {
           setExpense(res.data);
           setTotalPages(res.totalPages ?? 1);
           
+          if(res.totalPages < res.page) {
+            setPage(1);
+          }
+
           if (availableMonths.length === 0) {
             try {
               const map = new Map<string, number>();
@@ -390,7 +393,6 @@ export default function ExpensesList() {
     setSelectedMonths(monthsSelected);
     setSelectedStatuses(statusesSelected);
     setSelectedPeople(peopleSelected)
-    setPage(1);
   };
 
   return (

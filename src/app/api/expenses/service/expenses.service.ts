@@ -161,78 +161,78 @@ export class ExpensesService {
         }
       }
 
-  const result = await Expense.findAndCountAll({
-    where: {
-      ...whereBase,
-      ...(timeStampWhere && {
-        [Op.or]: [
-          { dateSanity: timeStampWhere },
-          { "$intervention.timeStamp$": timeStampWhere },
-        ],
-      }),
-    },
-    include: [
-      {
-        model: User,
-        as: "user",
-        attributes: ["ci", "nombre"],
+    const result = await Expense.findAndCountAll({
+      where: {
+        ...whereBase,
+        ...(timeStampWhere && {
+          [Op.or]: [
+            { dateSanity: timeStampWhere },
+            { "$intervention.timeStamp$": timeStampWhere },
+          ],
+        }),
       },
-      {
-        model: Intervention,
-        as: "intervention",
-        attributes: ["id", "timeStamp"],
-        required: false,
-      },
-    ],
-    limit: pagination.size,
-    offset: pagination.getOffset(),
-    order: pagination.getOrder(),
-  });
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["ci", "nombre"],
+        },
+        {
+          model: Intervention,
+          as: "intervention",
+          attributes: ["id", "timeStamp"],
+          required: false,
+        },
+      ],
+      limit: pagination.size,
+      offset: pagination.getOffset(),
+      order: pagination.getOrder(),
+    });
 
-  const data: ListExpenseDto[] = await Promise.all(
-  result.rows.map(async (exp) => {
-    let fecha: Date | null = null;
-    if (exp.interventionId) {
-      const intervention = await Intervention.findByPk(exp.interventionId, {
-        attributes: ["timeStamp"],
-      });
-      fecha = intervention?.timeStamp ?? null;
-    } else {
-      fecha = exp.dateSanity;
-    }
-
-    let userExpense: { ci: string; nombre: string } | undefined = undefined;
-    if (exp.userId) {
-      const user = await User.findByPk(exp.userId, {
-        attributes: ["ci", "nombre"],
-      });
-      if (user) {
-        userExpense = { ci: user.ci, nombre: user.nombre };
+    const data: ListExpenseDto[] = await Promise.all(
+    result.rows.map(async (exp) => {
+      let fecha: Date | null = null;
+      if (exp.interventionId) {
+        const intervention = await Intervention.findByPk(exp.interventionId, {
+          attributes: ["timeStamp"],
+        });
+        fecha = intervention?.timeStamp ?? null;
+      } else {
+        fecha = exp.dateSanity;
       }
-    }
-    
+
+      let userExpense: { ci: string; nombre: string } | undefined = undefined;
+      if (exp.userId) {
+        const user = await User.findByPk(exp.userId, {
+          attributes: ["ci", "nombre"],
+        });
+        if (user) {
+          userExpense = { ci: user.ci, nombre: user.nombre };
+        }
+      }
+      
+      return {
+          id: exp.id,
+          userId: exp.userId,
+          concept: exp.concept,
+          type: exp.type,
+          state: exp.state === "pagado" ? "Pagado" : "Pendiente de Pago",
+          amount: exp.amount,
+          fecha,
+          user: userExpense,
+        };
+      })
+    );
+
     return {
-      id: exp.id,
-      userId: exp.userId,
-      concept: exp.concept,
-      type: exp.type,
-      state: exp.state === "pagado" ? "Pagado" : "Pendiente de Pago",
-      amount: exp.amount,
-      fecha,
-      user: userExpense,
+      data,
+      count: result.count,
+      totalPages: Math.ceil(result.count / pagination.size),
+      totalItems: result.count,
+      page: pagination.page,
+      size: pagination.size,
     };
-  })
-);
-  
-  return {
-    data,
-    count: result.count,
-    totalPages: Math.ceil(result.count / pagination.size),
-    totalItems: result.count,
-    page: pagination.page,
-    size: pagination.size,
-  };
-}
+  }
 
   async findInitialValuesForFilter() {
     
@@ -274,7 +274,6 @@ export class ExpensesService {
       .sort((a, b) => b[1] - a[1])
       .map((e) => e[0]);
 
-    
     return {
       people,
       statuses,
@@ -282,9 +281,6 @@ export class ExpensesService {
     };
 
   }
-
-
-
 
   async createExpense(request: CreateExpenseDto): Promise<Expense> {
     const [intervention, user] = await Promise.all([
