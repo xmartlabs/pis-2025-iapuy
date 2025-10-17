@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
-
+  return NextResponse.next();
   const token = req.headers.get("authorization")?.split(" ")[1];
   if (!token) {
     return NextResponse.json(
@@ -31,6 +31,7 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/api/registros-sanidad") ||
         pathname.startsWith("/api/gastos") ||
         pathname.startsWith("/api/users/profile") ||
+        pathname.startsWith("/api/users/update") ||
         pathname.startsWith("/api/perros/interventions") ||
         (pathname.startsWith("/api/intervention") && method === "GET") ||
         (pathname.startsWith("/api/intervention") && method === "PUT")

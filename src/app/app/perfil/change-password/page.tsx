@@ -72,7 +72,7 @@ export default function Home() {
     try {
 
       const res = await fetch("/api/users/update", {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({username: context?.userName, password: data.password }),
       });
@@ -81,7 +81,7 @@ export default function Home() {
         if (res.status === 607)
           setLoginError("Usuario no existe." + context?.userName);
         else
-          setLoginError("Error desconocido. " + res.status + res.error + context?.userName);
+          setLoginError("Error desconocido. " + res.status + res.error +context?.userName);
         return;
       } else {
         setLoginError("exito");
