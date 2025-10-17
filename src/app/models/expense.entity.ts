@@ -46,7 +46,9 @@ export class Expense extends Model {
   declare user?: User;
 
   @ForeignKey(() => Intervention)
-  @Column
+  @Column({
+    allowNull: true,
+  })
   declare interventionId: string;
 
   @BelongsTo(() => Intervention, { as: "intervention" })

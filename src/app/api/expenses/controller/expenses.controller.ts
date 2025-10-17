@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type  PayloadForUser } from "../../users/service/user.service";
 import { type FiltersExpenseDto } from "../dtos/initial-filter.dto";
+import type { Expense } from "@/app/models/expense.entity";
 
 export class ExpensesController {
   constructor(
@@ -38,5 +39,9 @@ export class ExpensesController {
     const expenseData: CreateExpenseDto =
       (await request.json()) as CreateExpenseDto;
     return await this.expensesService.createExpense(expenseData);
+  }
+
+  async updateExpense(id: string, data: Partial<Expense>) {
+    return await this.expensesService.update(id, data);
   }
 }
