@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import ExpenseDialogOne from "@/app/components/expenses/intervention-expense-dialog-step-one"
 import { Plus } from "lucide-react";
-import ExpenseDialog from "@/app/components/expenses/intervention-expense-dialog"
 import Link from "next/link";
-
+import { useState } from "react";
+import ExpenseDialogTwo from "@/app/components/expenses/intervention-expense-dialog-step-two"
 export default function AddExpenseButton() {
+    const [openDialogIntervention, setOpenDialogIntervention] = useState(false);
+    const [openStepTwo, setOpenStepTwo] = useState(false);
+    const [selectedIntervention, setSelectedIntervention] = useState("");
     return (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -30,10 +34,28 @@ export default function AddExpenseButton() {
                 <Link href={"/app/perfil"}>Sanidad de un perro</Link>
             </DropdownMenuItem>
             
-            <DropdownMenuItem asChild>
-                <ExpenseDialog/>
+            <DropdownMenuItem
+            onClick={() => { setOpenDialogIntervention(true); }} 
+            >
+                Gasto en intervención
             </DropdownMenuItem>
-            </DropdownMenuContent>
+        </DropdownMenuContent>
+        {openDialogIntervention && (
+            <ExpenseDialogOne
+            open={openDialogIntervention}
+            selectedIntervention={selectedIntervention}
+            onOpenChange={setOpenDialogIntervention}
+            setSelectedIntervention={setSelectedIntervention}
+            setOpenStepTwo={setOpenStepTwo}
+            />
+        )}
+        {openStepTwo && (
+        <ExpenseDialogTwo
+          open={openStepTwo}
+          onOpenChange={setOpenStepTwo}
+          InterventionID={selectedIntervention}
+        />
+      )}
     </DropdownMenu>
     );
 }
