@@ -35,6 +35,9 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription  } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two"
+
+
 
 type Pathology = {
   id: string;
@@ -317,7 +320,7 @@ export default function EvaluarIntervencion() {
     feelingDog: z.enum(["good", "regular", "bad"]),
   });
 
-  const MAX_FILE_SIZE = 20 * 1024 * 1024;
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
   const photosSchema = z
     .any()
@@ -1093,10 +1096,10 @@ const addCostCard = () => {
                       key={index} 
                       className={cn(
                             "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                            !isAdmin && "pointer-events-none opacity-50"
+                            (!isAdmin || false)  && "pointer-events-none opacity-50"
                       )}
                     >
-                      {patientsCards.length > 0 && (  //!aca debe ser >1 cambie para probar
+                      {costsCards.length > 1 && (  
                         <Button
                           type="button"
                           variant="link"
@@ -1108,21 +1111,25 @@ const addCostCard = () => {
                         </Button>
                       )}
                       <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                        
-
-                      {/* <CrearGastoIntervencion></CrearGastoIntervencion> */}
-
+                      
+                      {interv && (
+                        <ExpenseForm InterventionID={interv.id} />
+                      )}
 
                       </CardContent>
                     </Card>
                   ))}
                   <div className="flex flex-row md:flex-col gap-2">
                     <Button 
-                    type="button"
-                    variant="secondary" 
-                    size="icon"  
-                    onClick = {addCostCard} 
-                    className="!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
+                      type="button"
+                      variant="secondary" 
+                      size="icon"  
+                      onClick = {addCostCard} 
+                      className= {cn(
+                        "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+                        (!isAdmin || false) && "pointer-events-none opacity-50"
+                      )}
+                    >
                       <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
                     </Button>
                   </div>
