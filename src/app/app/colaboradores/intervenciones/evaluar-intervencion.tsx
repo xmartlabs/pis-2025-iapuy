@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription  } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 type Pathology = {
   id: string;
@@ -59,6 +60,15 @@ interface Intervention {
   institutionName?: string;
 }
 
+interface JwtPayload {
+  ci: string;
+  name: string;
+  type: "Administrador" | "Colaborador";
+  iat: number;
+  exp: number;
+}
+
+
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
 
@@ -80,10 +90,24 @@ export default function EvaluarIntervencion() {
     throw new Error("Falta el parámetro id en la URL");
   }
 
+  const token = context?.tokenJwt;
+
+  let userType: string | null = null;
+
+  if (token) {
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const payloadJson = JSON.parse(atob(payloadBase64)) as JwtPayload;
+      userType = payloadJson.type; // "Colaborador" o "Administrador"
+    } catch (err) {
+      console.error("Error al decodificar el token:", err);
+    }
+  }
+  const isAdmin = userType === "Administrador";
+
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -150,7 +174,6 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -214,7 +237,6 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -1067,7 +1089,13 @@ const addCostCard = () => {
                 </Alert>
               <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
                   {costsCards.map((_, index) => (
-                    <Card key={index} className="relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none">
+                    <Card 
+                      key={index} 
+                      className={cn(
+                            "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                            !isAdmin && "pointer-events-none opacity-50"
+                      )}
+                    >
                       {patientsCards.length > 0 && (  //!aca debe ser >1 cambie para probar
                         <Button
                           type="button"
