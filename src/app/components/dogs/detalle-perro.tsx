@@ -8,7 +8,7 @@ import { LoginContext } from "@/app/context/login-context";
 import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { UserType } from "@/app/page";
-import { forbidden } from 'next/navigation'
+import { forbidden } from "next/navigation";
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -110,9 +110,7 @@ export default function DetallePerro() {
           />
         )}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <h1
-            className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle"
-          >
+          <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
             {infoPerro.nombre}
           </h1>
           <div className="flex gap-2">
@@ -134,14 +132,16 @@ export default function DetallePerro() {
             titulo="DUEÑO"
             valor={infoPerro.duenioNombre ? infoPerro.duenioNombre : ""}
           />
-          {infoPerro.descripcion &&(<Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />)}
-          {infoPerro.descripcion &&(<Dato titulo="FUERTES" valor={infoPerro.fortalezas} />)}
+          {infoPerro.descripcion && (
+            <Dato titulo="DESCRIPCIÓN" valor={infoPerro.descripcion} />
+          )}
+          {infoPerro.fortalezas && (
+            <Dato titulo="FUERTES" valor={infoPerro.fortalezas} />
+          )}
         </div>
       </div>
 
-      {isOpenError && (
-        forbidden()
-      )}
+      {isOpenError && forbidden()}
     </>
   );
 }
