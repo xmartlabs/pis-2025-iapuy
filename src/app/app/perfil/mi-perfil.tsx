@@ -2,11 +2,13 @@
 import { useContext, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoginContext } from "@/app/context/login-context";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -29,6 +31,7 @@ export default function DetallePersona() {
   const context = useContext(LoginContext);
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const userCi = context?.userCI;
 
@@ -146,6 +149,23 @@ export default function DetallePersona() {
   );
 
   useEffect(() => {
+    if (searchParams.get('passwordChanged') === 'true') {
+      toast.success(`¡Contraseña cambiada con éxito!`, {
+        duration: 5000,
+        icon: null,
+        className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+        style: {
+          background: "#DEEBD9",
+          border: "1px solid #BDD7B3",
+          color: "#121F0D",
+        },
+      });
+      
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('passwordChanged');
+      window.history.replaceState({}, '', url.toString());
+    }
     const controller = new AbortController();
 
     fetchUser(controller.signal)
@@ -160,7 +180,7 @@ export default function DetallePersona() {
     return () => {
       controller.abort();
     };
-  }, [fetchUser]);
+  }, [fetchUser, searchParams]);
 
   return (
     <div className="!overflow-x-auto">

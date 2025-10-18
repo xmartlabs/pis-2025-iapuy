@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { toast } from "sonner";
 
 export interface LoginResponse {
   accessToken: string;
@@ -30,7 +31,7 @@ export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginError, setLogError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     //resolver: zodResolver(FormSchema),
@@ -67,7 +68,7 @@ export default function Home() {
 
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     setSubmitting(true);
-    setLoginError("procesando... " + data.password + context?.userName);
+    setLogError(null);
 
     try {
       const token = context?.tokenJwt;
@@ -80,25 +81,19 @@ export default function Home() {
 
       if (!res.ok) {
         if (res.status === 404)
-          setLoginError("Usuario no existe." + context?.userCI + " " + context?.userName);
+          setLogError("Usuario no existe." + context?.userCI + " " + context?.userName);
         else
-          setLoginError("Error desconocido. " + res.status);
+          setLogError("Error desconocido. " + res.status);
         return;
       } else {
-        setLoginError("exito " + res.status);
+        router.push("/app/perfil?passwordChanged=true");
       }
-      
-
-      const response = (await res.json()) as LoginResponse;
-      //handleLoginSuccess(response);
     } catch (error){
       console.error(error);
-      // ignore network/login errors here; loading flag will be cleared in finally
-      setLoginError("error");
+      setLogError("error");
     } finally {
       setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   return (
