@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-return */
 "use client";
 import {
   SidebarProvider,
@@ -9,7 +10,7 @@ import {DropDownMenu} from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
 import { useContext, useEffect } from "react";
 import type { UserType } from "@/app/page";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
 type Props = Readonly<{ children: React.ReactNode }>;
@@ -17,8 +18,12 @@ type Props = Readonly<{ children: React.ReactNode }>;
 export default function LoginLayout({ children }: Props) {
   const context = useContext(LoginContext);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname === "/app/reset-password") {
+      return;
+    }
     let mounted = true;
     interface RefreshResponse {
       accessToken: string;
