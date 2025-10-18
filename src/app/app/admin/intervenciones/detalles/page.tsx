@@ -132,7 +132,7 @@ export default function IntervencionPage() {
           titulo="TIPO DE INTERVENCIÓN"
           valor={infoIntervention.tipo ? infoIntervention.tipo : ""}
         />
-        {infoIntervention && infoIntervention.description.length > 0 && (
+        {infoIntervention.description && (
           <Dato titulo="DESCRIPCIÓN" valor={infoIntervention.description} />
         )}
       </div>
