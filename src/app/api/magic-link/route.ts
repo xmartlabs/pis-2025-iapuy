@@ -6,18 +6,45 @@ const magicLinkController = new MagicLinkController();
 await initDatabase();
 
 function getRequestOrigin(request: NextRequest): string {
-  const proto = request.headers.get("x-forwarded-proto");
-  const host =
-    request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const rawProto = request.headers.get("x-forwarded-proto");
+  const proto = rawProto ? rawProto.split(",")[0].trim() : null;
 
-  if (proto && host) return `${proto}://${host}`;
+  let rawHost =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+  if (rawHost.includes(",")) rawHost = rawHost.split(",")[0].trim();
 
-  if (host) {
-    const isLocal = host.includes("localhost") || host.startsWith("127.");
-    return `${isLocal ? "http" : "https"}://${host}`;
+  const rawPort = request.headers.get("x-forwarded-port");
+  const port = rawPort ? rawPort.split(",")[0].trim() : null;
+
+  let host = rawHost;
+  if (port && host && !host.includes(":")) {
+    host = `${host}:${port}`;
   }
 
-  return "";
+  const hostnameOnly = host ? host.split(":")[0] : null;
+  const isLocal = hostnameOnly
+    ? hostnameOnly.includes("localhost") || hostnameOnly.startsWith("127.")
+    : false;
+
+  if (host) {
+    if (!isLocal) return `https://${host}`;
+
+    const scheme = proto ?? "http";
+    return `${scheme}://${host}`;
+  }
+
+  try {
+    const parsed = new URL(request.url);
+    const parsedIsLocal =
+      parsed.hostname.includes("localhost") ||
+      parsed.hostname.startsWith("127.");
+    if (!parsedIsLocal) return `https://${parsed.host}`;
+    return parsed.origin;
+  } catch {
+    return "";
+  }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
