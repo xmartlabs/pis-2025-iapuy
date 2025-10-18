@@ -137,6 +137,9 @@ export class UserService {
   ): Promise<User | null> {
     const user = await User.findByPk(username);
     if (!user) return null;
+    if (updateData.password) {
+      updateData.password = await Hashing.hashPassword(updateData.password);
+    }
     return await user.update(updateData);
   }
 

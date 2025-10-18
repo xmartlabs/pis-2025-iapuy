@@ -73,19 +73,19 @@ export default function Home() {
       const token = context?.tokenJwt;
 
       const res = await fetch("/api/users/update", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({username: context?.userName, password: data.password }),
+        body: JSON.stringify({username: context?.userCI, password: data.password }),
       });
 
       if (!res.ok) {
-        if (res.status === 607)
-          setLoginError("Usuario no existe." + context?.userName);
+        if (res.status === 404)
+          setLoginError("Usuario no existe." + context?.userCI + " " + context?.userName);
         else
-          setLoginError("Error desconocido. " + res.status + res.error +context?.userName);
+          setLoginError("Error desconocido. " + res.status);
         return;
       } else {
-        setLoginError("exito");
+        setLoginError("exito " + res.status);
       }
       
 

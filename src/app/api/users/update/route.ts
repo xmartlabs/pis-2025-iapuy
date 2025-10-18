@@ -4,13 +4,11 @@ import { initDatabase } from "@/lib/init-database";
 import { extractPagination } from "@/lib/pagination/extraction";
 import { UniqueConstraintError } from "sequelize";
 
-console.error("loaded");
-
 const userController = new UserController();
 await initDatabase();
 
-export async function PUT(request: NextRequest) {
-    console.error("print error");
+export async function POST(request: NextRequest) {
+    
     try {
     const body = await request.json();
     const { username, ...updateData } = body;
@@ -19,9 +17,7 @@ export async function PUT(request: NextRequest) {
       body: JSON.stringify(updateData)
     });
 
-  return NextResponse.json(
-      await userController.updateUser(updateRequest, { username })
-    );
+  return await userController.updateUser(updateRequest, { username })
   } catch (error) {
     return NextResponse.json(
       { error: "Internal Server Error" },
