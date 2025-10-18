@@ -48,7 +48,7 @@ const registerUserAssociations = () => {
     });
   }
 
-  if (!hasAssociation(ResetToken, User)) {
+  if (!hasAssociation(ResetToken, User, "UserToReset")) {
     ResetToken.belongsTo(User, { foreignKey: "userId", as: "UserToReset" });
   }
 
