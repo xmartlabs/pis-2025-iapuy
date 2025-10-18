@@ -70,10 +70,11 @@ export default function Home() {
     setLoginError("procesando... " + data.password + context?.userName);
 
     try {
+      const token = context?.tokenJwt;
 
       const res = await fetch("/api/users/update", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({username: context?.userName, password: data.password }),
       });
 
