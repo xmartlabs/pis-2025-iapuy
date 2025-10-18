@@ -38,6 +38,19 @@ export class InterventionController {
     );
     return interventions;
   }
+
+  async getUsersInvolvedInInterventionForExpense(
+    payload: PayloadForUser,
+    interventionId: string
+  ) {
+    const involved =
+      await this.interventionService.findUsersInvolvedInIntervention(
+        payload,
+        interventionId
+      );
+    return involved;
+  }
+
   async getInterventionDetails(id: string) {
     return await this.interventionService.getInterventionDetails(id);
   }

@@ -285,6 +285,78 @@ export class InterventionService {
 
     return mapped;
   }
+
+  async findUsersInvolvedInIntervention(
+    payload: PayloadForUser,
+    interventionId: string
+  ): Promise<
+    Array<{
+      userCi: string;
+      userName: string;
+    }>
+  > {
+    const intervention = await this.findIntervention(interventionId);
+    if (intervention === null) {
+      throw new Error(`Intervention with id "${interventionId}" not found`);
+    }
+
+    const interventionWithUsers = await Intervention.findByPk(interventionId, {
+      include: [
+        {
+          model: User,
+          as: "Users",
+          attributes: ["ci", "nombre"],
+          through: { attributes: [] },
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          include: [
+            {
+              model: User,
+              as: "User",
+              attributes: ["ci", "nombre"],
+            },
+          ],
+          required: false,
+        },
+      ],
+    });
+
+    if (!interventionWithUsers) return [];
+
+    const acompaniaUsers = interventionWithUsers.Users ?? [];
+    const usrPerroUsers =
+      interventionWithUsers.UsrPerroIntervention?.map((u) => u.User).filter(
+        Boolean
+      ) ?? [];
+    if (acompaniaUsers.length === 0 && usrPerroUsers.length === 0) return [];
+
+    const allUsers = [...acompaniaUsers, ...usrPerroUsers];
+
+    if (payload.type === "Colaborador") {
+      // If the collaborator is not involved in the intervention return error.
+      const isInvolved = allUsers.some(
+        (u) => u !== undefined && u.ci === payload.ci
+      );
+      if (!isInvolved) {
+        throw new Error(
+          "El colaborador no participa ni acompaña en la intervención seleccionada."
+        );
+      }
+
+      // if collaborator is involved, return only their own data
+      return [{ userCi: payload.ci, userName: payload.name }];
+    }
+    const map = new Map<string, { userCi: string; userName: string }>();
+    allUsers.forEach((u) => {
+      if (u !== undefined) {
+        map.set(u.ci, { userCi: u.ci, userName: u.nombre });
+      }
+    });
+
+    return Array.from(map.values());
+  }
   async findInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
