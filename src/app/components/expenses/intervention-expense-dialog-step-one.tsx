@@ -16,6 +16,7 @@ import { AlertCircleIcon, Check, ChevronsUpDown} from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { LoginContext } from "@/app/context/login-context";
+import { Label } from "@/components/ui/label";
 
 export type Intervention = {
   intervensionId: string;
@@ -79,6 +80,7 @@ export function InterventionCombobox({ value: propValue, onChange }: Interventio
   return (
     <div className="flex flex-col w-full">
         <Popover open={open} onOpenChange={setOpen}>
+            <Label className="mb-2">Intervencion</Label>
             <PopoverTrigger asChild>
                 <Button ref={triggerRef} variant="outline" role="combobox" aria-expanded={open} className="justify-between">
                 {value
@@ -177,9 +179,6 @@ export default function ExpenseDialogOne({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="w-full m-0">
-                        <span className="font-inter font-semibold text-[14px] leading-[16px] tracking-[-0.01em] text-[#2D3648]">
-                            Intervención
-                        </span>
                         <InterventionCombobox
                             value={selectedIntervention}
                             onChange={setSelectedIntervention}
