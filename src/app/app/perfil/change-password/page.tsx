@@ -1,13 +1,10 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useContext, useCallback } from "react";
+import { useEffect, useState, useContext} from "react";
 import { LoginContext } from "@/app/context/login-context";
-import { jwtDecode } from "jwt-decode";
 import { LoginDialog } from "@/app/components/login-dialog";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,9 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
 
-export interface LoginResponse {
+export interface PasswordChangeResponse {
   accessToken: string;
 }
 
@@ -31,19 +27,12 @@ export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loginError, setLogError] = useState<string | null>(null);
+  const [reponseError, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     //resolver: zodResolver(FormSchema),
     defaultValues: { ci: "", password: "" },
   });
-
-  const handleLoginSuccess = useCallback(
-    (data: LoginResponse) => {
-
-    },
-    [context, router]
-  );
 
   useEffect(() => {
     const renovarToken = async () => {
@@ -54,8 +43,7 @@ export default function Home() {
         });
 
         if (res.ok) {
-          const data = (await res.json()) as LoginResponse;
-          handleLoginSuccess(data);
+          const data = (await res.json()) as PasswordChangeResponse;
         }
       } finally {
         setLoading(false);
@@ -64,11 +52,11 @@ export default function Home() {
     renovarToken().catch(() => {
       setLoading(false);
     });
-  }, [handleLoginSuccess]);
+  }, []);
 
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     setSubmitting(true);
-    setLogError(null);
+    setError(null);
 
     try {
       const token = context?.tokenJwt;
@@ -81,16 +69,16 @@ export default function Home() {
 
       if (!res.ok) {
         if (res.status === 404)
-          setLogError("Usuario no existe." + context?.userCI + " " + context?.userName);
+          setError("Usuario no existe." + context?.userCI + " " + context?.userName);
         else
-          setLogError("Error desconocido. " + res.status);
+          setError("Error desconocido. " + res.status);
         return;
       } else {
         router.push("/app/perfil?passwordChanged=true");
       }
     } catch (error){
       console.error(error);
-      setLogError("error");
+      setError("error");
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +101,7 @@ export default function Home() {
         >
           <div
             className={`w-[436px] flex flex-col items-start justify-start !mx-[64px] ${
-              loginError ? "my-[42px]" : "my-[58px]"
+              reponseError ? "my-[42px]" : "my-[58px]"
             } gap-8`}
           >
             <Image src="/logo.png" alt="Logo" width={150} height={150} />
@@ -160,12 +148,12 @@ export default function Home() {
                   >
                     Continuar
                   </Button>
-                  {loginError && (
+                  {reponseError && (
                     <div
                       className="w-[436px] h-[24px] opacity-100 font-sans font-medium 
                                     text-sm leading-6 tracking-[0] text-center text-[var(--destructive,#DC2626)]"
                     >
-                      {loginError}
+                      {reponseError}
                     </div>
                   )}
                 </div>
