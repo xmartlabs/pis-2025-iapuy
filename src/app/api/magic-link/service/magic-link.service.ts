@@ -1,6 +1,7 @@
 import { ResetToken } from "@/app/models/reset-tokens.entity";
 import { User } from "@/app/models/user.entity";
 import sequelize from "@/lib/database";
+import { initDatabase } from "@/lib/init-database";
 import { createHash, randomBytes } from "node:crypto";
 import { Op } from "sequelize";
 
@@ -10,6 +11,38 @@ export class MagicLinkService {
     process.env.RESET_TOKEN_EXPIRATION_MINUTES || "60",
     10
   );
+
+  static async verifyResetToken(receivedToken: string): Promise<string> {
+    await initDatabase();
+    const receivedHash = createHash("sha256")
+      .update(receivedToken)
+      .digest("hex");
+
+    const record = await ResetToken.findOne({
+      where: {
+        tokenHash: receivedHash,
+        used: false,
+        expiresAt: {
+          [Op.gt]: new Date(),
+        },
+      },
+      include: [
+        {
+          model: User,
+          as: "UserToReset",
+          required: true,
+          attributes: ["ci"],
+        },
+      ],
+    });
+
+    if (!record) throw new Error("Invalid token");
+
+    record.used = true;
+    await record.save();
+
+    return record.UserToReset!.ci;
+  }
 
   generateToken(): { token: string; tokenHash: string } {
     const buffer = randomBytes(MagicLinkService.TOKEN_SIZE_BYTES);
@@ -59,38 +92,5 @@ export class MagicLinkService {
     }
 
     return { token, expiresAt };
-  }
-
-  async verifyResetToken(
-    receivedToken: string
-  ): Promise<{ ci: string; nombre: string }> {
-    const receivedHash = createHash("sha256")
-      .update(receivedToken)
-      .digest("hex");
-
-    const record = await ResetToken.findOne({
-      where: {
-        tokenHash: receivedHash,
-        used: false,
-        expiresAt: {
-          [Op.gt]: new Date(),
-        },
-      },
-      include: [
-        {
-          model: User,
-          as: "UserToReset",
-          required: true,
-          attributes: ["ci", "nombre"],
-        },
-      ],
-    });
-
-    if (!record) throw new Error("Invalid token");
-
-    record.used = true;
-    await record.save();
-
-    return { ci: record.UserToReset!.ci, nombre: record.UserToReset!.nombre };
   }
 }

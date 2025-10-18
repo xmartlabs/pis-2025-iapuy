@@ -3,7 +3,6 @@ import {
   Model,
   Table,
   Column,
-  DataType,
   ForeignKey,
   BelongsTo,
   PrimaryKey,
@@ -14,30 +13,16 @@ import { User } from "./user.entity";
 export class ResetToken extends Model {
   @PrimaryKey
   @ForeignKey(() => User)
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column
   declare userId: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    unique: true,
-  })
+  @Column
   declare tokenHash: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: false,
-  })
+  @Column
   declare expiresAt: Date;
 
-  @Column({
-    type: DataType.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  })
+  @Column
   declare used: boolean;
 
   @BelongsTo(() => User)
