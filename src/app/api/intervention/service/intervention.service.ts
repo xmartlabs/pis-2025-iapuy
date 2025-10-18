@@ -201,7 +201,7 @@ export class InterventionService {
   ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
-      : {};
+      : undefined;
 
     const result = await Intervention.findAndCountAll({
       where: interventionWhere,
