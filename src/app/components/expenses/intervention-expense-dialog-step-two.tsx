@@ -18,7 +18,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {InterventionCombobox} from "@/app/components/expenses/intervention-expense-dialog-step-one"
 import { AlertCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState,forwardRef } from "react";
+import { LoginContext } from "@/app/context/login-context";
 
 interface ComboboxProps {
   value: string;
@@ -141,32 +142,52 @@ const MeasurementComboBox =({ value: propValue, onChange,disabled }: ComboboxPro
 }
 interface Props{
     InterventionID:string,
+    onSubmit?: (data: z.infer<typeof FormSchema>) => void;
 }
-export function ExpenseForm({ InterventionID }: Props) {
-  const FormSchema = z.object({
+export const FormSchema = z.object({
     interventionID: z
         .string(),
     peopleCI: z.string(),
-    type:z.boolean(),
+    type:z.string(),
     measurementType:z.string(),
     amount:z.number()
     .positive({ message: "Debe ingresar una cantidad de KM válida." }),
-  });
-  const form = useForm<z.infer<typeof FormSchema>>({
+});
+export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
+  ({ InterventionID, onSubmit }, ref) => {
+    const form = useForm<z.infer<typeof FormSchema>>({
       resolver: zodResolver(FormSchema),
-      defaultValues: { interventionID: InterventionID, peopleCI: "",type:true,amount:0},
-  });
-  const selectedType = useWatch({ control: form.control, name: "type" })
-  const isTraslado = selectedType === true
-  const selectedMeasurementType = useWatch({ control: form.control, name: "measurementType" })
-  useEffect(() => {
-    if (!selectedType) {
-      form.setValue("measurementType", "$");
-    }
-  }, [selectedType, form]);
+      defaultValues: { 
+        interventionID: InterventionID, 
+        peopleCI: "",
+        type: "Traslado",
+        amount: 0,
+        measurementType: "KM",
+      },
+    });
+
+    const selectedType = useWatch({ control: form.control, name: "type" });
+    const isTraslado = selectedType === "Traslado";
+    const selectedMeasurementType = useWatch({ control: form.control, name: "measurementType" });
+
+    useEffect(() => {
+      if (!selectedType) {
+        form.setValue("measurementType", "$");
+      }
+    }, [selectedType, form]);
+
+    const handleFormSubmit = (data: z.infer<typeof FormSchema>) => {
+      if(onSubmit) {
+        onSubmit(data);
+      }
+    };
   return(
     <Form {...form}>
-      <form className="flex flex-col gap-6 w-full">
+      <form
+        ref={ref}
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        className="flex flex-col gap-6 w-full">
         <FormField
           control={form.control}
           name="interventionID"
@@ -205,18 +226,24 @@ export function ExpenseForm({ InterventionID }: Props) {
               <FormControl>
                 <RadioGroup
                   className="flex flex-row gap-6"
-                  onValueChange={(value) => { field.onChange(value === "true"); }}
-                  value={field.value ? "true" : "false"}
+                  onValueChange={(value) => { field.onChange(value); }}
+                  value={field.value as string | undefined}
                 >
                   <div className="flex items-center">
-                    <RadioGroupItem value="true" id="option-true" />
+                    <RadioGroupItem 
+                      value="Traslado" 
+                      id="option-true"                     
+                    />
                     <Label htmlFor="option-true" className="ml-2">
                       Traslado
                     </Label>
                   </div>
 
                   <div className="flex items-center">
-                    <RadioGroupItem value="false" id="option-false" />
+                    <RadioGroupItem 
+                      value="Estacionamiento/Taxi" 
+                      id="option-false"
+                    />
                     <Label htmlFor="option-false" className="ml-2">
                       Estacionamiento/Taxi
                     </Label>
@@ -264,6 +291,7 @@ export function ExpenseForm({ InterventionID }: Props) {
                       id="amount"
                       type="number"
                       {...field}
+                      onChange={(e) => { field.onChange(e.target.valueAsNumber); }}
                     />
                   </FormControl>
                   {selectedMeasurementType === "KM" && (
@@ -293,39 +321,91 @@ export function ExpenseForm({ InterventionID }: Props) {
       </form>
     </Form>
   )
-}
+});
+ExpenseForm.displayName = "ExpenseForm";
 interface Props2 {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   InterventionID: string;
 }
 export default function ExpenseDialogTwo({ open, onOpenChange, InterventionID }: Props2) {
+  const [submitting, setSubmitting] = useState(false);
+  const context = useContext(LoginContext);
+  const token = context?.tokenJwt;
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const submit = async (data: z.infer<typeof FormSchema>) => {
+    if (!submitting) {
+      setSubmitting(true);
+      try {
+        const res = await fetch("/api/expenses", {
+          method: "POST",
+          headers: { 
+            Accept: "application/json", 
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            userId:"11111111", 
+            interventionId: data.interventionID,
+            type: data.type,
+            concept:"", 
+            state:"Pendiente de pago",
+            amount:data.amount
+          }),
+        });
+
+        if (res.ok) {
+          alert("Pago ingresado con éxito");
+        } else {
+          alert("Error");
+        }
+      } catch {
+        alert("Error");
+      } finally {
+        setSubmitting(false);
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[500px] max-w-full">
         <DialogHeader>
-          <DialogTitle className="font-sans font-semibold text-lg leading-[100%] tracking-[-0.025em] mb-6">
+          <DialogTitle className="font-sans font-semibold text-lg mb-6">
             Gasto en Intervención
           </DialogTitle>
           <DialogDescription asChild>
-              <div className="grid border border-red-500 rounded-md p-2 w-full mb-6">
-                  <div className="flex">
-                      <AlertCircleIcon className="text-red-500 mr-1" />{" "}
-                      <p className="text-red-500">Solo subí el gasto si lo realizaste para trasladar a un perro.</p>
-                  </div>
+            <div className="grid border border-red-500 rounded-md p-2 w-full mb-6">
+              <div className="flex">
+                <AlertCircleIcon className="text-red-500 mr-1" />
+                <p className="text-red-500">
+                  Solo subí el gasto si lo realizaste para trasladar a un perro.
+                </p>
               </div>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
-        <ExpenseForm InterventionID={InterventionID} />
+        {/* Form con ref */}
+        <ExpenseForm 
+          InterventionID={InterventionID} 
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          onSubmit={submit} 
+          ref={formRef}
+        />
 
         <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 w-full mt-8">
           <DialogClose asChild>
-            <Button className="min-w-[80px] rounded-md border border-[#BDD7B3] py-2 px-3 opacity-100 rotate-0 bg-color-white font-sans font-medium text-sm leading-6 tracking-normal text-[#5B9B40] ">Cancelar</Button>
+            <Button className="min-w-[80px] rounded-md border border-[#BDD7B3] py-2 px-3 text-[#5B9B40] bg-white">
+              Cancelar
+            </Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button className="min-w-[80px] rounded-md border border-[#BDD7B3] py-2 px-3 opacity-100 rotate-0 bg-[#5B9B40] font-sans font-medium text-sm leading-6 tracking-normal">Confirmar</Button>
-          </DialogClose>
+          <Button
+            className="min-w-[80px] rounded-md border border-[#BDD7B3] py-2 px-3 bg-[#5B9B40] text-white"
+            onClick={() => formRef.current?.requestSubmit()} // envía el form
+          >
+            Confirmar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
