@@ -69,6 +69,9 @@ export class Expense extends Model {
   @Column
   declare amount: number;
 
+  @Column
+  declare dateSanity: Date;
+
   @CreatedAt
   declare createdAt: Date;
 
@@ -77,4 +80,8 @@ export class Expense extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
+
+  declare Intervencion?: Intervention;
 }
