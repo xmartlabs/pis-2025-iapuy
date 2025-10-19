@@ -3,7 +3,7 @@ import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { Op } from "sequelize";
+import {Op, Sequelize } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
@@ -160,6 +160,17 @@ export class ExpensesService {
           };
         }
       }
+    
+    if (pagination.query && pagination.query.trim()) {
+      const q = `%${pagination.query.trim()}%`;
+      // @ts-expect-error this is because wherebase is not typed as WhereOptions
+      whereBase[Op.and] = [
+        Sequelize.where(
+          Sequelize.cast(Sequelize.col("Expense.type"), "TEXT"),
+          { [Op.iLike]: q }
+        ),
+      ];
+    }
 
     const result = await Expense.findAndCountAll({
       where: {
@@ -172,21 +183,13 @@ export class ExpensesService {
         }),
       },
       include: [
-        {
-          model: User,
-          as: "user",
-          attributes: ["ci", "nombre"],
-        },
-        {
-          model: Intervention,
-          as: "intervention",
-          attributes: ["id", "timeStamp"],
-          required: false,
-        },
+        { model: User, as: "user", attributes: ["ci", "nombre"] },
+        { model: Intervention, as: "intervention", attributes: ["id", "timeStamp"], required: false },
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
       order: pagination.getOrder(),
+      distinct: true,
     });
 
     const data: ListExpenseDto[] = await Promise.all(
