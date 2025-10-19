@@ -3,7 +3,6 @@
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,7 +25,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Upload, Minus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState, useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
@@ -387,189 +386,242 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
 
   return (
     <div>
-        <Form {...form}>
-            <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit)(e).catch((err) => { reportError(err); }) }} className="space-y-8 !font-inter w-full -ml-[12px] sm:px-4 gap-y-6 gap-x-4">
-              <h3 className="text-2xl font-bold tracking-normal leading-[1.4]" >
-              Pacientes
-              </h3>
-              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-                  {patientsCards.map((_, index) => (
-                    <Card key={index} className="relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none">
-                      {patientsCards.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="icon"
-                          onClick={() => { removePatientCard(index); }}
-                          className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
-                        >
-                          <X color="#5B9B40" strokeWidth={1} />
-                        </Button>
-                      )}
-                      <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                        <div className="flex flex-col sm:flex-row gap-6 w-full">
-                          <FormField
-                            control={form.control}
-                            name={`patients.${index}.name`}
-                            render={({ field }) => (
-                              <FormItem className="w-full sm:w-[318px] min-h-[68px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                                <Label htmlFor={`patients.${index}.name`} className="text-sm h-[16px] font-medium leading-[20px]">Nombre</Label>
-                                <FormControl>
-                                  <Input 
-                                  {...field}
-                                    id={`patients.${index}.name`} 
-                                    className="h-[48px] border-1 border-[#D4D4D4] bg-[#FFFFFF]"                 
-                                  />
-                                </FormControl>
-                                {form.formState.touchedFields.patients?.[index]?.name && <FormMessage />}
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`patients.${index}.age`}
-                            render={({ field }) => (
-                            <FormItem className="w-full sm:w-[120px] min-h-[40px] flex flex-col">
-                              <Label htmlFor={`age-${index}`} className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]">Edad</Label>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  id={`patient-${index}-age`}
-                                  type="string"                           
-                                  className="h-[48px] border-1 border-[#D4D4D4] bg-white"
-                                />
-                              </FormControl>
-                              {form.formState.touchedFields.patients?.[index]?.name && <FormMessage />}
-                            </FormItem>
-                          )}
-                        />
-                        </div>
-                        {pathologys.length > 0 && (
-                          <FormField
-                            control={form.control}
-                            name={`patients.${index}.pathology`}
-                            render={({ field }) => (
-                              <FormItem className=" w-full sm:w-[462px] flex flex-col gap-[8px]">
-                                <Label
-                                  htmlFor={`patients.${index}.pathology`}
-                                  className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]">
-                                  Patología
-                                </Label>
-
-                                <Select
-                                  onValueChange={(val: string) => {
-                                    if (val === "__none") {
-                                      field.onChange(undefined);
-                                      return;
-                                    }
-                                    field.onChange(val);
-                                  }}
-                                  value={typeof field.value === "string" ? field.value : ""}
-                                >
-                                  <SelectTrigger
-                                    className="w-full !h-[40px] rounded-[6px] border-1 border-[#D4D4D4] bg-white"
-                                    aria-labelledby={`patients.${index}.pathology`}
-                                  >
-                                    <SelectValue placeholder="Seleccionar" />
-                                  </SelectTrigger>
-
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      {pathologys.map((pat) => (
-                                          <SelectItem key={pat.id} value={String(pat.id)}>
-                                            {pat.nombre}
-                                          </SelectItem>
-                                        ))
-                                      }
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                                {pathologys.length > 0 && form.formState.isSubmitted && !form.watch(`patients.${index}.pathology`) && (
-                                  <p className="mt-1 text-sm text-red-500">
-                                    Debes seleccionar una patología.
-                                  </p>
-                                )}
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                        <div className="grid gap-2">
-                          <FormLabel className="w-full sm:w-[320px] h-[16px] font-medium text-[14px]">
-                            ¿Cómo se sintió?
-                          </FormLabel>
-                          <RadioGroup 
-                            onValueChange={(val)=>
-                              { form.setValue(`patients.${index}.feeling`,val as ExperiencePat); }
-                            }
-                            value = {form.watch(`patients.${index}.feeling`)}
-                            className="flex flex-wrap gap-6"
-
+      <Form {...form}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form
+              .handleSubmit(onSubmit)(e)
+              .catch((err) => {
+                reportError(err);
+              });
+          }}
+          className="space-y-8 !font-inter w-full -ml-[12px] sm:px-4 gap-y-6 gap-x-4"
+        >
+          <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
+            Pacientes
+          </h3>
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            {patientsCards.map((_, index) => (
+              <Card
+                key={index}
+                className="relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none"
+              >
+                {patientsCards.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="icon"
+                    onClick={() => {
+                      removePatientCard(index);
+                    }}
+                    className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                  >
+                    <X color="#5B9B40" strokeWidth={1} />
+                  </Button>
+                )}
+                <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                  <div className="flex flex-col sm:flex-row gap-6 w-full">
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="w-full sm:w-[318px] min-h-[68px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                          <Label
+                            htmlFor={`patients.${index}.name`}
+                            className="text-sm h-[16px] font-medium leading-[20px]"
                           >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem 
-                              value="good" 
-                              id={`patient-${index}-good`} 
-                              className="
-                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
-                                  data-[state=checked]:!border-[#5B9B40]
-                                  data-[state=checked]:!text-[#5B9B40]
-                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                              " 
+                            Nombre
+                          </Label>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              id={`patients.${index}.name`}
+                              className="h-[48px] border-1 border-[#D4D4D4] bg-[#FFFFFF]"
                             />
-                            <Label htmlFor={`patient-${index}-good`} className="text-sm leading-[16px]">Bien</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem 
-                              value="regular" 
-                              id={`patient-${index}-regular`} 
-                              className="
-                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
-                                  data-[state=checked]:!border-[#5B9B40]
-                                  data-[state=checked]:!text-[#5B9B40]
-                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
-                              " 
+                          </FormControl>
+                          {form.formState.touchedFields.patients?.[index]
+                            ?.name && <FormMessage />}
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.age`}
+                      render={({ field }) => (
+                        <FormItem className="w-full sm:w-[120px] min-h-[40px] flex flex-col">
+                          <Label
+                            htmlFor={`age-${index}`}
+                            className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]"
+                          >
+                            Edad
+                          </Label>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              id={`patient-${index}-age`}
+                              type="string"
+                              className="h-[48px] border-1 border-[#D4D4D4] bg-white"
                             />
-                            <Label htmlFor={`patient-${index}-regular`} className="text-sm leading-[16px]">Regular</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem 
-                              value="bad" 
-                              id={`patient-${index}-bad`}  
-                              className="
+                          </FormControl>
+                          {form.formState.touchedFields.patients?.[index]
+                            ?.name && <FormMessage />}
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {pathologys.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name={`patients.${index}.pathology`}
+                      render={({ field }) => (
+                        <FormItem className=" w-full sm:w-[462px] flex flex-col gap-[8px]">
+                          <Label
+                            htmlFor={`patients.${index}.pathology`}
+                            className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]"
+                          >
+                            Patología
+                          </Label>
+
+                          <Select
+                            onValueChange={(val: string) => {
+                              if (val === "__none") {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              field.onChange(val);
+                            }}
+                            value={
+                              typeof field.value === "string" ? field.value : ""
+                            }
+                          >
+                            <SelectTrigger
+                              className="w-full !h-[40px] rounded-[6px] border-1 border-[#D4D4D4] bg-white"
+                              aria-labelledby={`patients.${index}.pathology`}
+                            >
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                              <SelectGroup>
+                                {pathologys.map((pat) => (
+                                  <SelectItem
+                                    key={pat.id}
+                                    value={String(pat.id)}
+                                  >
+                                    {pat.nombre}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          {pathologys.length > 0 &&
+                            form.formState.isSubmitted &&
+                            !form.watch(`patients.${index}.pathology`) && (
+                              <p className="mt-1 text-sm text-red-500">
+                                Debes seleccionar una patología.
+                              </p>
+                            )}
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  <div className="grid gap-2">
+                    <FormLabel className="w-full sm:w-[320px] h-[16px] font-medium text-[14px]">
+                      ¿Cómo se sintió?
+                    </FormLabel>
+                    <RadioGroup
+                      onValueChange={(val) => {
+                        form.setValue(
+                          `patients.${index}.feeling`,
+                          val as ExperiencePat
+                        );
+                      }}
+                      value={form.watch(`patients.${index}.feeling`)}
+                      className="flex flex-wrap gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value="good"
+                          id={`patient-${index}-good`}
+                          className="
                                   !bg-white !border-1 !border-[#5B9B40] !rounded-full
                                   data-[state=checked]:!border-[#5B9B40]
                                   data-[state=checked]:!text-[#5B9B40]
                                   data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
                                   data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
                               "
-                            />
-                            <Label htmlFor={`patient-${index}-bad`} className="text-sm leading-[16px]">Mal</Label>
-                          </div>
-                        </RadioGroup>
+                        />
+                        <Label
+                          htmlFor={`patient-${index}-good`}
+                          className="text-sm leading-[16px]"
+                        >
+                          Bien
+                        </Label>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                <div className="flex flex-row md:flex-col gap-2">
-                  <Button 
-                  type="button"
-                  variant="secondary" 
-                  size="icon"  
-                  onClick = {addPatCard} 
-                  className="!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-                    <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
-                  </Button>
-                </div>
-              </div>
-              <h3 className="text-2xl font-bold tracking-normal mb-5 font-inter" >
-                Perros
-              </h3>
-              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-                {dogs.map((dog,index)=> (
-                  <Card key= {dog.id} 
-                  className=" 
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value="regular"
+                          id={`patient-${index}-regular`}
+                          className="
+                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                                  data-[state=checked]:!border-[#5B9B40]
+                                  data-[state=checked]:!text-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                              "
+                        />
+                        <Label
+                          htmlFor={`patient-${index}-regular`}
+                          className="text-sm leading-[16px]"
+                        >
+                          Regular
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value="bad"
+                          id={`patient-${index}-bad`}
+                          className="
+                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                                  data-[state=checked]:!border-[#5B9B40]
+                                  data-[state=checked]:!text-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                              "
+                        />
+                        <Label
+                          htmlFor={`patient-${index}-bad`}
+                          className="text-sm leading-[16px]"
+                        >
+                          Mal
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            <div className="flex flex-row md:flex-col gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={addPatCard}
+                className="!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]"
+              >
+                <Plus color="#5B9B40" className="w-[20px] h-[20px]" />
+              </Button>
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold tracking-normal mb-5 font-inter">
+            Perros
+          </h3>
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            {dogs.map((dog, index) => (
+              <Card
+                key={dog.id}
+                className=" 
                     w-full md:w-[518px]
                     h-[92px]
                     rounded-lg
@@ -578,122 +630,138 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
                     border-[#BDD7B3]
                     shadow-none
                   "
+              >
+                <CardContent className="px-0 text-[#2D3648]">
+                  <FormLabel className="block font-medium text-[14px] pb-2 leading-[16px]">
+                    ¿Cómo se sintió {dog.nombre}?
+                  </FormLabel>
+                  <RadioGroup
+                    onValueChange={(val) => {
+                      form.setValue(
+                        `dogs.${index}.feelingDog`,
+                        val as ExperienceDog
+                      );
+                    }}
+                    defaultValue="good"
+                    value={form.watch(`dogs.${index}.feelingDog`)}
+                    className="w-full sm:w-[296px] flex flex-row gap-4"
                   >
-                    <CardContent className="px-0 text-[#2D3648]">
-                      <FormLabel className="block font-medium text-[14px] pb-2 leading-[16px]">
-                        ¿Cómo se sintió {dog.nombre}?
-                      </FormLabel>
-                      <RadioGroup 
-                        onValueChange={(val)=>{
-                          form.setValue(`dogs.${index}.feelingDog`,val as ExperienceDog); 
-                        }}
-                        defaultValue="good"
-                        value = {form.watch(`dogs.${index}.feelingDog`)}
-                        className="w-full sm:w-[296px] flex flex-row gap-4"
-                      >
-                        <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
-                          <RadioGroupItem 
-                            value="good" 
-                            id={`good-${dog.id}`} 
-                            className="
+                    <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
+                      <RadioGroupItem
+                        value="good"
+                        id={`good-${dog.id}`}
+                        className="
                               !bg-white !border-1 !border-[#5B9B40] !rounded-full
                               data-[state=checked]:!border-[#5B9B40]
                               data-[state=checked]:!text-[#5B9B40]
                               data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
                               data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
                             "
-                          />
-                          <Label htmlFor={`good-${dog.id}`} className="text-sm leading-[16px]">Buena</Label>
-                        </div>
-                        <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
-                          <RadioGroupItem 
-                          value="regular" 
-                          id={`regular-${dog.id}`} 
-                          className="
-                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
-                            data-[state=checked]:!border-[#5B9B40]
-                            data-[state=checked]:!text-[#5B9B40]
-                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
-                          "
-                          />
-                          <Label htmlFor={`regular-${dog.id}`} className="text-sm leading-[16px]">Regular</Label>
-                        </div>
-                        <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
-                          <RadioGroupItem 
-                          value="bad" 
-                          id={`bad-${dog.id}`} 
-                          className="
-                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
-                            data-[state=checked]:!border-[#5B9B40]
-                            data-[state=checked]:!text-[#5B9B40]
-                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
-                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
-                          "
-                          />
-                          <Label htmlFor={`bad-${dog.id}`} className="text-sm leading-[16px]">Mal</Label>
-                        </div>
-                      </RadioGroup>
-
-                      <input
-                        type="hidden"
-                        {...form.register(`dogs.${index}.dogId` as const)}
-                        value={dog.id}
                       />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <div className="gap-5">
-                <h3 className="text-2xl font-bold font-inter">
-                  Fotos
-                </h3>
-                <p className="pt-2 pb-4">Solo podés adjuntar dos fotos de máximo 15 MB cada una.</p>
-                <div>
-                    <Input
-                      id="picture"
-                      type="file"
-                      multiple
-                      {...form.register("photos")}
-                      className="
+                      <Label
+                        htmlFor={`good-${dog.id}`}
+                        className="text-sm leading-[16px]"
+                      >
+                        Buena
+                      </Label>
+                    </div>
+                    <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
+                      <RadioGroupItem
+                        value="regular"
+                        id={`regular-${dog.id}`}
+                        className="
+                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                            data-[state=checked]:!border-[#5B9B40]
+                            data-[state=checked]:!text-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
+                          "
+                      />
+                      <Label
+                        htmlFor={`regular-${dog.id}`}
+                        className="text-sm leading-[16px]"
+                      >
+                        Regular
+                      </Label>
+                    </div>
+                    <div className="w-full sm:w-[296px] h-[24px] flex items-center gap-2">
+                      <RadioGroupItem
+                        value="bad"
+                        id={`bad-${dog.id}`}
+                        className="
+                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                            data-[state=checked]:!border-[#5B9B40]
+                            data-[state=checked]:!text-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
+                          "
+                      />
+                      <Label
+                        htmlFor={`bad-${dog.id}`}
+                        className="text-sm leading-[16px]"
+                      >
+                        Mal
+                      </Label>
+                    </div>
+                  </RadioGroup>
+
+                  <input
+                    type="hidden"
+                    {...form.register(`dogs.${index}.dogId` as const)}
+                    value={dog.id}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="gap-5">
+            <h3 className="text-2xl font-bold font-inter">Fotos</h3>
+            <p className="pt-2 pb-4">
+              Solo podés adjuntar dos fotos de máximo 15 MB cada una.
+            </p>
+            <div>
+              <Input
+                id="picture"
+                type="file"
+                multiple
+                {...form.register("photos")}
+                className="
                         max-w-[518px] h-[40px] rounded-md border border-[#D4D4D4]
                         file:font-semibold file:text-[#121F0D] file:bg-white 
                         file:border-none file:px-2 file:cursor-pointer
                         text-[#777d74] 
                       "
-                    />
-                </div>
-                {form.formState.errors.photos && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {form.formState.errors.photos.message as string}
-                  </p>
-                )}
-                <div className="py-6">
-                  <div>
-                    <p className="w-[379px] h-[28px] font-normal text-[14px] leading-[21px]">
-                      Si necesitás subir más, podés dejar acá el link a Drive:                  
-                    </p>
-                  </div>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Ejemplo: https://drive.google.com/drive/folders/1BP_DxHxEql-iViwo"
-                      {...form.register("driveLink")}
-                      className="max-w-[518px] h-[40px] rounded-md mt-2 border-1 border-[#D4D4D4]"
-                    />
-                  </FormControl>
-                </div>
+              />
+            </div>
+            {form.formState.errors.photos && (
+              <p className="mt-2 text-sm text-red-500">
+                {form.formState.errors.photos.message as string}
+              </p>
+            )}
+            <div className="py-6">
+              <div>
+                <p className="w-[379px] h-[28px] font-normal text-[14px] leading-[21px]">
+                  Si necesitás subir más, podés dejar acá el link a Drive:
+                </p>
               </div>
-              
-              <Button
-                className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center"
-              >
-                <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
-                  Guardar cambios
-                </span>
-              </Button>
-            </form>
-          </Form>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Ejemplo: https://drive.google.com/drive/folders/1BP_DxHxEql-iViwo"
+                  {...form.register("driveLink")}
+                  className="max-w-[518px] h-[40px] rounded-md mt-2 border-1 border-[#D4D4D4]"
+                />
+              </FormControl>
+            </div>
+          </div>
+
+          <Button className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center">
+            <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
+              Guardar cambios
+            </span>
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }
