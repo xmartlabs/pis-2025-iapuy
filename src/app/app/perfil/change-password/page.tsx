@@ -16,6 +16,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const FormSchema = z.object({
+  password: z.string()
+    .min(8, { message: "La contraseña debe tener al menos 8 caracteres." })
+    .regex(/[A-Z]/, { message: "La contraseña debe contener al menos una letra mayúscula." }),
+});
 
 export interface PasswordChangeResponse {
   accessToken: string;
@@ -30,8 +37,8 @@ export default function Home() {
   const [reponseError, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
-    //resolver: zodResolver(FormSchema),
-    defaultValues: { ci: "", password: "" },
+    resolver: zodResolver(FormSchema),
+    defaultValues: { password: "" },
   });
 
   useEffect(() => {
@@ -49,6 +56,7 @@ export default function Home() {
         setLoading(false);
       }
     };
+    
     renovarToken().catch(() => {
       setLoading(false);
     });
@@ -61,7 +69,7 @@ export default function Home() {
     let newPassword: string = "";
 
     try {
-      newPassword = data.password as string;
+      newPassword = data.password;
 
       if (newPassword.length < 8 || !/[A-Z]/.test(newPassword)) {
           setError("La contraseña debe tener al menos 8 caracteres, y al menos una mayúscula.");
