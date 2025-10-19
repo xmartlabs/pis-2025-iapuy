@@ -264,9 +264,9 @@ export default function ListadoIntervenciones({
   };
 
   return (
-    <div className=" max-w-[92%]">
+    <div className=" max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
-        <div className="w-full h-[48px] flex justify-between opacity-100 rotate-0">
+        <div className="w-full h-[48px] flex justify-between opacity-100 mb-[32px]">
           <div className="flex items-center gap-3">
             <CalendarRange size={48} />
             <h1
@@ -286,7 +286,7 @@ export default function ListadoIntervenciones({
             />
           </div>
         ) : (
-          <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+          <div className="flex justify-start sm:justify-end items-center">
             <CustomSearchBar
               searchInput={searchInput}
               setSearchInput={setSearchInput}
@@ -302,7 +302,7 @@ export default function ListadoIntervenciones({
         )}
       </div>
       {!isColab && (
-        <div className="flex justify-end mb-2 pb-2 pt-3 gap-5">
+        <div className="flex justify-start sm:justify-end items-center">
           <CustomSearchBar
             searchInput={searchInput}
             setSearchInput={setSearchInput}
@@ -316,9 +316,9 @@ export default function ListadoIntervenciones({
           />
         </div>
       )}
-      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
-        <div className="sm:w-full overflow-x-auto">
-          <Table className="table-fixed border-collapse">
+      <div className="mx-auto w-full border border-gray-300 mt-4 rounded-lg">
+        <div className="overflow-x-auto">
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow
                 className="bg-gray-50 border-b border-gray-200 font-medium font-sm leading-[1.1] text-[#F3F4F6]"
@@ -371,10 +371,16 @@ export default function ListadoIntervenciones({
                 intervention.map((inter) => (
                   <TableRow
                     key={inter.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                    onClick={() => {
-                      go(inter.id);
-                    }}
+                    className={`hover:bg-gray-50 transition-colors duration-150 ${
+                      !isColab ? "cursor-pointer" : ""
+                    }`}
+                    onClick={
+                      !isColab
+                        ? () => {
+                            go(inter.id);
+                          }
+                        : undefined
+                    }
                   >
                     <TableCell className="p-3">
                       <div className="flex items-center gap-3">

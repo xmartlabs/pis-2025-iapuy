@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogOverlay
+  DialogOverlay,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -99,7 +99,9 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch("/api/users", { headers: baseHeaders });
+        const response = await fetch("/api/users?size=-1", {
+          headers: baseHeaders,
+        });
         if (response.status === 401) {
           const resp2 = await fetch("/api/auth/refresh", {
             method: "POST",
@@ -114,7 +116,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
             const newToken = refreshBody?.accessToken ?? null;
             if (newToken) {
               context?.setToken(newToken);
-              const retryResp = await fetch("/api/users", {
+              const retryResp = await fetch("/api/users?size=-1", {
                 method: "GET",
                 headers: {
                   Accept: "application/json",
@@ -296,7 +298,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogOverlay className="fixed inset-0 z-50 bg-black/50"/>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50" />
         <DialogContent
           className="
                         mt-27 !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
