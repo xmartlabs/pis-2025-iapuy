@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Upload, Minus, X, AlertCircleIcon } from "lucide-react";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -83,11 +83,13 @@ export default function EvaluarIntervencion() {
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
-  const [costsCards, setCostCard] = useState([0]);
+  const [expenseCards, setExpenseCard] = useState([0]);
   const [interv, setInterv] = useState<Intervention>();
   const context = useContext(LoginContext);
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
+  const formRefs = useRef<(HTMLFormElement | null)[]>([]);
+  const [expenses, setExpenses] = useState<z.infer<typeof expensesSchema>[]>([]);
 
   if (!id) {
     throw new Error("Falta el parámetro id en la URL");
@@ -102,8 +104,8 @@ export default function EvaluarIntervencion() {
       const payloadBase64 = token.split('.')[1];
       const payloadJson = JSON.parse(atob(payloadBase64)) as JwtPayload;
       userType = payloadJson.type; // "Colaborador" o "Administrador"
-    } catch (err) {
-      console.error("Error al decodificar el token:", err);
+    } catch {
+      reportError("Error al decodificar el token:");
     }
   }
   const isAdmin = userType === "Administrador";
@@ -298,7 +300,7 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   const patientsSchema = z.object({
     name: z.string().min(1, "Nombre requerido"),
@@ -335,11 +337,20 @@ export default function EvaluarIntervencion() {
       "Cada foto debe pesar menos de 15MB"
     );
 
+    const expensesSchema = z.object({
+      interventionID: z.string(),
+      peopleCI: z.string(),
+      type:z.string(),
+      measurementType:z.string(),
+      amount:z.number().positive({ message: "Debe ingresar una cantidad de KM válida." }),
+  });
+
   const FormSchema = z.object({
     patients: z.array(patientsSchema).min(1),
     dogs: z.array(dogsExpSchema),
     photos: photosSchema.optional(),
     driveLink: z.string().optional(),
+    expenses: z.array(expensesSchema).optional()
   });
 
   type FormValues = z.infer<typeof FormSchema>;
@@ -370,6 +381,16 @@ export default function EvaluarIntervencion() {
   }, [dogs, form]);
 
   const router = useRouter();
+  
+  const handleExpenseSubmit = (data: z.infer<typeof expensesSchema>, index: number) => {
+    setExpenses((prev) => {
+      const copy = [...prev];
+      copy[index] = data;
+      return copy;
+    });
+  };
+
+
   // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: FormValues) {
     try {
@@ -400,7 +421,6 @@ export default function EvaluarIntervencion() {
       }));
 
       const formData = new FormData();
-
       formData.append("patients", JSON.stringify(patients));
       formData.append("experiences", JSON.stringify(experiences));
 
@@ -431,12 +451,34 @@ export default function EvaluarIntervencion() {
         }
         return;
       }
-      if (res.ok) {
-        form.reset();
-        router.push("/app/colaboradores/intervenciones/listado?success=1");
-      } else {
+      if (!res.ok) {
         throw new Error("Error en el registro");
       }
+
+      await Promise.all(
+        expenses.map((exp) =>
+          fetch("/api/expenses", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${context?.tokenJwt}`,
+            },
+            body: JSON.stringify({
+              userId: "11111111", // o el real
+              interventionId: exp.interventionID,
+              type: exp.type,
+              concept: "",
+              state: "Pendiente de pago",
+              amount: exp.amount,
+            }),
+          })
+        )
+      );
+
+      form.reset();
+      router.push("/app/colaboradores/intervenciones/listado?success=1");
+
     } catch {
       toast.error(`No se pudo guardar la informacion.`, {
         duration: 5000,
@@ -451,6 +493,15 @@ export default function EvaluarIntervencion() {
       });
     }
   }
+
+  const handleConfirm = async () => {
+    // 1. Disparar submit de todos los ExpenseForm hijos
+    formRefs.current.forEach((f) => f?.requestSubmit());
+
+    // 2. Ejecutar el submit global del padre
+    await form.handleSubmit(onSubmit)();
+  };
+
 
   const addPatCard = () => {
     const newIndex = patientsCards.length;
@@ -495,54 +546,51 @@ export default function EvaluarIntervencion() {
     }
   };
 
-const addCostCard = () => {
-    const newIndex = costsCards.length;
+const addExpenseCard = () => {
+    const newIndex = expenseCards.length;
 
-    setCostCard((prev) => [...prev, newIndex]);
+    setExpenseCard((prev) => [...prev, newIndex]);
 
-    // const currentPatients = form.getValues("patients") ?? [];
-    // const newPatient = {
-    //   name: "",
-    //   age: "",
-    //   pathology: "",
-    //   feeling: "good",
-    // };
-    // const currentCosts = form.getValues("costs") ?? [];
-    // const newCost = {
-       //
-    // };
+    const currentExpense = form.getValues("expenses") ?? [];
+    const newExpense = {
+      name: "",
+      age: "",
+      pathology: "",
+      feeling: "good",
+    };
 
-    // const udpatedCosts = [...currentCosts, newCost];
-    // form.setValue("costs", currentCosts as FormValues["costs"]);
+
+    const updatedExpenses = [...currentExpense, newExpense];
+    form.setValue("expenses", updatedExpenses as FormValues["expenses"]);
 
     form.clearErrors([
-      // `patients.${newIndex}.name`,
-      // `patients.${newIndex}.age`,
-      // `patients.${newIndex}.pathology`,
-      // `patients.${newIndex}.feeling`,
+      `expenses.${newIndex}.interventionID`,
+      `expenses.${newIndex}.peopleCI`,
+      `expenses.${newIndex}.type`,
+      `expenses.${newIndex}.amount`,
     ]);
+
   };
 
-  const removeCostCard = (index: number) => {
-    if (costsCards.length > 1) {
-      const updatedCards = [...costsCards];
+  const removeExpenseCard = (index: number) => {
+    if (expenseCards.length > 1) {
+      const updatedCards = [...expenseCards];
       updatedCards.splice(index, 1);
-      setCostCard(updatedCards);
+      setExpenseCard(updatedCards);
 
-      // const currentCosts = form.getValues("costs") ?? [];
-      // const updatedCosts = [...currentCosts];
-      //updatedCosts.splice(index, 1);
-      //form.setValue("costs", updatedCosts);
+      const currentExpenses = form.getValues("expenses") ?? [];
+      const updatedExpenses = [...currentExpenses];
+      updatedExpenses.splice(index, 1);
+      form.setValue("expenses", updatedExpenses);
 
       form.clearErrors([
-        // `patients.${index}.name`,
-        // `patients.${index}.age`,
-        // `patients.${index}.pathology`,
-        // `patients.${index}.feeling`,
+        `expenses.${index}.interventionID`,
+        `expenses.${index}.peopleCI`,
+        `expenses.${index}.type`,
+        `expenses.${index}.amount`,
       ]);
     }
   };
-
 
   return (
     <div>
@@ -1081,41 +1129,48 @@ const addCostCard = () => {
                   />
                 </FormControl>
               </div>
+
               <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
                 Costos
               </h3>
+
               <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
-                  <AlertCircleIcon />
-                  <AlertDescription>
-                    Solo subí el gasto si lo realizaste para trasladar a un perro.
-                  </AlertDescription>
-                </Alert>
+                <AlertCircleIcon />
+                <AlertDescription>
+                  Solo subí el gasto si lo realizaste para trasladar a un perro.
+                </AlertDescription>
+              </Alert>
+              
               <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-                  {costsCards.map((_, index) => (
+                  {expenseCards.map((_, index) => (
                     <Card 
                       key={index} 
                       className={cn(
                             "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                            (!isAdmin || false)  && "pointer-events-none opacity-50"
+                            (isAdmin || false)  && "pointer-events-none opacity-50"
                       )}
                     >
-                      {costsCards.length > 1 && (  
+                      {expenseCards.length > 1 && (  
                         <Button
                           type="button"
                           variant="link"
                           size="icon"
-                          onClick={() => { removeCostCard(index); }}
+                          onClick={() => { removeExpenseCard(index); }}
                           className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
                         >
                           <X color="#5B9B40" strokeWidth={1} />
                         </Button>
                       )}
                       <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                      
-                      {interv && (
-                        <ExpenseForm InterventionID={interv.id} />
-                      )}
-
+                        {interv && (
+                          <ExpenseForm
+                            ref={(el) => {
+                              formRefs.current[index] = el;
+                            }}
+                            InterventionID={interv.id}
+                            onSubmit={(data) => { handleExpenseSubmit(data, index); }}
+                          />
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -1124,17 +1179,17 @@ const addCostCard = () => {
                       type="button"
                       variant="secondary" 
                       size="icon"  
-                      onClick = {addCostCard} 
+                      onClick = {addExpenseCard} 
                       className= {cn(
                         "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
-                        (!isAdmin || false) && "pointer-events-none opacity-50"
+                        (isAdmin || false) && "pointer-events-none opacity-50"
                       )}
                     >
                       <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
                     </Button>
                   </div>
               </div>
-              <Button className="w-[119px] h-[48px] rounded-[6px] px-[20px] py-[12px] bg-[#2D3648] text-white gap-[8px] flex items-center justify-center">
+              <Button type="button" onClick={() => { handleConfirm().catch(reportError); }} className="w-[119px] h-[48px] rounded-[6px] px-[20px] py-[12px] bg-[#2D3648] text-white gap-[8px] flex items-center justify-center">
                 <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
                   Confirmar
                 </span>
