@@ -29,8 +29,9 @@ const formSchema = z.object({
     nombre: z.stringFormat("nombre", /^[\p{L}]+(?:\s+[\p{L}]+)+$/u, {
         message: "Ingrese nombre completo",
     }),
-    password: z.string().min(8, {
-        message: "Su contraseña debe tener más de 8 caracteres.",
+    password: z.string()
+    .min(8, { message: "La contraseña debe tener al menos 8 caracteres." })
+    .regex(/[A-Z]/, { message: "La contraseña debe contener al menos una letra mayúscula."
     }),
     rol: z.enum(["admin", "colaborador"]),
     banco: z.string().min(1, {
