@@ -7,7 +7,7 @@ import { UniqueConstraintError } from "sequelize";
 const userController = new UserController();
 await initDatabase();
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
     
     try {
     const body = await request.json();

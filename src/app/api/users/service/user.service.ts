@@ -146,7 +146,6 @@ export class UserService {
     if (dataToUpdate.password) {
       
       if (typeof dataToUpdate.password !== "string") {
-        console.error("Invalid password type:", typeof dataToUpdate.password);
         throw new Error("Invalid password type: expected string");
       }
       if (!dataToUpdate.password || dataToUpdate.password.length < 8 || !/[A-Z]/.test(dataToUpdate.password)) {

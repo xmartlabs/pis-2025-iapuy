@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest) {
     
   try {
     const body = await request.json();
-    const { username: string, ...updateData} = body;
+    const { username, ...updateData } = body;
 
     const updateRequest = new NextRequest(request, {
       body: JSON.stringify(updateData)
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
   return await userController.updateUser(updateRequest, { username })
   } catch (error) {
     return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
+      { error: error.message ||"Internal Server Error" },
       { status: 500 }
     );
   }
