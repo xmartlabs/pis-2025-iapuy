@@ -287,7 +287,7 @@ export default function ListadoPerrosTable() {
                     >
                       <TableCell className="px-6 py-4 align-middle">
                         <div className="flex items-center gap-3">
-                          <span className="text-base md:text-base ml-2 font-semibold">
+                          <span className="text-base md:text-base ml-2">
                             {p.nombre}
                           </span>
                         </div>
