@@ -238,7 +238,7 @@ export default function InstitutionList() {
                 institutions.map((p) => (
                   <TableRow
                     key={p.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
+                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
                     onClick={() => {
                       go(p.id);
                     }}

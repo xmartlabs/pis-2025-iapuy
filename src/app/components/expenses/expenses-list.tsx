@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
-import { useRouter } from "next/navigation";
 import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
@@ -61,7 +60,6 @@ export default function ExpensesList() {
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 
   const context = useContext(LoginContext);
-  const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -73,10 +71,6 @@ export default function ExpensesList() {
       clearTimeout(timer);
     };
   }, [searchInput]);
-
-  function go(id: string) {
-    router.push(`/app/admin/gastos/detalles?id=${id}`);
-  }
 
   const fetchExpenses = useCallback(
     async (
@@ -415,7 +409,7 @@ export default function ExpensesList() {
   };
 
   return (
-    <div className="max-w-[92%]">
+    <div className="max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
         <div className="flex items-center gap-3">
           <BadgeDollarSign className="h-[46px] w-[46px] text-[rgba(0, 0, 0, 1)]" />
@@ -428,7 +422,11 @@ export default function ExpensesList() {
         </div>
 
         <div className="flex justify-end gap-4">
-          <AddExpenseButton onCreated={() => { setReload((r) => !r); }} />
+          <AddExpenseButton
+            onCreated={() => {
+              setReload((r) => !r);
+            }}
+          />
           <Button
             className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
                      opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white
@@ -509,9 +507,6 @@ export default function ExpensesList() {
                   <TableRow
                     key={exp.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
-                    onClick={() => {
-                      go(exp.id);
-                    }}
                   >
                     <TableCell className="p-3">
                       {`${new Date(exp.fecha).toLocaleDateString("es-UY", {

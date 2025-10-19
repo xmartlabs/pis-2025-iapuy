@@ -228,7 +228,7 @@ export default function ListadoPersonas() {
           setSearchInput={setSearchInput}
         />
       </div>
-      <div className=" mb-8 max-w-full mx-auto w-full border border-gray-300 mt-4 sm:mt-[20px] rounded-lg">
+      <div className=" mx-auto w-full border border-gray-300 mt-4 rounded-lg">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
@@ -278,6 +278,7 @@ export default function ListadoPersonas() {
                 users.map((user, i) => (
                   <TableRow
                     key={i}
+                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
                     onClick={() => {
                       // eslint-disable-next-line @typescript-eslint/no-floating-promises
                       router.push(`/app/admin/personas/detalle?ci=${user.ci}`);
