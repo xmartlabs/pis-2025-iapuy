@@ -231,7 +231,7 @@ export default function HistorialIntervenciones() {
                 intervention.map((inter) => (
                   <TableRow
                     key={inter.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
+                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
                     onClick={() => {
                       go(inter.id);
                     }}
@@ -284,6 +284,13 @@ export default function HistorialIntervenciones() {
           </Table>
         </div>
       </div>
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }
