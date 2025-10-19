@@ -1,5 +1,6 @@
 /* eslint-disable new-cap */
 import {
+  DataType,
   Column,
   CreatedAt,
   DeletedAt,
@@ -8,6 +9,7 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  BelongsTo,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 import { Intervention } from "./intervention.entity";
@@ -20,7 +22,7 @@ export class UsrPerro extends Model {
   declare id: string;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Perro)
@@ -39,4 +41,8 @@ export class UsrPerro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  @BelongsTo(() => User)
+  declare User?: User;
+  declare Perro?: Perro;
 }

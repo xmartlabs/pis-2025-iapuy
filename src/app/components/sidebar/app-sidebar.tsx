@@ -3,7 +3,8 @@ import {
   Building,
   Dog,
   PersonStanding,
-  CalendarRange /*BadgeDollarSign*/,
+  CalendarRange, /*BadgeDollarSign*/
+  BadgeDollarSign,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,24 +58,26 @@ export function AppSidebar() {
       icon: CalendarRange,
       onlyAdmin: false,
     },
-    /*{
+    {
     title: "Gastos",
-    url: tipo === UserType.Administrator ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
+    url: type === UserType.Administrator ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
     icon:BadgeDollarSign,
     onlyAdmin:false
-  },*/
+  },
   ];
   return (
     <Sidebar>
       <SidebarHeader className=" h-[261px]">
         <div className="w-[258px] h-[133px]">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={150}
-            height={150}
-            style={{ marginLeft: "16px", marginTop: "48px" }}
-          />
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={150}
+              height={150}
+              style={{ marginLeft: "16px", marginTop: "48px" }}
+            />
+          </Link>
         </div>
       </SidebarHeader>
       <SidebarContent className="!px-4">

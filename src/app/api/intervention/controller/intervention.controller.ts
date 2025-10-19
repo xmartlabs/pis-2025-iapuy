@@ -27,6 +27,34 @@ export class InterventionController {
       statuses
     );
   }
+
+  async getInterventionsSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ) {
+    const interventions = await this.interventionService.findAllSimple(
+      payload,
+      statuses
+    );
+    return interventions;
+  }
+
+  async getUsersInvolvedInInterventionForExpense(
+    payload: PayloadForUser,
+    interventionId: string
+  ) {
+    const involved =
+      await this.interventionService.findUsersInvolvedInIntervention(
+        payload,
+        interventionId
+      );
+    return involved;
+  }
+
+  async getInterventionDetails(id: string) {
+    return await this.interventionService.getInterventionDetails(id);
+  }
+
   async getInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,

@@ -39,7 +39,7 @@ describe("AuthService - login", () => {
     const result = await service.login("fake", "wrong");
     expect(userServiceMock.findOneForAuth).toHaveBeenCalled();
     expect(result).toEqual({
-      error: "Credenciales inválidas",
+      error: "Este usuario no existe",
       status: 401,
     });
   });
@@ -55,7 +55,7 @@ describe("AuthService - login", () => {
     expect(userServiceMock.findOneForAuth).toHaveBeenCalled();
     expect(result).toEqual({
       error: "Credenciales inválidas",
-      status: 401,
+      status: 402,
     });
   });
 

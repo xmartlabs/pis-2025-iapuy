@@ -3,7 +3,7 @@ import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op } from "sequelize";
+import { Op, type WhereOptions } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
@@ -18,6 +18,8 @@ import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
 import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
+import { User } from "@/app/models/user.entity";
+import { Acompania } from "@/app/models/acompania.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -191,7 +193,170 @@ export class InterventionService {
     });
     return getPaginationResultFromModel(pagination, result);
   }
+  async findAllSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ): Promise<
+    Array<{
+      intervensionId: string;
+      type: string;
+      timestamp: Date;
+      institutionId: string;
+      institutionName: string;
+    }>
+  > {
+    const includeBase: Record<string, unknown>[] = [
+      {
+        model: Institucion,
+        as: "Institucions",
+        attributes: ["id", "nombre"],
+        through: { attributes: [] },
+      },
+    ];
 
+    let interventions: Intervention[] = [];
+    const whereBase: WhereOptions = {};
+    if (statuses && statuses.trim()) {
+      const statusesArr = statuses
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statusesArr.length) {
+        whereBase.status = { [Op.in]: statusesArr };
+      }
+    }
+
+    if (payload.type === "Administrador") {
+      interventions = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: includeBase,
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+    } else {
+      // Interventions in which the Collaborator 'Acompanies'
+      const viaUsers = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: User,
+            as: "Users",
+            where: { ci: payload.ci },
+            through: { attributes: [] },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // Interventions in which the Collaborator takes part
+      const viaUsrPerro = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: UsrPerro,
+            as: "UsrPerroIntervention",
+            where: { userId: payload.ci },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // merge results, remove duplicates
+      const map = new Map<string, Intervention>();
+      [...viaUsers, ...viaUsrPerro].forEach((i) => map.set(i.id, i));
+      interventions = Array.from(map.values());
+    }
+
+    const mapped = interventions.map((r) => {
+      const institution = r.Institucions?.[0];
+      return {
+        intervensionId: r.id,
+        type: r.tipo.toString(),
+        timestamp: r.timeStamp,
+        institutionId: institution?.id ?? "",
+        institutionName: institution?.nombre ?? "",
+      };
+    });
+
+    return mapped;
+  }
+
+  async findUsersInvolvedInIntervention(
+    payload: PayloadForUser,
+    interventionId: string
+  ): Promise<
+    Array<{
+      userCi: string;
+      userName: string;
+    }>
+  > {
+    const intervention = await this.findIntervention(interventionId);
+    if (intervention === null) {
+      throw new Error(`Intervention with id "${interventionId}" not found`);
+    }
+
+    const interventionWithUsers = await Intervention.findByPk(interventionId, {
+      include: [
+        {
+          model: User,
+          as: "Users",
+          attributes: ["ci", "nombre"],
+          through: { attributes: [] },
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          include: [
+            {
+              model: User,
+              as: "User",
+              attributes: ["ci", "nombre"],
+            },
+          ],
+          required: false,
+        },
+      ],
+    });
+
+    if (!interventionWithUsers) return [];
+
+    const acompaniaUsers = interventionWithUsers.Users ?? [];
+    const usrPerroUsers =
+      interventionWithUsers.UsrPerroIntervention?.map((u) => u.User).filter(
+        Boolean
+      ) ?? [];
+    if (acompaniaUsers.length === 0 && usrPerroUsers.length === 0) return [];
+
+    const allUsers = [...acompaniaUsers, ...usrPerroUsers];
+
+    if (payload.type === "Colaborador") {
+      // If the collaborator is not involved in the intervention return error.
+      const isInvolved = allUsers.some(
+        (u) => u !== undefined && u.ci === payload.ci
+      );
+      if (!isInvolved) {
+        throw new Error(
+          "El colaborador no participa ni acompaña en la intervención seleccionada."
+        );
+      }
+
+      // if collaborator is involved, return only their own data
+      return [{ userCi: payload.ci, userName: payload.name }];
+    }
+    const map = new Map<string, { userCi: string; userName: string }>();
+    allUsers.forEach((u) => {
+      if (u !== undefined) {
+        map.set(u.ci, { userCi: u.ci, userName: u.nombre });
+      }
+    });
+
+    return Array.from(map.values());
+  }
   async findInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
@@ -199,7 +364,7 @@ export class InterventionService {
   ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
-      : {};
+      : undefined;
 
     const result = await Intervention.findAndCountAll({
       where: interventionWhere,
@@ -248,7 +413,6 @@ export class InterventionService {
       const intervention = await Intervention.create(
         {
           timeStamp: request.timeStamp,
-          costo: request.cost,
           tipo: request.type,
           pairsQuantity: request.pairsQuantity,
           description: request.description,
@@ -356,7 +520,7 @@ export class InterventionService {
 
   async findAllPathologiesbyId(id: string) {
     const intervention = await Intervention.findByPk(id);
-    if (intervention?.tipo !== "terapeutica") {
+    if (intervention?.tipo !== "Terapeutica") {
       return [];
     }
     const relation = await InstitucionIntervencion.findOne({
@@ -417,11 +581,61 @@ export class InterventionService {
       institutionName,
     } as InterventionWithInstitution;
   }
-  
+
   async delete(id: string): Promise<void> {
     const res = await Intervention.destroy({ where: { id } });
     if (res === 0) {
       throw new Error(`Intervention not found with id ${id}`);
     }
+  }
+
+  async getInterventionDetails(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["perroId", "userId"],
+          include: [
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: PerroExperiencia,
+                  as: "DogExperiences",
+                  attributes: ["id", "experiencia"],
+                  where: { intervencion_id: id },
+                  required: false,
+                },
+              ],
+            },
+            { model: User, as: "User", attributes: ["ci", "nombre"] },
+          ],
+        },
+        {
+          model: Paciente,
+          as: "Pacientes",
+          attributes: ["id", "nombre", "edad", "patologia_id", "experiencia"],
+          include: [
+            { model: Patologia, as: "Patologia", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: Acompania,
+          as: "Acompania",
+          attributes: ["userId"],
+          include: [{ model: User, as: "User", attributes: ["ci", "nombre"] }],
+        },
+      ],
+    });
+    return intervention;
   }
 }

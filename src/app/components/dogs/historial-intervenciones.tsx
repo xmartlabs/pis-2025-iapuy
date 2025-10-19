@@ -183,7 +183,7 @@ export default function HistorialIntervenciones() {
           className="font-serif font-semibold text-2xl leading-8 tracking-tight text-[#1B2F13] font-size-text-2xl font-family-font-serif"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
-          Intervenciones
+          Historial de Intervenciones
         </h1>
       </div>
       <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
@@ -247,9 +247,9 @@ export default function HistorialIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {Array.isArray(inter.institutions) &&
-                        inter.institutions.length > 0
-                          ? (inter.institutions as Array<{ nombre?: string }>)
+                        {Array.isArray(inter.Institucions) &&
+                        inter.Institucions.length > 0
+                          ? (inter.Institucions as Array<{ nombre?: string }>)
                               .map((inst) => inst?.nombre ?? "")
                               .filter(Boolean)
                               .join(", ")
@@ -263,7 +263,7 @@ export default function HistorialIntervenciones() {
                   <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <p className="text-sm text-muted-foreground">
-                        No se encuentran intervenciones
+                        No se encuentran registros de intervenciones
                       </p>
                     </div>
                   </TableCell>
@@ -273,7 +273,8 @@ export default function HistorialIntervenciones() {
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages>1 &&(<CustomPagination page={page} totalPages={totalPages} setPage={setPage} />)}
+      
     </div>
   );
 }
