@@ -1,152 +1,83 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { describe, it, expect, beforeEach, vi } from "vitest";
-
-vi.mock("@/app/models/usrperro.entity", () => {
-  class UsrPerro {
-    static findOne = vi.fn();
-    constructor(public props: any) { Object.assign(this, props); }
-    async save(): Promise<void> {
-    }
-  }
-  return { UsrPerro };
-});
-
-vi.mock("@/app/models/acompania.entity", () => {
-  class Acompania {
-    static findOne = vi.fn();
-    constructor(public props: any) { Object.assign(this, props); }
-    async save(): Promise<void> {
-    }
-  }
-  return { Acompania };
-});
-
-vi.mock("@/app/models/user.entity", () => ({ User: { findOne: vi.fn() } }));
-
-vi.mock("@/app/models/perro.entity", () => ({ Perro: { findOne: vi.fn() } }));
-
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InscripcionService } from "./inscription.service";
-import { User } from "@/app/models/user.entity";
-import { Perro } from "@/app/models/perro.entity";
+import sequelize from "@/lib/database";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import { Acompania } from "@/app/models/acompania.entity";
+import { User } from "@/app/models/user.entity";
+import { Perro } from "@/app/models/perro.entity";
+import { Intervention } from "@/app/models/intervention.entity";
+import type { InscripcionDto } from "../dtos/inscription.dto";
 
-describe("InscripcionService.inscribirse", () => {
-  const service = new InscripcionService();
+// ---------------------- Mocks ----------------------
+vi.mock("@/app/models/usrperro.entity", () => ({
+  UsrPerro: {
+    create: vi.fn(),
+    some: vi.fn(),
+  },
+}));
+vi.mock("@/app/models/acompania.entity", () => ({
+  Acompania: {
+    create: vi.fn(),
+    some: vi.fn(),
+  },
+}));
+vi.mock("@/app/models/user.entity", () => ({
+  User: {
+    findOne: vi.fn(),
+  },
+}));
+vi.mock("@/app/models/perro.entity", () => ({
+  Perro: {
+    findOne: vi.fn(),
+  },
+}));
+vi.mock("@/app/models/intervention", () => ({
+  Intervention: {
+    findOne: vi.fn(),
+  },
+}));
+vi.mock('@/lib/database', () => ({
+    default: {
+      transaction: vi.fn().mockResolvedValue({
+        commit: vi.fn().mockResolvedValue(undefined),
+        rollback: vi.fn().mockResolvedValue(undefined),
+      }),
+    },
+}));
 
-  const baseDto = {
-    ci: "12345678",
-    intervencion: "INT-1",
-    perro: "DOG-1",
-    tipo: "guia" as const,
-  };
+describe("InscriptionService", ()=>{
+  // eslint-disable-next-line init-declarations
+  let service: InscripcionService;
 
   beforeEach(() => {
+    service = new InscripcionService();
     vi.clearAllMocks();
+  })
+
+  it("should register one companion", async () => {
+    Intervention.findOne = vi.fn().mockResolvedValue({ id: "INT-1" });
+    User.findOne = vi.fn().mockResolvedValue({ id: "USR-1" });
+    
+    const dto: InscripcionDto = {
+      intervention: 'INT-1',
+      acompaniantes: ['USR-1'],
+      duplas: [],
+    }
+     const result = await service.inscribirse(dto);
+     expect(result).toEqual({message: "Inscripciones realizadas con éxito.", status: 200});
   });
 
-  it("should register a guide with a dog successfully", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValue(null);
-    (Perro.findOne as any).mockResolvedValue({ id: baseDto.perro });
-
-    const res = await service.inscribirse(baseDto);
-
-    expect(res).toEqual({
-      message: "Inscripción de guía con perro completada correctamente",
-      status: 200,
-    });
-  });
-
-  it("should register a companion without a dog successfully", async () => {
-    const dto = { ...baseDto, tipo: "acompaniante" as const };
-    (User.findOne as any).mockResolvedValue({ ci: dto.ci });
-    (UsrPerro.findOne as any).mockResolvedValue(null);
-    (Acompania.findOne as any).mockResolvedValue(null);
-
-    const res = await service.inscribirse(dto);
-
-    expect(res).toEqual({
-      message: "Inscripción de acompañante completada correctamente",
-      status: 200,
-    });
-  });
-
-  it("should throw an error if the user is not found", async () => {
-    (User.findOne as any).mockResolvedValue(null);
-    await expect(service.inscribirse(baseDto)).rejects.toThrow("Usuario no encontrado");
-  });
-
-  it("should throw an error if the person already participates as guide", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce({ id: "UP-1" });
-    await expect(service.inscribirse(baseDto))
-      .rejects.toThrow("La persona ya participa de la intervención");
-  });
-
-  it("should throw an error if the person already participates as companion", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValueOnce({ id: "AC-1" });
-    await expect(service.inscribirse(baseDto))
-      .rejects.toThrow("La persona ya participa de la intervención");
-  });
-
-  it("should throw an error if the dog is not found for a guide", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValue(null);
-    (Perro.findOne as any).mockResolvedValue(null);
-
-    await expect(service.inscribirse(baseDto))
-      .rejects.toThrow("Perro no encontrado");
-  });
-
-  it("should throw an error if the dog already participates in the intervention", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValue(null);
-    (Perro.findOne as any).mockResolvedValue({ id: baseDto.perro });
-    (UsrPerro.findOne as any).mockResolvedValueOnce({ id: "UP-DOG" });
-
-    await expect(service.inscribirse(baseDto))
-      .rejects.toThrow("El perro ya participa de la intervención");
-  });
-
-  it("should return 400 if the type is invalid", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    // @ts-expect-error forcing invalid type
-    const res = await service.inscribirse({ ...baseDto, tipo: "invalid" });
-    expect(res).toEqual({
-      error: "Tipo de inscripción inválida",
-      status: 400,
-    });
-  });
-
-  it("should propagate save() error for guide", async () => {
-    (User.findOne as any).mockResolvedValue({ ci: baseDto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValue(null);
-    (Perro.findOne as any).mockResolvedValue({ id: baseDto.perro });
-    vi.spyOn(UsrPerro.prototype, "save").mockRejectedValue(new Error("Save failed"));
-
-    await expect(service.inscribirse(baseDto))
-      .rejects.toThrow("Save failed");
-  });
-
-  it("should propagate save() error for companion", async () => {
-    const dto = { ...baseDto, tipo: "acompaniante" as const };
-    (User.findOne as any).mockResolvedValue({ ci: dto.ci });
-    (UsrPerro.findOne as any).mockResolvedValueOnce(null);
-    (Acompania.findOne as any).mockResolvedValueOnce(null);
-    vi.spyOn(Acompania.prototype, "save").mockRejectedValue(new Error("Save failed"));
-
-    await expect(service.inscribirse(dto))
-      .rejects.toThrow("Save failed");
+  it("should register one guide with dog", async () => {
+    Intervention.findOne = vi.fn().mockResolvedValue({ id: "INT-1" });
+    User.findOne = vi.fn().mockResolvedValue({ id: "USR-1" });
+    Perro.findOne = vi.fn().mockResolvedValue({ id: "DOG-1" });
+    
+    const dto: InscripcionDto = {
+      intervention: 'INT-1',
+      acompaniantes: [],
+      duplas: [{ ci: "USR-1", perro: "DOG-1" }],
+    }
+     const result = await service.inscribirse(dto);
+     expect(result).toEqual({message: "Inscripciones realizadas con éxito.", status: 200});
   });
 });

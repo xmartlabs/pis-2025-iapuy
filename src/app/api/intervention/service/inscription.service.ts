@@ -70,9 +70,8 @@ export class InscripcionService {
                     (u: UsrPerro) => u.userId === usrCi
                 ) ?? false;
                 if(uA || uG) throw new Error("El usuario ya participa de la intervención");
-
                 await Acompania.create(
-                    { userId: usrCi, interventionId: datos.intervention },
+                    { userId: usrCi, intervencionId: datos.intervention },
                     { transaction }
                 );
             })

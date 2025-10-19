@@ -11,7 +11,7 @@ export class InscripcionController {
         const req : InscripcionDto = await request.json() as InscripcionDto;
 
         if(req.duplas.length === 0 && req.acompaniantes.length === 0) throw new Error("Se requiere al menos una inscripcion");
-        if(!req.intervencion) throw new Error("Id de intervención requerida");
+        if(!req.intervention) throw new Error("Id de intervención requerida");
 
         return await this.inscripcionService.inscribirse(req);
     } catch (error) {
