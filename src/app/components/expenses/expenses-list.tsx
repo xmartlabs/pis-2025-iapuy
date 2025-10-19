@@ -55,7 +55,7 @@ export default function ExpensesList() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [reload] = useState(false);
+  const [reload, setReload] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
@@ -428,7 +428,7 @@ export default function ExpensesList() {
         </div>
 
         <div className="flex justify-end gap-4">
-          <AddExpenseButton />
+          <AddExpenseButton onCreated={() => { setReload((r) => !r); }} />
           <Button
             className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
                      opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white

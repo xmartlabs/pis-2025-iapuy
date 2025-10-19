@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import ExpenseDialogTwo from "@/app/components/expenses/intervention-expense-dialog-step-two"
-export default function AddExpenseButton() {
+export default function AddExpenseButton({ onCreated }: { readonly onCreated?: () => void }) {
     const [openDialogIntervention, setOpenDialogIntervention] = useState(false);
     const [openStepTwo, setOpenStepTwo] = useState(false);
     const [selectedIntervention, setSelectedIntervention] = useState("");
@@ -49,13 +49,14 @@ export default function AddExpenseButton() {
             setOpenStepTwo={setOpenStepTwo}
             />
         )}
-        {openStepTwo && (
-        <ExpenseDialogTwo
-          open={openStepTwo}
-          onOpenChange={setOpenStepTwo}
-          InterventionID={selectedIntervention}
-        />
-      )}
+                {openStepTwo && (
+                <ExpenseDialogTwo
+                    open={openStepTwo}
+                    onOpenChange={setOpenStepTwo}
+                    InterventionID={selectedIntervention}
+                    onCreated={onCreated}
+                />
+            )}
     </DropdownMenu>
     );
 }
