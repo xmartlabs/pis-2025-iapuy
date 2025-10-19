@@ -24,21 +24,35 @@ import {
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
 import { Textarea } from "@/components/ui/textarea";
+
+const today = new Date();
+const maxYear = today.getFullYear() + 5;
+const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
 const formSchema = z
   .object({
     date: z
       .string()
       .min(1, { message: "Debe seleccionar una fecha" })
-      .refine((dateString) => {
-        const selectedDate = new Date(dateString);
-        const today = new Date();
-        const selected = selectedDate.toISOString().split("T")[0];
-        const current = today.toISOString().split("T")[0];
+      .refine(
+        (dateString) => {
+          const selectedDate = new Date(dateString);
+          if (isNaN(selectedDate.getTime())) return false;
 
-        return selected >= current;
-      }, {
-        message: "La fecha debe ser hoy o en el futuro",
-      }),
+          const selectedYear = selectedDate.getFullYear();
+
+          if (selectedYear > maxYear || selectedYear < 1900) return false;
+
+          const current = new Date();
+          current.setHours(0, 0, 0, 0);
+          selectedDate.setHours(0, 0, 0, 0);
+
+          return selectedDate >= current;
+        },
+        {
+          message: `La fecha debe ser hoy o en el futuro, y el año no puede superar ${maxYear}`,
+        }
+      ),
     hour: z
       .string()
       .min(1, { message: "Debe seleccionar una hora" })
@@ -120,44 +134,52 @@ const NuevaIntervencionForm = forwardRef<
   return (
     <Form {...form}>
       <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit(onSubmit)().catch(() => {
-            });
-          }}
-          className="w-full"
-        >
+        onSubmit={(e) => {
+          e.preventDefault();
+          form
+            .handleSubmit(onSubmit)()
+            .catch(() => {});
+        }}
+        className="w-full"
+      >
         <div className="flex flex-col md:flex-row gap-8 mb-8">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex-1 max-w-[255px]">
-                  <FormLabel>Fecha*</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="hour"
-              render={({ field }) => (
-                <FormItem className="flex-1 max-w-[255px]">
-                  <FormLabel>Hora*</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="pairQuantity"
-              render={({ field }) => (
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex-1 max-w-[255px]">
+                <FormLabel>Fecha*</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...field}
+                    min={formatDate(today)}
+                    max={formatDate(
+                      new Date(maxYear, today.getMonth(), today.getDate())
+                    )}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="hour"
+            render={({ field }) => (
+              <FormItem className="flex-1 max-w-[255px]">
+                <FormLabel>Hora*</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="pairQuantity"
+            render={({ field }) => (
               <FormItem className="flex-1 max-w-[255px]">
                 <FormLabel>Cantidad de duplas necesaria*</FormLabel>
                 <FormControl>
@@ -197,7 +219,7 @@ const NuevaIntervencionForm = forwardRef<
                 <FormMessage />
               </FormItem>
             )}
-          />        
+          />
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 mb-8">
@@ -278,9 +300,7 @@ const NuevaIntervencionForm = forwardRef<
               <FormItem className="flex-1">
                 <div className="flex justify-between items-center mb-1">
                   <FormLabel>Descripción</FormLabel>
-                  <span >
-                    {charCount}/400
-                  </span>
+                  <span>{charCount}/400</span>
                 </div>
                 <FormControl>
                   <Textarea

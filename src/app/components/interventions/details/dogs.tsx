@@ -4,7 +4,7 @@ export default function Dogs({ dogs }: { dogs: UsrDogIntervention[] }) {
   return (
     <section>
       <h2 className="text-2xl font-semibold mb-4 text-[#1B2F13]">Perros</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[96px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {dogs &&
           dogs.map((dog) => (
             <div
