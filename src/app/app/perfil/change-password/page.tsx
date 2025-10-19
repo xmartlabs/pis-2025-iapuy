@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useContext} from "react";
+import { useState, useContext} from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { LoginDialog } from "@/app/components/login-dialog";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,6 @@ export default function Home() {
 
   const context = useContext(LoginContext);
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [reponseError, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -40,27 +39,6 @@ export default function Home() {
     resolver: zodResolver(FormSchema),
     defaultValues: { password: "" },
   });
-
-  useEffect(() => {
-    const renovarToken = async () => {
-      try {
-        const res = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include", // cookies
-        });
-
-        if (res.ok) {
-          const data = (await res.json()) as PasswordChangeResponse;
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    renovarToken().catch(() => {
-      setLoading(false);
-    });
-  }, []);
 
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     setSubmitting(true);
