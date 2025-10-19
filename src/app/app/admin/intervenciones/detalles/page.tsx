@@ -158,7 +158,7 @@ export default function IntervencionPage() {
       />
 
       <div className="mt-2">
-        <DeleteIntervention />
+        <DeleteIntervention interventionId={id} />
       </div>
     </div>
   );

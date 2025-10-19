@@ -18,6 +18,7 @@ import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
 import { Paciente } from "@/app/models/pacientes.entity";
+import { ResetToken } from "@/app/models/reset-tokens.entity";
 
 // Helper to detect if an association already exists between two models
 const hasAssociation = (
@@ -45,6 +46,10 @@ const registerUserAssociations = () => {
       foreignKey: "userId",
       as: "Intervenciones",
     });
+  }
+
+  if (!hasAssociation(ResetToken, User, "UserToReset")) {
+    ResetToken.belongsTo(User, { foreignKey: "userId", as: "UserToReset" });
   }
 
   if (!hasAssociation(User, Expense)) {
@@ -180,14 +185,15 @@ const registerRegistroSanidadAssociations = () => {
 };
 
 const registerInstitucionAssociations = () => {
-  if (!hasAssociation(Institucion, Patologia)) {
+  if (!hasAssociation(Institucion, Intervention)) {
     Institucion.belongsToMany(Intervention, {
       through: InstitucionIntervencion,
       as: "Intervenciones",
       otherKey: "intervencionId",
       foreignKey: "institucionId",
     });
-
+  }
+  if (!hasAssociation(Institucion, Patologia)) {
     Institucion.belongsToMany(Patologia, {
       through: InstitucionPatologias,
       foreignKey: "institucionId",
