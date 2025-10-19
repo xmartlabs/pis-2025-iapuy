@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
@@ -15,17 +14,122 @@ import {
 } from "@/components/ui/table";
 import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
+import CustomPagination from "@/app/components/pagination";
+import CustomBreadCrumb2Links from "@/app/components/bread-crumb/bread-crumb-2links";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
-  const [page] = useState<number>(1);
-  const [size] = useState<number>(8);
+  const [page, setPage] = useState<number>(1);
+  const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
+  const [dogName, setDogName] = useState<string>("");
   const context = useContext(LoginContext);
   const sanidadContext = useContext(SanidadContext);
-  const router = useRouter();
+
+  const fetchDogDetails = useCallback(
+    async (
+      id: string,
+      signal?: AbortSignal,
+      triedRefresh = false
+    ): Promise<{ perro?: { nombre?: string } } | null> => {
+      const url = new URL(`/api/perros/detalles`, location.origin);
+      url.searchParams.set("id", id);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
+
+      try {
+        const token = context?.tokenJwt;
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
+          signal: combinedSignal,
+        });
+
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(
+            new URL("/api/auth/refresh", location.origin),
+            {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              signal: combinedSignal,
+            }
+          );
+
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              const retryResp = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${newToken}`,
+                },
+                signal: combinedSignal,
+              });
+
+              if (!retryResp.ok) {
+                const txt = await retryResp.text().catch(() => "");
+                throw new Error(
+                  `API ${retryResp.status}: ${retryResp.statusText}${
+                    txt ? ` - ${txt}` : ""
+                  }`
+                );
+              }
+
+              const ct2 = retryResp.headers.get("content-type") ?? "";
+              if (!ct2.includes("application/json"))
+                throw new Error("Expected JSON response");
+
+              const body2 = (await retryResp.json()) as unknown;
+              if (!body2 || typeof body2 !== "object")
+                throw new Error("Malformed API response");
+              return body2 as { perro?: { nombre?: string } };
+            }
+          }
+        }
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as unknown;
+        if (!body || typeof body !== "object")
+          throw new Error("Malformed API response");
+        return body as { perro?: { nombre?: string } };
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
+        return null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    [context]
+  );
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
@@ -86,10 +190,15 @@ export default function HistorialSanidad() {
   const id: string = searchParams.get("id") ?? "";
 
   useEffect(() => {
-    fetchRegistrosSanidad(id)
-      .then((paginationResult) => {
-        setRegistros(paginationResult.data || []);
-        setTotalPages(paginationResult.totalPages || 1);
+    const controller = new AbortController();
+    Promise.all([
+      fetchDogDetails(id, controller.signal),
+      fetchRegistrosSanidad(id),
+    ])
+      .then(([dogDetails, registrosSanidad]) => {
+        setDogName(dogDetails?.perro?.nombre || "");
+        setRegistros(registrosSanidad.data || []);
+        setTotalPages(registrosSanidad.totalPages || 1);
       })
       .catch(() => {
         setRegistros([]);
@@ -101,6 +210,7 @@ export default function HistorialSanidad() {
     page,
     size,
     fetchRegistrosSanidad,
+    fetchDogDetails,
     sanidadContext.lastUpdate,
   ]);
 
@@ -108,29 +218,21 @@ export default function HistorialSanidad() {
 
   return (
     <>
+      <div className="w-full">
+        <CustomBreadCrumb2Links
+          link={["/app/admin/perros/listado", "Perros"]}
+          link2={[`/app/admin/perros/detalles?id=${id}`, dogName]}
+          current={"Historial de Sanidad"}
+          className="mb-8"
+        />
+      </div>
       <div className="flex flex-col gap-5 w-full">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <h1
-            className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            Historial de Sanidad
-          </h1>
-
-          {registros.length >= size && totalPages > 1 && (
-            <button
-              onClick={() => {
-                router.push(
-                  `/app/admin/perros/historial-sanidad-completo?id=${id}`
-                );
-              }}
-              className="text-right text-[#5B9B40] hover:text-green-800 cursor-pointer"
-            >
-              Ver historial completo
-            </button>
-          )}
-        </div>
-
+        <h2
+          className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          Historial de Sanidad
+        </h2>
         <div
           className="rounded-md border  w-full font-normal"
           style={{ fontFamily: "Archivo, sans-serif" }}
@@ -198,6 +300,13 @@ export default function HistorialSanidad() {
           </Table>
         </div>
       </div>
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
