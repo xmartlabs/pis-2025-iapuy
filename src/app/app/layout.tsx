@@ -6,8 +6,7 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
-import { usePathname } from 'next/navigation';
-import {DropDownMenu} from "@/app/components/sidebar/user-dropdown";
+import { DropDownMenu } from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
 import { useContext, useEffect } from "react";
 import type { UserType } from "@/app/page";
@@ -118,10 +117,7 @@ export default function LoginLayout({ children }: Props) {
     iniciales = "ZZ";
   }
 
-  const pathname = usePathname();
-
-
-  const noSidebarRoutes = ['/app/perfil/change-password']; // routes where sidebar is not shown
+  const noSidebarRoutes = ["/app/perfil/change-password"]; // routes where sidebar is not shown
 
   const shouldShowSidebar = !noSidebarRoutes.includes(pathname);
 
@@ -131,10 +127,17 @@ export default function LoginLayout({ children }: Props) {
       <SidebarInset>
         {shouldShowSidebar && <SidebarTrigger className="block md:hidden" />}
         {/* eslint-disable-next-line no-void*/}
-        {shouldShowSidebar && <DropDownMenu iniciales={iniciales} handleLogout={() => void handleLogout()}/>}
-        <main className={shouldShowSidebar ? "!ml-8 !mt-[60px]" : ""}>{children}</main>
+        {shouldShowSidebar && (
+          <DropDownMenu
+            iniciales={iniciales}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            handleLogout={() => handleLogout()}
+          />
+        )}
+        <main className={shouldShowSidebar ? "!ml-8 !mt-[60px]" : ""}>
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
-
 }
