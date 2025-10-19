@@ -151,9 +151,7 @@ export class RegistrosSanidadService {
           type: expenseType,
           concept: "",
           state: "Pendiente de pago",
-          amount: expensesService.getFixedCost(
-            createRegistroSanidadDto.tipoSanidad
-          ),
+          amount: expensesService.getFixedCost(expenseType),
         };
         await expensesService.createExpense(createExpenseDto, {
           transaction: t,
