@@ -4,7 +4,7 @@ import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op } from "sequelize";
+import { Op, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 
 export class ExpensesService {
@@ -32,15 +32,20 @@ export class ExpensesService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async createExpense(request: CreateExpenseDto): Promise<Expense> {
+  async createExpense(request: CreateExpenseDto, options?: { transaction?: Transaction }): Promise<Expense> {
+    const transaction = options?.transaction;
     const [intervention, user] = await Promise.all([
-      Intervention.findOne({
-        where: { id: request.interventionId },
-        attributes: ["id"],
-      }),
+      request.interventionId && request.interventionId.trim() !== "" 
+        ? Intervention.findOne({
+            where: { id: request.interventionId },
+            attributes: ["id"],
+            ...(transaction && { transaction }),
+          })
+        : null,
       User.findOne({
         where: { ci: request.userId },
         attributes: ["ci"],
+        ...(transaction && { transaction }),
       }),
     ]);
     if (
@@ -59,12 +64,14 @@ export class ExpensesService {
     }
     const expense = await Expense.create({
       userId: request.userId,
-      interventionId: request.interventionId,
+      interventionId: request.interventionId && request.interventionId.trim() !== "" 
+        ? request.interventionId 
+        : null,
       type: request.type,
       concept: request.concept,
       state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
       amount: request.amount,
-    });
+    }, transaction ? { transaction } : {});
 
     return expense;
   }
@@ -84,5 +91,20 @@ export class ExpensesService {
       toUpdate as unknown as Partial<Expense>
     );
     return updated;
+  }
+
+  getFixedCost(sanidadtype: string): number {
+    switch (sanidadtype) {
+      case "Baño":
+        return 50;
+      case "Vacunacion":
+        return 80;
+      case "Desparasitacion Interna":
+        return 30;
+      case "Desparasitacion Externa":
+        return 40;
+      default:
+        return 0;
+    }
   }
 }

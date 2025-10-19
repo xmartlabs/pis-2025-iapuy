@@ -12,6 +12,8 @@ import type { PayloadForUser } from "../../perros/detalles/route";
 import { Perro } from "@/app/models/perro.entity";
 import type { FindOptions } from "sequelize";
 import { User } from "@/app/models/user.entity";
+import { ExpensesService } from "../../expenses/service/expenses.service";
+import type { CreateExpenseDto } from "../../expenses/dtos/create-expense.dto";
 
 export class RegistrosSanidadService {
   async findAll(
@@ -119,6 +121,30 @@ export class RegistrosSanidadService {
           },
           { transaction: t }
         );
+      }
+      const expensesService = new ExpensesService();
+      const perro = await Perro.findByPk(createRegistroSanidadDto.perroId, {
+        transaction: t,
+      });
+
+      if (perro && perro.duenioId) {
+        const createExpenseDto: CreateExpenseDto = {
+          userId: perro.duenioId,
+          interventionId: "",
+          type: createRegistroSanidadDto.tipoSanidad as
+            | "Baño"
+            | "Vacunacion"
+            | "Desparasitacion Interna"
+            | "Desparasitacion Externa",
+          concept: ``,
+          state: "Pendiente de pago",
+          amount: expensesService.getFixedCost(
+            createRegistroSanidadDto.tipoSanidad
+          ),
+        };
+        await expensesService.createExpense(createExpenseDto, {
+          transaction: t,
+        });
       }
       return regSanidad;
     });
