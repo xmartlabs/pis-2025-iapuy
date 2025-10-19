@@ -3,15 +3,24 @@ import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import {Op, Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
 
-
 const monthNames = [
-  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
 ];
 
 const monthMap: Record<string, number> = {
@@ -42,133 +51,137 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 export class ExpensesService {
-  
   async findAll(
-  pagination: PaginationDto,
-  payload: PayloadForUser,
-  months: string | null,
-  statuses: string | null,
-  people: string | null
-): Promise<PaginationResultDto<ListExpenseDto>> {
-  const whereBase: Record<string, unknown> =
-    payload.type === "Administrador"
-      ? {}
-      : { userId: payload.ci };
+    pagination: PaginationDto,
+    payload: PayloadForUser,
+    months: string | null,
+    statuses: string | null,
+    people: string | null
+  ): Promise<PaginationResultDto<ListExpenseDto>> {
+    const whereBase: Record<string, unknown> =
+      payload.type === "Administrador" ? {} : { userId: payload.ci };
 
-  if (statuses && statuses.trim()) {
-    const statusesArr = statuses.split(",").map((s) => s.trim()).filter(Boolean);
-    if (statusesArr.length) {
-      const parsedStatuses = statusesArr.map((s) => (s==="Pendiente de pago") ? "no pagado" : "pagado");
-      whereBase.state = { [Op.in]: parsedStatuses };
+    if (statuses && statuses.trim()) {
+      const statusesArr = statuses
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statusesArr.length) {
+        const parsedStatuses = statusesArr.map((s) =>
+          s === "Pendiente de pago" ? "no pagado" : "pagado"
+        );
+        whereBase.state = { [Op.in]: parsedStatuses };
+      }
     }
-  }
-  if (people && people.trim()) {
-    const peopleArr = people.split(",").map((p) => p.trim()).filter(Boolean);
-    if (peopleArr.length) {
-      whereBase.userId = { [Op.in]: peopleArr };
+    if (people && people.trim()) {
+      const peopleArr = people
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (peopleArr.length) {
+        whereBase.userId = { [Op.in]: peopleArr };
+      }
     }
-  }
-  
-  let timeStampWhere: Record<string, unknown> | undefined = undefined;
-      if (months && months.trim()) {
-        const monthsArr = months
-          .split(",")
-          .map((m) => m.trim())
-          .filter(Boolean);
-  
-        const ranges: Array<{ start: Date; end: Date }> = [];
-  
-        const parseMonthLabel = (
-          label: string
-        ): { start: Date; end: Date } | null => {
-          let normalized = label.replace(/\+/g, " ");
-          try {
-            normalized = decodeURIComponent(normalized);
-          } catch {
-            // ignore
+
+    let timeStampWhere: Record<string, unknown> | undefined = undefined;
+    if (months && months.trim()) {
+      const monthsArr = months
+        .split(",")
+        .map((m) => m.trim())
+        .filter(Boolean);
+
+      const ranges: Array<{ start: Date; end: Date }> = [];
+
+      const parseMonthLabel = (
+        label: string
+      ): { start: Date; end: Date } | null => {
+        let normalized = label.replace(/\+/g, " ");
+        try {
+          normalized = decodeURIComponent(normalized);
+        } catch {
+          // ignore
+        }
+        normalized = normalized.replace(".", "").trim();
+
+        const isoMatch = normalized.match(/^(\d{4})-(\d{2})$/);
+        if (isoMatch) {
+          const year = Number(isoMatch[1]);
+          const month = Number(isoMatch[2]) - 1;
+          if (month >= 0 && month <= 11) {
+            const start = new Date(year, month, 1, 0, 0, 0, 0);
+            const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            return { start, end };
           }
-          normalized = normalized.replace(".", "").trim();
-  
-          const isoMatch = normalized.match(/^(\d{4})-(\d{2})$/);
-          if (isoMatch) {
-            const year = Number(isoMatch[1]);
-            const month = Number(isoMatch[2]) - 1;
-            if (month >= 0 && month <= 11) {
-              const start = new Date(year, month, 1, 0, 0, 0, 0);
-              const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        }
+
+        const parts = normalized.split(/\s+/);
+        if (parts.length >= 2) {
+          const yearPart = parts[-1];
+          const monthPart = parts.slice(0, -1).join(" ");
+          const year = Number(yearPart);
+          if (!Number.isNaN(year) && year > 1900 && year < 3000) {
+            const key = monthPart.toLowerCase();
+            const monthIdx = monthMap[key] ?? monthMap[key.slice(0, 3)];
+            if (typeof monthIdx === "number") {
+              const start = new Date(year, monthIdx, 1, 0, 0, 0, 0);
+              const end = new Date(year, monthIdx + 1, 0, 23, 59, 59, 999);
               return { start, end };
             }
           }
-  
-          const parts = normalized.split(/\s+/);
-          if (parts.length >= 2) {
-            const yearPart = parts[parts.length - 1];
-            const monthPart = parts.slice(0, parts.length - 1).join(" ");
-            const year = Number(yearPart);
-            if (!Number.isNaN(year) && year > 1900 && year < 3000) {
-              const key = monthPart.toLowerCase();
-              const monthIdx = monthMap[key] ?? monthMap[key.slice(0, 3)];
-              if (typeof monthIdx === "number") {
-                const start = new Date(year, monthIdx, 1, 0, 0, 0, 0);
-                const end = new Date(year, monthIdx + 1, 0, 23, 59, 59, 999);
-                return { start, end };
+        }
+
+        return null;
+      };
+
+      for (const m of monthsArr) {
+        const r =
+          parseMonthLabel(m) ??
+          ((): { start: Date; end: Date } | null => {
+            const tryParse = (s: string) => {
+              const parsed = Date.parse(`1 ${s}`);
+              if (!Number.isNaN(parsed)) {
+                const d = new Date(parsed);
+                return {
+                  start: new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0),
+                  end: new Date(
+                    d.getFullYear(),
+                    d.getMonth() + 1,
+                    0,
+                    23,
+                    59,
+                    59,
+                    999
+                  ),
+                };
               }
-            }
-          }
-  
-          return null;
-        };
-  
-        for (const m of monthsArr) {
-          const r =
-            parseMonthLabel(m) ??
-            ((): { start: Date; end: Date } | null => {
-              const tryParse = (s: string) => {
-                const parsed = Date.parse(`1 ${s}`);
-                if (!isNaN(parsed)) {
-                  const d = new Date(parsed);
-                  return {
-                    start: new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0),
-                    end: new Date(
-                      d.getFullYear(),
-                      d.getMonth() + 1,
-                      0,
-                      23,
-                      59,
-                      59,
-                      999
-                    ),
-                  };
-                }
-                return null;
-              };
-              return (
-                tryParse(m) ??
-                tryParse(
-                  decodeURIComponent(m.replace(/\+/g, " ")).replace(".", "")
-                )
-              );
-            })();
-          if (r) ranges.push(r);
-        }
-  
-        if (ranges.length === 1) {
-          timeStampWhere = { [Op.between]: [ranges[0].start, ranges[0].end] };
-        } else if (ranges.length > 1) {
-          timeStampWhere = {
-            [Op.or]: ranges.map((r) => ({ [Op.between]: [r.start, r.end] })),
-          };
-        }
+              return null;
+            };
+            return (
+              tryParse(m) ??
+              tryParse(
+                decodeURIComponent(m.replace(/\+/g, " ")).replace(".", "")
+              )
+            );
+          })();
+        if (r) ranges.push(r);
       }
-    
+
+      if (ranges.length === 1) {
+        timeStampWhere = { [Op.between]: [ranges[0].start, ranges[0].end] };
+      } else if (ranges.length > 1) {
+        timeStampWhere = {
+          [Op.or]: ranges.map((r) => ({ [Op.between]: [r.start, r.end] })),
+        };
+      }
+    }
+
     if (pagination.query && pagination.query.trim()) {
       const q = `%${pagination.query.trim()}%`;
       // @ts-expect-error this is because wherebase is not typed as WhereOptions
       whereBase[Op.and] = [
-        Sequelize.where(
-          Sequelize.cast(Sequelize.col("Expense.type"), "TEXT"),
-          { [Op.iLike]: q }
-        ),
+        Sequelize.where(Sequelize.cast(Sequelize.col("Expense.type"), "TEXT"), {
+          [Op.iLike]: q,
+        }),
       ];
     }
 
@@ -178,13 +191,18 @@ export class ExpensesService {
         ...(timeStampWhere && {
           [Op.or]: [
             { dateSanity: timeStampWhere },
-            { "$intervention.timeStamp$": timeStampWhere },
+            { "$Intervencion.timeStamp$": timeStampWhere },
           ],
         }),
       },
       include: [
-        { model: User, as: "user", attributes: ["ci", "nombre"] },
-        { model: Intervention, as: "intervention", attributes: ["id", "timeStamp"], required: false },
+        { model: User, as: "User", attributes: ["ci", "nombre"] },
+        {
+          model: Intervention,
+          as: "Intervencion",
+          attributes: ["id", "timeStamp"],
+          required: false,
+        },
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
@@ -192,13 +210,10 @@ export class ExpensesService {
       distinct: true,
     });
 
-    const data: ListExpenseDto[] = await Promise.all(
-    result.rows.map(async (exp) => {
+    const data: ListExpenseDto[] = result.rows.map((exp) => {
       let fecha: Date | null = null;
       if (exp.interventionId) {
-        const intervention = await Intervention.findByPk(exp.interventionId, {
-          attributes: ["timeStamp"],
-        });
+        const intervention = exp.Intervencion;
         fecha = intervention?.timeStamp ?? null;
       } else {
         fecha = exp.dateSanity;
@@ -206,26 +221,23 @@ export class ExpensesService {
 
       let userExpense: { ci: string; nombre: string } | undefined = undefined;
       if (exp.userId) {
-        const user = await User.findByPk(exp.userId, {
-          attributes: ["ci", "nombre"],
-        });
+        const user = exp.User;
         if (user) {
           userExpense = { ci: user.ci, nombre: user.nombre };
         }
       }
-      
+
       return {
-          id: exp.id,
-          userId: exp.userId,
-          concept: exp.concept,
-          type: exp.type,
-          state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
-          amount: exp.amount,
-          fecha,
-          user: userExpense,
-        };
-      })
-    );
+        id: exp.id,
+        userId: exp.userId,
+        concept: exp.concept,
+        type: exp.type,
+        state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
+        amount: exp.amount,
+        fecha,
+        user: userExpense,
+      };
+    });
 
     return {
       data,
@@ -238,21 +250,28 @@ export class ExpensesService {
   }
 
   async findInitialValuesForFilter() {
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const expenses: Record<string, any>[] = await Expense.findAll({
+    const expenses = await Expense.findAll({
       attributes: ["id", "userId", "state", "dateSanity"],
       include: [
-        { model: User, as: "user", attributes: ["ci", "nombre"] },
-        { model: Intervention, as: "intervention", attributes: ["timeStamp"], required: false },
+        {
+          model: User,
+          as: "User",
+          attributes: ["ci", "nombre"],
+          required: true,
+        },
+        {
+          model: Intervention,
+          as: "Intervencion",
+          attributes: ["timeStamp"],
+          required: false,
+        },
       ],
-      raw : true
     });
 
     const peopleMap = new Map<string, { userId: string; nombre: string }>();
     for (const exp of expenses) {
-      const ci = exp["user.ci"] as string ?? exp.userId;
-      const nombre = exp["user.nombre"] as string ?? exp.userId;
+      const ci = exp.userId;
+      const nombre = exp.User?.nombre ?? exp.userId;
       if (ci) peopleMap.set(ci, { userId: ci, nombre });
     }
     const people = Array.from(peopleMap.values());
@@ -260,13 +279,11 @@ export class ExpensesService {
     const statuses = ["Pagado", "Pendiente de pago"];
 
     const monthSet = new Map<string, number>();
-    for (const exp of expenses) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, dot-notation
-      const fecha: string | null = exp["intervention.timeStamp"] ?? exp["dateSanity"];
-      if (!fecha) continue;
 
-      const d = new Date(fecha);
-      if (isNaN(d.getTime())) continue;
+    for (const exp of expenses) {
+      const d: Date = exp.Intervencion?.timeStamp ?? exp.dateSanity;
+
+      if (Number.isNaN(d.getTime())) continue;
 
       const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
       const monthStart = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
@@ -282,7 +299,6 @@ export class ExpensesService {
       statuses,
       months,
     };
-
   }
 
   async createExpense(request: CreateExpenseDto): Promise<Expense> {
