@@ -32,10 +32,13 @@ export class ExpensesService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async createExpense(request: CreateExpenseDto, options?: { transaction?: Transaction }): Promise<Expense> {
+  async createExpense(
+    request: CreateExpenseDto,
+    options?: { transaction?: Transaction }
+  ): Promise<Expense> {
     const transaction = options?.transaction;
     const [intervention, user] = await Promise.all([
-      request.interventionId && request.interventionId.trim() !== "" 
+      request.interventionId && request.interventionId.trim() !== ""
         ? Intervention.findOne({
             where: { id: request.interventionId },
             attributes: ["id"],
@@ -48,13 +51,13 @@ export class ExpensesService {
         ...(transaction && { transaction }),
       }),
     ]);
-    if (
-      request.type !== "Baño" &&
-      request.type !== "Vacunacion" &&
-      request.type !== "Desparasitacion Interna" &&
-      request.type !== "Desparasitacion Externa" &&
-      !intervention
-    ) {
+    const isSanidadType =
+      request.type === "Baño" ||
+      request.type === "Vacunacion" ||
+      request.type === "Desparasitacion Interna" ||
+      request.type === "Desparasitacion Externa";
+
+    if (!isSanidadType && !intervention) {
       throw new Error(
         `Intervention with id "${request.interventionId}" not found`
       );
@@ -62,16 +65,20 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
-    const expense = await Expense.create({
-      userId: request.userId,
-      interventionId: request.interventionId && request.interventionId.trim() !== "" 
-        ? request.interventionId 
-        : null,
-      type: request.type,
-      concept: request.concept,
-      state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
-      amount: request.amount,
-    }, transaction ? { transaction } : {});
+    const expense = await Expense.create(
+      {
+        userId: request.userId,
+        interventionId:
+          request.interventionId && request.interventionId.trim() !== ""
+            ? request.interventionId
+            : null,
+        type: request.type,
+        concept: request.concept,
+        state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
+        amount: request.amount,
+      },
+      transaction ? { transaction } : {}
+    );
 
     return expense;
   }

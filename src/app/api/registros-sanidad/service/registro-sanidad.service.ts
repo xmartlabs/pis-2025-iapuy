@@ -128,15 +128,28 @@ export class RegistrosSanidadService {
       });
 
       if (perro && perro.duenioId) {
+        // Map tipoSanidad to expense type
+        let expenseType:
+          | "Baño"
+          | "Vacunacion"
+          | "Desparasitacion Interna"
+          | "Desparasitacion Externa" = "Baño";
+        if (createRegistroSanidadDto.tipoSanidad === "banio") {
+          expenseType = "Baño";
+        } else if (createRegistroSanidadDto.tipoSanidad === "desparasitacion") {
+          expenseType =
+            createRegistroSanidadDto.tipoDesparasitacion === "Interna"
+              ? "Desparasitacion Interna"
+              : "Desparasitacion Externa";
+        } else {
+          expenseType = "Vacunacion";
+        }
+
         const createExpenseDto: CreateExpenseDto = {
           userId: perro.duenioId,
           interventionId: "",
-          type: createRegistroSanidadDto.tipoSanidad as
-            | "Baño"
-            | "Vacunacion"
-            | "Desparasitacion Interna"
-            | "Desparasitacion Externa",
-          concept: ``,
+          type: expenseType,
+          concept: "",
           state: "Pendiente de pago",
           amount: expensesService.getFixedCost(
             createRegistroSanidadDto.tipoSanidad
