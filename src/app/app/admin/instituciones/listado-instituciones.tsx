@@ -43,7 +43,6 @@ export default function InstitutionList() {
     };
   }, [searchInput]);
 
-
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -156,7 +155,7 @@ export default function InstitutionList() {
         if ((err as DOMException)?.name === "AbortError") {
           return null;
         }
-          return null;
+        return null;
       } finally {
         clearTimeout(timeout);
       }
@@ -177,6 +176,10 @@ export default function InstitutionList() {
       controller.abort();
     };
   }, [page, size, search, context]);
+
+  function go(id: string) {
+    router.push(`/app/admin/instituciones/detalle?id=${id}`);
+  }
 
   return (
     <div className=" max-w-[95%] p-8">
@@ -200,10 +203,10 @@ export default function InstitutionList() {
         </div>
       </div>
       <div className="flex justify-start sm:justify-end items-center">
-          <CustomSearchBar
-            searchInput={searchInput}
-            setSearchInput={setSearchInput}
-          />          
+        <CustomSearchBar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+        />
       </div>
 
       <div className="mx-auto w-full border border-gray-300 mt-4 rounded-lg">
@@ -236,6 +239,9 @@ export default function InstitutionList() {
                   <TableRow
                     key={p.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
+                    onClick={() => {
+                      go(p.id);
+                    }}
                   >
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-3">

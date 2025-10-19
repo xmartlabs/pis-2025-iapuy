@@ -3,7 +3,6 @@
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,17 +26,16 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Upload, Minus, X, AlertCircleIcon } from "lucide-react";
+import { Plus, X, AlertCircleIcon } from "lucide-react";
 import { useEffect, useState, useContext, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription  } from "@/components/ui/alert";
+import type { JwtPayload } from "jsonwebtoken";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two"
-
-
+import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two";
 
 type Pathology = {
   id: string;
@@ -52,6 +50,7 @@ type Dog = {
 interface Intervention {
   id: string;
   timeStamp: string;
+  costo: string;
   status: string;
   pairsQuantity: number;
   tipo: string;
@@ -62,15 +61,6 @@ interface Intervention {
   userId: string | null;
   institutionName?: string;
 }
-
-interface JwtPayload {
-  ci: string;
-  name: string;
-  type: "Administrador" | "Colaborador";
-  iat: number;
-  exp: number;
-}
-
 
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
@@ -113,6 +103,7 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
+        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -179,6 +170,7 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
+        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -242,6 +234,7 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
+        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -313,7 +306,11 @@ export default function EvaluarIntervencion() {
       .refine((val) => val >= 0 && val <= 200, {
         message: "Edad inválida",
       }),
-    pathology: z.string().optional(),
+    pathology:
+      interv?.tipo === "recreativa"
+        ? z.string().optional()
+        : z.string().min(1, "Patología requerida"),
+
     feeling: z.enum(["good", "regular", "bad"]).optional(),
   });
 
@@ -358,6 +355,7 @@ export default function EvaluarIntervencion() {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema) as unknown as Resolver<FormValues>,
     defaultValues: {
+      tipo: interv?.tipo,
       patients: [{ name: "", age: "", pathology: "", feeling: "good" }],
 
       photos: undefined,
@@ -594,161 +592,79 @@ const addExpenseCard = () => {
 
   return (
     <div>
-      <h1
-        className="
-          w-[1044px] 
-          h-[58px] 
-          flex 
-          justify-between 
-          opacity-100 
-          font-inter 
-          font-bold 
-          text-[48px] 
-          leading-[120%] 
-        "
-      >
-        {`Editar ${interv?.institutionName ?? ""} ${
-          interv?.timeStamp
-            ? new Date(interv.timeStamp).toLocaleDateString("es-ES", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "2-digit",
-              })
-            : ""
-        } ${
-          interv?.timeStamp
-            ? new Date(interv.timeStamp).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })
-            : ""
-        }`}
-      </h1>
-      <div className="opacity-60 pointer-events-none">
-        <form className="w-full max-w-[1044px] pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <h2 className="block text-sm font-medium">Fecha*</h2>
-                <input
-                  type="date"
-                  value={
-                    interv?.timeStamp
-                      ? new Date(interv.timeStamp).toISOString().split("T")[0]
-                      : ""
-                  }
-                  disabled
-                  className="h-[48px] w-full border rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <h2 className="block text-sm font-medium">Hora*</h2>
-                <input
-                  type="time"
-                  value={
-                    interv?.timeStamp
-                      ? new Date(interv.timeStamp)
-                          .toISOString()
-                          .split("T")[1]
-                          .slice(0, 5)
-                      : ""
-                  }
-                  disabled
-                  className="h-[48px] w-full border rounded-md px-3 py-2"
-                />
-              </div>
-            </div>
+      <div className="pb-6 ">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1
+            className="
+                font-inter font-semibold
+                text-[32px] sm:text-[40px] md:text-[48px]
+                leading-tight
+              "
+          >
+            {`Editar ${interv?.institutionName ?? ""} ${
+              interv?.timeStamp
+                ? new Date(interv.timeStamp).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit",
+                  })
+                : ""
+            } ${
+              interv?.timeStamp
+                ? new Date(interv.timeStamp).toLocaleTimeString("es-ES", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })
+                : ""
+            }`}
+          </h1>
 
-            <div>
-              <h2 className="block text-sm font-medium">
-                Cantidad de duplas necesaria*
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button className="!w-[44px] !h-[48px] rounded-[6px] !p-[12px] border bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-                  <Minus className="w-[20px] h-[20px] text-black" />
-                </Button>
-                <div className="flex items-center justify-center min-w-[3rem] h-[48px] px-3 py-2 text-sm border rounded-md">
-                  {interv?.pairsQuantity ?? 0}
-                </div>
-                <Button className="!w-[44px] !h-[48px] rounded-[6px] !p-[12px] border bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-                  <Plus className="w-[20px] h-[20px] text-black" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h2 className="block text-sm font-medium">
-                Tipo de Intervención*
-              </h2>
-              <select
-                disabled
-                className="h-[48px] w-full border rounded-md px-3 py-2"
-              >
-                <option>
-                  {interv?.tipo
-                    ? interv.tipo.charAt(0).toUpperCase() + interv.tipo.slice(1)
-                    : ""}
-                </option>{" "}
-                {/*upper case first letter*/}
-              </select>
-            </div>
-            <div>
-              <h2 className="block text-sm font-medium">Institución*</h2>
-              <select
-                disabled
-                className="h-[48px] w-full border rounded-md px-3 py-2"
-              >
-                <option>{interv?.institutionName ?? "—"}</option>
-              </select>
-            </div>
-          </div>
-        </form>
-      </div>
-      <Tabs defaultValue="diainterv" className="w-full">
-        <TabsList
-          className="flex max-w-[329px] bg-transparent p-0 justify-start gap-6 relative
-                       after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#717D96]/20"
-        >
-          <TabsTrigger
-            value="persyperr"
+          <Button
             disabled
             className="
-        inline-flex px-0 py-2
-        font-inter font-bold text-[16px]
-        text-[#717D96] bg-transparent rounded-none
-        border-0 shadow-none ring-0 outline-none
-        focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-0
-        disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100
-        relative
-        after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent
-      "
+                w-[141px] h-[40px]
+                rounded-[6px]
+                bg-[#5B9B40] text-white
+                flex items-center justify-center
+              "
+          >
+            <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
+              Guardar cambios
+            </span>
+          </Button>
+        </div>
+        <div>
+          <div className="max-w-[571] py-6">
+            <h2 className="block text-xs font-normal py-1">
+              TIPO DE INTERVENCIÓN
+            </h2>
+            {interv?.tipo
+              ? interv.tipo.charAt(0).toUpperCase() + interv.tipo.slice(1)
+              : ""}{" "}
+            {/*upper case first letter*/}
+          </div>
+          <div>
+            <h2 className="block text-xs font-normal py-1">DESCRIPCIÓN</h2>
+            {interv?.description ?? "—"}
+          </div>
+        </div>
+      </div>
+      <Tabs defaultValue="diainterv" className="!rounded-md gap-6">
+        <TabsList className="bg-[#DEEBD9] rounded-md py-1 flex items-center justify-center gap-2 max-w-[306px] h-[40px]">
+          <TabsTrigger
+            value="persyperr"
+            className="py-2 w-[140px] h-[32px] text-center rounded-md
+                      data-[state=active]:bg-white data-[state=active]:text-black 
+                      data-[state=inactive]:text-[#5B9B40]"
           >
             Personas y perros
           </TabsTrigger>
-
           <TabsTrigger
             value="diainterv"
-            className="
-        inline-flex px-0 py-2
-        font-inter font-bold text-[16px]
-        text-[#717D96] bg-transparent rounded-none
-        border-0 shadow-none ring-0 outline-none
-        focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-0
-        relative
-        after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent
-        data-[state=active]:text-[#2D3648]
-        data-[state=active]:after:bg-[#2D3648]
-        data-[state=active]:bg-transparent
-        data-[state=active]:border-0
-        data-[state=active]:shadow-none
-        data-[state=active]:ring-0
-        data-[state=active]:outline-none
-        data-[state=active]:focus:outline-none
-        after:transition-colors after:duration-150
-      "
+            className=" py-2 w-[150px] h-[32px] text-center rounded-md
+                      data-[state=active]:bg-white data-[state=active]:text-black 
+                      data-[state=inactive]:text-[#5B9B40]"
           >
             Día de la intervención
           </TabsTrigger>
@@ -764,7 +680,7 @@ const addExpenseCard = () => {
                     reportError(err);
                   });
               }}
-              className="space-y-8 !font-inter w-full -ml-[12px] sm:px-4"
+              className="space-y-8 !font-inter w-full -ml-[12px] sm:px-4 gap-y-6 gap-x-4"
             >
               <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
                 Pacientes
@@ -773,26 +689,31 @@ const addExpenseCard = () => {
                 {patientsCards.map((_, index) => (
                   <Card
                     key={index}
-                    className="
-                  w-full              
-                  md:w-[510px]    
-                  rounded-[20px]
-                  p-6
-                  bg-[#F7F9FC]
-                  border-0
-                  shadow-none
-                "
+                    className="relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none"
                   >
+                    {patientsCards.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="icon"
+                        onClick={() => {
+                          removePatientCard(index);
+                        }}
+                        className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                      >
+                        <X color="#5B9B40" strokeWidth={1} />
+                      </Button>
+                    )}
                     <CardContent className="px-0 space-y-8 text-[#2D3648]">
                       <div className="flex flex-col sm:flex-row gap-6 w-full">
                         <FormField
                           control={form.control}
                           name={`patients.${index}.name`}
                           render={({ field }) => (
-                            <FormItem className="w-full sm:w-[327px] min-h-[72px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                            <FormItem className="w-full sm:w-[318px] min-h-[68px] flex flex-col font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
                               <Label
                                 htmlFor={`patients.${index}.name`}
-                                className="text-sm h-[16px] leading-[20px]"
+                                className="text-sm h-[16px] font-medium leading-[20px]"
                               >
                                 Nombre
                               </Label>
@@ -800,7 +721,7 @@ const addExpenseCard = () => {
                                 <Input
                                   {...field}
                                   id={`patients.${index}.name`}
-                                  className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"
+                                  className="h-[48px] border-1 border-[#D4D4D4] bg-[#FFFFFF]"
                                 />
                               </FormControl>
                               {form.formState.touchedFields.patients?.[index]
@@ -812,10 +733,10 @@ const addExpenseCard = () => {
                           control={form.control}
                           name={`patients.${index}.age`}
                           render={({ field }) => (
-                            <FormItem className="w-full sm:w-[111px] min-h-[72px] flex flex-col">
+                            <FormItem className="w-full sm:w-[120px] min-h-[40px] flex flex-col">
                               <Label
                                 htmlFor={`age-${index}`}
-                                className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]"
+                                className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]"
                               >
                                 Edad
                               </Label>
@@ -824,7 +745,7 @@ const addExpenseCard = () => {
                                   {...field}
                                   id={`patient-${index}-age`}
                                   type="string"
-                                  className="h-[48px] border-2 border-[#CBD2E0] bg-[#FFFFFF]"
+                                  className="h-[48px] border-1 border-[#D4D4D4] bg-white"
                                 />
                               </FormControl>
                               {form.formState.touchedFields.patients?.[index]
@@ -841,7 +762,7 @@ const addExpenseCard = () => {
                             <FormItem className=" w-full sm:w-[462px] flex flex-col gap-[8px]">
                               <Label
                                 htmlFor={`patients.${index}.pathology`}
-                                className="text-sm h-[16px] leading-[20px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]"
+                                className="text-sm h-[16px] leading-[20px] font-medium text-[14px] leading-[16px] tracking-[-0.01em]"
                               >
                                 Patología
                               </Label>
@@ -861,7 +782,7 @@ const addExpenseCard = () => {
                                 }
                               >
                                 <SelectTrigger
-                                  className="w-full !h-[48px] rounded-[6px] border-2 border-[#CBD2E0] bg-white"
+                                  className="w-full !h-[40px] rounded-[6px] border-1 border-[#D4D4D4] bg-white"
                                   aria-labelledby={`patients.${index}.pathology`}
                                 >
                                   <SelectValue placeholder="Seleccionar" />
@@ -891,59 +812,79 @@ const addExpenseCard = () => {
                           )}
                         />
                       )}
-                      <FormLabel className="w-full sm:w-[320px] h-[16px] font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
-                        ¿Cómo se sintió el paciente?
-                      </FormLabel>
-                      <RadioGroup
-                        onValueChange={(val) => {
-                          form.setValue(
-                            `patients.${index}.feeling`,
-                            val as ExperiencePat
-                          );
-                        }}
-                        value={form.watch(`patients.${index}.feeling`)}
-                        className="flex flex-wrap gap-6"
-                      >
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem
-                            value="good"
-                            id={`patient-${index}-good`}
-                            className="w-4 h-4"
-                          />
-                          <Label
-                            htmlFor={`patient-${index}-good`}
-                            className="text-sm leading-[16px]"
-                          >
-                            Buena
-                          </Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem
-                            value="regular"
-                            id={`patient-${index}-regular`}
-                            className="w-4 h-4"
-                          />
-                          <Label
-                            htmlFor={`patient-${index}-regular`}
-                            className="text-sm leading-[16px]"
-                          >
-                            Regular
-                          </Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem
-                            value="bad"
-                            id={`patient-${index}-bad`}
-                            className="w-4 h-4"
-                          />
-                          <Label
-                            htmlFor={`patient-${index}-bad`}
-                            className="text-sm leading-[16px]"
-                          >
-                            Mala
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                      <div className="grid gap-2">
+                        <FormLabel className="w-full sm:w-[320px] h-[16px] font-medium text-[14px]">
+                          ¿Cómo se sintió?
+                        </FormLabel>
+                        <RadioGroup
+                          onValueChange={(val) => {
+                            form.setValue(
+                              `patients.${index}.feeling`,
+                              val as ExperiencePat
+                            );
+                          }}
+                          value={form.watch(`patients.${index}.feeling`)}
+                          className="flex flex-wrap gap-6"
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="good"
+                              id={`patient-${index}-good`}
+                              className="
+                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                                  data-[state=checked]:!border-[#5B9B40]
+                                  data-[state=checked]:!text-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                              "
+                            />
+                            <Label
+                              htmlFor={`patient-${index}-good`}
+                              className="text-sm leading-[16px]"
+                            >
+                              Bien
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="regular"
+                              id={`patient-${index}-regular`}
+                              className="
+                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                                  data-[state=checked]:!border-[#5B9B40]
+                                  data-[state=checked]:!text-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                              "
+                            />
+                            <Label
+                              htmlFor={`patient-${index}-regular`}
+                              className="text-sm leading-[16px]"
+                            >
+                              Regular
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="bad"
+                              id={`patient-${index}-bad`}
+                              className="
+                                  !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                                  data-[state=checked]:!border-[#5B9B40]
+                                  data-[state=checked]:!text-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                                  data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40]
+                              "
+                            />
+                            <Label
+                              htmlFor={`patient-${index}-bad`}
+                              className="text-sm leading-[16px]"
+                            >
+                              Mal
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -953,44 +894,31 @@ const addExpenseCard = () => {
                     variant="secondary"
                     size="icon"
                     onClick={addPatCard}
-                    className="!w-[44px] !h-[44px] rounded-[6px] !p-[12px] border-3 border-[#2D3648] bg-[#FFFFFF] flex items-center justify-center gap-[8px]"
+                    className="!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]"
                   >
-                    <Plus className="w-[20px] h-[20px]" />
+                    <Plus color="#5B9B40" className="w-[20px] h-[20px]" />
                   </Button>
-                  {patientsCards.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => {
-                        removePatientCard(patientsCards.length - 1);
-                      }}
-                      className="!w-[44px] !h-[44px] rounded-[6px] !p-[12px] border-3 border-[#2D3648] bg-[#FFFFFF] flex items-center justify-center gap-[8px]"
-                    >
-                      <Minus className="w-[20px] h-[20px]" />
-                    </Button>
-                  )}
                 </div>
               </div>
-              <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter">
-                Experiencias
+              <h3 className="text-2xl font-bold tracking-normal mb-5 font-inter">
+                Perros
               </h3>
               <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
                 {dogs.map((dog, index) => (
                   <Card
                     key={dog.id}
                     className=" 
-                  w-full md:w-[510px]
-                  h-[119px]
-                  rounded-[20px]
-                  p-6
-                  bg-[#F7F9FC]
-                  border-0
-                  shadow-none
-                "
+                    w-full md:w-[518px]
+                    h-[92px]
+                    rounded-lg
+                    p-6
+                    bg-white
+                    border-[#BDD7B3]
+                    shadow-none
+                  "
                   >
-                    <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                      <FormLabel className="block font-semibold text-[14px] leading-[16px] tracking-[-0.01em]">
+                    <CardContent className="px-0 text-[#2D3648]">
+                      <FormLabel className="block font-medium text-[14px] pb-2 leading-[16px]">
                         ¿Cómo se sintió {dog.nombre}?
                       </FormLabel>
                       <RadioGroup
@@ -1008,7 +936,13 @@ const addExpenseCard = () => {
                           <RadioGroupItem
                             value="good"
                             id={`good-${dog.id}`}
-                            className="w-4 h-4"
+                            className="
+                              !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                              data-[state=checked]:!border-[#5B9B40]
+                              data-[state=checked]:!text-[#5B9B40]
+                              data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                              data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
+                            "
                           />
                           <Label
                             htmlFor={`good-${dog.id}`}
@@ -1021,7 +955,13 @@ const addExpenseCard = () => {
                           <RadioGroupItem
                             value="regular"
                             id={`regular-${dog.id}`}
-                            className="w-4 h-4"
+                            className="
+                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                            data-[state=checked]:!border-[#5B9B40]
+                            data-[state=checked]:!text-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
+                          "
                           />
                           <Label
                             htmlFor={`regular-${dog.id}`}
@@ -1034,13 +974,19 @@ const addExpenseCard = () => {
                           <RadioGroupItem
                             value="bad"
                             id={`bad-${dog.id}`}
-                            className="w-4 h-4"
+                            className="
+                            !bg-white !border-1 !border-[#5B9B40] !rounded-full
+                            data-[state=checked]:!border-[#5B9B40]
+                            data-[state=checked]:!text-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!fill-[#5B9B40]
+                            data-[state=checked]:[&>span>svg]:!stroke-[#5B9B40] 
+                          "
                           />
                           <Label
                             htmlFor={`bad-${dog.id}`}
                             className="text-sm leading-[16px]"
                           >
-                            Mala
+                            Mal
                           </Label>
                         </div>
                       </RadioGroup>
@@ -1054,55 +1000,24 @@ const addExpenseCard = () => {
                   </Card>
                 ))}
               </div>
-              <h3 className="text-2xl font-bold tracking-normal leading-[1.4] font-inter">
-                Fotos
-              </h3>
-              {typeof window !== "undefined" &&
-                (() => {
-                  const photos = form.watch("photos") as FileList;
-                  if (photos instanceof FileList && photos.length > 0) {
-                    return (
-                      <ul className="mb-3 relative z-10 flex flex-col gap-2">
-                        {Array.from(photos).map((file, idx) => (
-                          <li
-                            key={idx}
-                            className="
-                          flex items-center justify-between
-                          px-3 py-1.5
-                          rounded-md
-                          w-[332px]
-                          shadow-sm
-                          text-sm text-[#2D3648]
-                          font-medium
-                        "
-                          >
-                            {file.name}
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  return null;
-                })()}
-              <div className="relative w-[332px]">
-                <label
-                  htmlFor="picture"
-                  className="block w-[332px] h-[48px] rounded-[6px] border-2 border-gray-200 bg-[#F7F9FC] cursor-pointer"
-                >
-                  <span className="absolute top-[12px] left-[12px] w-[276px] h-[24px] font-normal text-[#2D3648] text-[16px] leading-[24px] tracking-[-0.01em]">
-                    Adjuntar
-                  </span>
-                  <input
+              <div className="gap-5">
+                <h3 className="text-2xl font-bold font-inter">Fotos</h3>
+                <p className="pt-2 pb-4">
+                  Solo podés adjuntar dos fotos de máximo 15 MB cada una.
+                </p>
+                <div>
+                  <Input
                     id="picture"
                     type="file"
                     multiple
                     {...form.register("photos")}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    aria-hidden="true"
+                    className="
+                        max-w-[518px] h-[40px] rounded-md border border-[#D4D4D4]
+                        file:font-semibold file:text-[#121F0D] file:bg-white 
+                        file:border-none file:px-2 file:cursor-pointer
+                        text-[#777d74] 
+                      "
                   />
-                </label>
-                <div className="absolute top-[12px] left-[296px] w-[24px] h-[24px]">
-                  <Upload className="w-[24px] h-[24px]" />
                 </div>
               </div>
               {form.formState.errors.photos && (
@@ -1110,22 +1025,18 @@ const addExpenseCard = () => {
                   {form.formState.errors.photos.message as string}
                 </p>
               )}
-
-              <div className="w-[327px] h-[139px] ">
-                <div className="w-[327px] h-[91px] gap-[8px] pb-[4px]">
-                  <FormLabel className="font-bold text-[16px] leading-[24px]">
-                    Link a más fotos
-                  </FormLabel>
-                  <FormDescription className="w-[327px] h-[63px] font-normal text-[14px] leading-[21px] tracking-[-0.01em]">
-                    Solo podés adjuntar dos, así que si necesitás <br /> subir
-                    más, podés dejar acá el link a Drive con el <br /> resto.
-                  </FormDescription>
+              <div className="py-6">
+                <div>
+                  <p className="w-[379px] h-[28px] font-normal text-[14px] leading-[21px]">
+                    Si necesitás subir más, podés dejar acá el link a Drive:
+                  </p>
                 </div>
                 <FormControl>
                   <Input
                     type="text"
+                    placeholder="Ejemplo: https://drive.google.com/drive/folders/1BP_DxHxEql-iViwo"
                     {...form.register("driveLink")}
-                    className="w-[327px] h-[40px] rounded-[6px] !p-[12px] border-2 border-[#CBD2E0]"
+                    className="max-w-[518px] h-[40px] rounded-md mt-2 border-1 border-[#D4D4D4]"
                   />
                 </FormControl>
               </div>
@@ -1142,56 +1053,56 @@ const addExpenseCard = () => {
               </Alert>
               
               <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-                  {expenseCards.map((_, index) => (
-                    <Card 
-                      key={index} 
-                      className={cn(
-                            "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                            (isAdmin || false)  && "pointer-events-none opacity-50"
+                {expenseCards.map((_, index) => (
+                  <Card 
+                    key={index} 
+                    className={cn(
+                          "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                          (isAdmin || false)  && "pointer-events-none opacity-50"
+                    )}
+                  >
+                    {expenseCards.length > 1 && (  
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="icon"
+                        onClick={() => { removeExpenseCard(index); }}
+                        className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                      >
+                        <X color="#5B9B40" strokeWidth={1} />
+                      </Button>
+                    )}
+                    <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                      {interv && (
+                        <ExpenseForm
+                          ref={(el) => {
+                            formRefs.current[index] = el;
+                          }}
+                          InterventionID={interv.id}
+                          onSubmit={(data) => { handleExpenseSubmit(data, index); }}
+                        />
                       )}
-                    >
-                      {expenseCards.length > 1 && (  
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="icon"
-                          onClick={() => { removeExpenseCard(index); }}
-                          className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
-                        >
-                          <X color="#5B9B40" strokeWidth={1} />
-                        </Button>
-                      )}
-                      <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                        {interv && (
-                          <ExpenseForm
-                            ref={(el) => {
-                              formRefs.current[index] = el;
-                            }}
-                            InterventionID={interv.id}
-                            onSubmit={(data) => { handleExpenseSubmit(data, index); }}
-                          />
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <div className="flex flex-row md:flex-col gap-2">
-                    <Button 
-                      type="button"
-                      variant="secondary" 
-                      size="icon"  
-                      onClick = {addExpenseCard} 
-                      className= {cn(
-                        "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
-                        (isAdmin || false) && "pointer-events-none opacity-50"
-                      )}
-                    >
-                      <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
-                    </Button>
-                  </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                <div className="flex flex-row md:flex-col gap-2">
+                  <Button 
+                    type="button"
+                    variant="secondary" 
+                    size="icon"  
+                    onClick = {addExpenseCard} 
+                    className= {cn(
+                      "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+                      (isAdmin || false) && "pointer-events-none opacity-50"
+                    )}
+                  >
+                    <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+                  </Button>
+                </div>
               </div>
-              <Button type="button" onClick={() => { handleConfirm().catch(reportError); }} className="w-[119px] h-[48px] rounded-[6px] px-[20px] py-[12px] bg-[#2D3648] text-white gap-[8px] flex items-center justify-center">
+              <Button type="button" onClick={() => { handleConfirm().catch(reportError); }} className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center">
                 <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
-                  Confirmar
+                  Guardar cambios
                 </span>
               </Button>
             </form>

@@ -2,9 +2,9 @@ import { initDatabase } from "@/lib/init-database";
 import { ExpensesController } from "./controller/expenses.controller";
 import { NextResponse, type NextRequest } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
-import type { Expense } from "@/app/models/expense.entity";
 import type { PayloadForUser } from "../perros/detalles/route";
 import jwt from "jsonwebtoken";
+import type { Expense } from "@/app/models/expense.entity";
 
 const expensesController = new ExpensesController();
 await initDatabase();
@@ -44,13 +44,8 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.json(res);
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    return NextResponse.json(
-      { error: "Hubo un error en el servidor" },
-      { status: 500 }
-    );
+    const message = getErrorMessage(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
 }

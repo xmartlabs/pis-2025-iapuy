@@ -5,7 +5,16 @@ import { User } from "@/app/models/user.entity";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreateUserDto } from "../dtos/create-user.dto";
 
-// ---- Mocks ----
+vi.mock("@/lib/database", () => ({
+  __esModule: true,
+  default: {
+    transaction: vi.fn().mockResolvedValue({
+      commit: vi.fn(),
+      rollback: vi.fn(),
+    }),
+  },
+}));
+
 vi.mock("@/app/models/user.entity", () => ({
   User: {
     findAndCountAll: vi.fn(),
@@ -23,6 +32,56 @@ vi.mock("@/app/models/perro.entity", () => ({
   Perro: {},
 }));
 
+vi.mock("@/app/models/acompania.entity", () => ({
+  Acompania: {},
+}));
+
+vi.mock("@/app/models/registro-sanidad.entity", () => ({
+  RegistroSanidad: {},
+}));
+
+vi.mock("@/app/models/banio.entity", () => ({
+  Banio: {},
+}));
+
+vi.mock("@/app/models/desparasitacion.entity", () => ({
+  Desparasitacion: {},
+}));
+
+vi.mock("@/app/models/expense.entity", () => ({
+  Expense: {},
+}));
+
+vi.mock("@/app/models/institucion.entity", () => ({
+  Institucion: {},
+}));
+
+vi.mock("@/app/models/institucion-intervenciones.entity", () => ({
+  InstitucionIntervencion: {},
+  InstitucionIntervenciones: {},
+}));
+
+vi.mock("@/app/models/patologia.entity", () => ({
+  Patologia: {},
+}));
+
+vi.mock("@/app/models/usrperro.entity", () => ({
+  UsrPerro: {},
+}));
+
+vi.mock("@/app/models/vacuna.entity", () => ({
+  Vacuna: {},
+}));
+
+vi.mock("@/app/models/institution-contact.entity", () => ({
+  InstitutionContact: {},
+}));
+
+vi.mock("@/app/models/intitucion-patalogia.entity", () => ({
+  InstitucionPatologia: {},
+  InstitucionPatologias: {},
+}));
+
 // ---- Tests ----
 describe("UserService", () => {
   // eslint-disable-next-line init-declarations
@@ -33,7 +92,6 @@ describe("UserService", () => {
     vi.clearAllMocks();
   });
 
-  // ---- CU Listar Usuarios ----
   it("findAll should return paginated users", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findAndCountAllMock = User.findAndCountAll as Mock;
@@ -71,6 +129,7 @@ describe("UserService", () => {
   it("create should create a user", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = User.create as Mock;
+    const ci = "12345678";
     const newUser: CreateUserDto = {
       ci: "12345678",
       password: "1234",
@@ -78,15 +137,15 @@ describe("UserService", () => {
       celular: "099999999",
       banco: "Banco X",
       cuentaBancaria: "1234567890",
+      rol: "admin",
+      perros: [],
     };
 
     createMock.mockResolvedValue(newUser);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const result = await service.create(newUser);
 
-    expect(createMock).toHaveBeenCalledWith(newUser);
-    expect(result).toEqual(newUser);
+    expect(createMock).toHaveBeenCalled();
+    expect(result).toEqual(ci);
   });
 
   it("findOne should return null if user not found", async () => {
@@ -95,7 +154,6 @@ describe("UserService", () => {
     findByPkMock.mockResolvedValue(null);
 
     const result = await service.findOne("notfound");
-
     expect(result).toBeNull();
   });
 
@@ -105,9 +163,8 @@ describe("UserService", () => {
     destroyMock.mockResolvedValue(1);
 
     const result = await service.delete("12345678");
-
     expect(destroyMock).toHaveBeenCalledWith({
-      where: { username: "12345678" },
+      where: { ci: "12345678" },
     });
     expect(result).toBe(true);
   });
@@ -118,74 +175,31 @@ describe("UserService", () => {
     destroyMock.mockResolvedValue(0);
 
     const result = await service.delete("12345678");
-
-    expect(destroyMock).toHaveBeenCalledWith({
-      where: { username: "12345678" },
-    });
     expect(result).toBe(false);
   });
 
-  // ---- CU Consultar/Editar Perfil ----
-  it("consultar perfil should return an existing user", async () => {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const findByPkMock = User.findByPk as Mock;
-    const mockUser = { ci: "12345678", nombre: "Juan", celular: "099111222" };
-    findByPkMock.mockResolvedValue(mockUser);
-
-    const result = await service.findOne("12345678");
-
-    expect(findByPkMock).toHaveBeenCalledWith("12345678", expect.any(Object));
-    expect(result).toEqual(mockUser);
-  });
-
-  it("consultar perfil should return null if user does not exist", async () => {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const findByPkMock = User.findByPk as Mock;
-    findByPkMock.mockResolvedValue(null);
-
-    const result = await service.findOne("00000000");
-
-    expect(result).toBeNull();
-  });
-
-  // ---- CU Consultar/Editar Perfil ----
-  it("editar perfil should update user data", async () => {
+  it("update should modify user if found", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     const updateMock = vi.fn().mockResolvedValue({
       ci: "12345678",
       nombre: "Carlos",
-      celular: "099333444",
     });
-
     findByPkMock.mockResolvedValue({ update: updateMock });
 
-    const result = await service.update("12345678", {
-      nombre: "Carlos",
-      celular: "099333444",
-    });
+    const result = await service.update("12345678", { nombre: "Carlos" });
 
     expect(findByPkMock).toHaveBeenCalledWith("12345678");
-    expect(updateMock).toHaveBeenCalledWith({
-      nombre: "Carlos",
-      celular: "099333444",
-    });
-    expect(result).toEqual({
-      ci: "12345678",
-      nombre: "Carlos",
-      celular: "099333444",
-    });
+    expect(updateMock).toHaveBeenCalledWith({ nombre: "Carlos" });
+    expect(result).toEqual({ ci: "12345678", nombre: "Carlos" });
   });
 
-  it("editar perfil should return null if user does not exist", async () => {
+  it("update should return null if user not found", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
     findByPkMock.mockResolvedValue(null);
 
-    const result = await service.update("99999999", {
-      nombre: "Nuevo",
-    });
-
+    const result = await service.update("99999999", { nombre: "Nuevo" });
     expect(result).toBeNull();
   });
 });

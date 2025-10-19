@@ -32,7 +32,7 @@ const CheckboxRow: React.FC<{
         // Radix puede enviar true/false or "indeterminate" but here it's boolean
         onCheckedChange(Boolean(val));
       }}
-      className="form-checkbox text-blue-600 rounded"
+      className="form-checkbox text-blue-600 rounded border-[#BDD7B3]"
     />
     <span className="text-gray-900 text-sm">{label}</span>
   </label>
@@ -114,7 +114,7 @@ export default function FilterDropdown({
         onClick={() => {
           setIsOpen((v) => !v);
         }}
-        className="bg-white text-black flex items-center justify-center w-11 h-11 border-2 border-[#2D3648] rounded-md gap-2 opacity-100 hover:bg-black hover:text-white hover:border-black transition duration-300 ease-in-out"
+        className= "bg-white text-[#5B9B40] flex items-center justify-center w-10 h-10 border-2 border-[#BDD7B3] rounded-md gap-2 opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white transition duration-300 ease-in-out"
         aria-expanded={isOpen}
         aria-haspopup="menu"
         id="filter-button"
@@ -124,7 +124,7 @@ export default function FilterDropdown({
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 p-2 bg-white border border-gray-200 rounded-lg shadow-xl z-10"
+          className="absolute right-0 mt-2 w-56 p-2 bg-white border border-[#BDD7B3] rounded-lg shadow-xl z-10"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="filter-button"
@@ -143,7 +143,7 @@ export default function FilterDropdown({
             </div>
           </div>
 
-          <hr className="my-2 border-gray-200" />
+          <hr className="my-2 border-[#BDD7B3]" />
 
           <div className="p-2">
             <h3 className="font-bold text-gray-800 text-base pb-2 pl-2">
@@ -161,7 +161,7 @@ export default function FilterDropdown({
             </div>
           </div>
 
-          <hr className="my-2 border-gray-200" />
+          <hr className="my-2 border-[#BDD7B3]" />
 
           <div className="p-2">
             <h3 className="font-bold text-gray-800 text-base pb-2 pl-2">
