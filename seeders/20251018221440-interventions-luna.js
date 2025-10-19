@@ -13,11 +13,9 @@ module.exports = {
     const lunaInt7 = "77777777-7777-4444-8888-777777777777";
     const lunaInt8 = "88888888-8888-4444-8888-888888888888";
 
-    // Fixed institution IDs for associations
     const instEducativa = "aaaa1111-bbbb-4444-cccc-ddddeeeeeeee";
     const instRecreatva = "bbbb2222-cccc-4444-dddd-eeeeffffffff";
 
-    // Create institutions if they don't exist
     await queryInterface.bulkInsert("instituciones", [
       {
         id: instEducativa,
@@ -32,8 +30,6 @@ module.exports = {
         updatedAt: new Date(),
       },
     ]);
-
-    // Create 8 interventions for Luna (perroId: p2222222) with status not 'pendiente'
     const interventions = [
       {
         id: lunaInt5,
@@ -127,7 +123,6 @@ module.exports = {
 
     await queryInterface.bulkInsert("intervenciones", interventions);
 
-    // Link Luna to these interventions in usrperros
     const lunaUsrPerros = interventions.map((intv) => ({
       userId: "22222222", // María
       perroId: "p2222222",
@@ -137,10 +132,7 @@ module.exports = {
       deletedAt: null,
     }));
     await queryInterface.bulkInsert("usrperros", lunaUsrPerros);
-
-    // Link interventions to institutions
     const institutionInterventions = [
-      // Educational interventions with Educational Institute
       {
         institucionId: instEducativa,
         intervencionId: lunaInt1,
@@ -165,7 +157,7 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-      // Recreational interventions with Recreational Center
+
       {
         institucionId: instRecreatva,
         intervencionId: lunaInt2,
@@ -178,7 +170,7 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-      // Therapeutic interventions with Educational Institute
+
       {
         institucionId: instEducativa,
         intervencionId: lunaInt3,
@@ -200,7 +192,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // Delete institution-intervention associations first
     await queryInterface.bulkDelete("institucion-intervenciones", {
       intervencionId: [
         "11111111-1111-4444-8888-111111111111",
@@ -213,8 +204,6 @@ module.exports = {
         "88888888-8888-4444-8888-888888888888",
       ],
     });
-
-    // Delete only the specific usrperros entries for these interventions
     await queryInterface.bulkDelete("usrperros", {
       intervencionId: [
         "11111111-1111-4444-8888-111111111111",
@@ -228,7 +217,6 @@ module.exports = {
       ],
     });
 
-    // Delete only the specific interventions created by this seed
     await queryInterface.bulkDelete("intervenciones", {
       id: [
         "11111111-1111-4444-8888-111111111111",
@@ -241,8 +229,6 @@ module.exports = {
         "88888888-8888-4444-8888-888888888888",
       ],
     });
-
-    // Delete the institutions created by this seed
     await queryInterface.bulkDelete("instituciones", {
       id: [
         "aaaa1111-bbbb-4444-cccc-ddddeeeeeeee",
