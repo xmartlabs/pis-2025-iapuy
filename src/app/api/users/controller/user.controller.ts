@@ -71,7 +71,7 @@ export class UserController {
     } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
-        { status: 500 }
+        { status: 501 } // change
       );
     }
   }

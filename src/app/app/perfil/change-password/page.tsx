@@ -58,27 +58,35 @@ export default function Home() {
     setSubmitting(true);
     setError(null);
 
+    let newPassword: string = "";
+
     try {
+      newPassword = data.password as string;
+
+      if (newPassword.length < 8 || !/[A-Z]/.test(newPassword)) {
+          setError("La contraseña debe tener al menos 8 caracteres, y al menos una mayúscula.");
+          return;
+      }
+
+
       const token = context?.tokenJwt;
 
-      const res = await fetch("/api/users/update", {
-        method: "POST",
+      const res = await fetch("/api/users", {
+        method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({username: context?.userCI, password: data.password }),
+        body: JSON.stringify({username: context?.userCI, password: newPassword }),
       });
 
       if (!res.ok) {
         if (res.status === 404)
-          setError("Usuario no existe." + context?.userCI + " " + context?.userName);
+          setError(`Usuario no existe. ${context?.userCI} ${context?.userName}`);
         else
-          setError("Error desconocido. " + res.status);
+          setError(`Error desconocido. ${res.status}`);
         return;
-      } else {
-        router.push("/app/perfil?passwordChanged=true");
       }
-    } catch (error){
-      console.error(error);
-      setError("error");
+      router.push(`/app/perfil?passwordChanged=true`);
+    } catch {
+      setError(`error al cambiar la contraseña.`);
     } finally {
       setSubmitting(false);
     }

@@ -102,6 +102,9 @@ export class UserService {
     if (typeof password !== "string") {
       throw new Error("Invalid password type: expected string");
     }
+    if (!password || password.length < 8 || !/[A-Z]/.test(password)) {
+      throw new Error("Password must be at least 8 characters long and contain at least one uppercase letter");
+    }
     const hashed = await Hashing.hashPassword(password);
     const createUserDto: CreateUserDto = { ...rest, password: hashed };
     const transaction = await sequelize.transaction();
@@ -137,10 +140,21 @@ export class UserService {
   ): Promise<User | null> {
     const user = await User.findByPk(username);
     if (!user) return null;
-    if (updateData.password) {
-      updateData.password = await Hashing.hashPassword(updateData.password);
+
+    const dataToUpdate = { ...updateData };
+
+    if (dataToUpdate.password) {
+      
+      if (typeof dataToUpdate.password !== "string") {
+        console.error("Invalid password type:", typeof dataToUpdate.password);
+        throw new Error("Invalid password type: expected string");
+      }
+      if (!dataToUpdate.password || dataToUpdate.password.length < 8 || !/[A-Z]/.test(dataToUpdate.password)) {
+        throw new Error("Password must be at least 8 characters long and contain at least one uppercase letter");
+      }
+      dataToUpdate.password = await Hashing.hashPassword(dataToUpdate.password);
     }
-    return await user.update(updateData);
+    return await user.update(dataToUpdate);
   }
 
   async delete(ci: string): Promise<boolean> {

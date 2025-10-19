@@ -145,7 +145,7 @@ export default function DetallePersona() {
         clearTimeout(timeout);
       }
     },
-    [userCi, context]
+    [context]
   );
 
   useEffect(() => {

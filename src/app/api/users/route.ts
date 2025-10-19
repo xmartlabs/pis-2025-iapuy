@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { UserController } from "./controller/user.controller";
 import { initDatabase } from "@/lib/init-database";
 import { extractPagination } from "@/lib/pagination/extraction";
@@ -41,6 +41,26 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+    
+  try {
+    const body = await request.json();
+    const { username: string, ...updateData} = body;
+
+    const updateRequest = new NextRequest(request, {
+      body: JSON.stringify(updateData)
+    });
+
+  return await userController.updateUser(updateRequest, { username })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const ci: string = request.nextUrl.searchParams.get("ci") ?? "";
