@@ -79,6 +79,7 @@ export class Intervention extends Model {
 
   @BelongsToMany(() => Institucion, () => InstitucionIntervencion)
   declare Institucions?: Institucion[];
+  declare Users?: User[];
   declare UsrPerroIntervention?: UsrPerro[];
   declare Pacientes?: Paciente[];
 }
