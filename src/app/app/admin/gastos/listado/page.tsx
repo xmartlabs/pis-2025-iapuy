@@ -1,5 +1,5 @@
-import ListadoGastos from "../ListadoGastos";
+import ExpensesList from "../../../../components/expenses/expenses-list";
 
-export default function PantallaGastos() {
-  return <ListadoGastos/>;
+export default function ExpensesScreen() {
+  return <ExpensesList/>;
 }

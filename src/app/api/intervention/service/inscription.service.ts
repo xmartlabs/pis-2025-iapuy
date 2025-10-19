@@ -15,13 +15,13 @@ export class InscripcionService {
       include: [
         {
           model: UsrPerro,
-          as: "usrPerro",
+          as: "UsrPerroIntervention",
           required: false,
           attributes: ["userId", "perroId"],
         },
         {
           model: Acompania,
-          as: "acompania",
+          as: "Acompania",
           required: false,
           attributes: ["userId"],
         },
@@ -52,11 +52,11 @@ export class InscripcionService {
 
     for (const dupla of datos.duplas ?? []) {
       const uG =
-        intervention.usrPerro?.some((u: UsrPerro) => u.userId === dupla.ci) ??
+        intervention.UsrPerroIntervention?.some((u: UsrPerro) => u.userId === dupla.ci) ??
         false;
 
       const uA =
-        intervention.acompania?.some((u: Acompania) => u.userId === dupla.ci) ??
+        intervention.Acompania?.some((u: Acompania) => u.userId === dupla.ci) ??
         false;
 
       if (uA || uG)
@@ -65,7 +65,7 @@ export class InscripcionService {
         );
 
       const pG =
-        intervention.usrPerro?.some(
+        intervention.UsrPerroIntervention?.some(
           (u: UsrPerro) => u.perroId === dupla.perro
         ) ?? false;
 
@@ -77,10 +77,10 @@ export class InscripcionService {
 
     for (const usrCi of datos.acompaniantes ?? []) {
       const uA =
-        intervention.acompania?.some((u: Acompania) => u.userId === usrCi) ??
+        intervention.Acompania?.some((u: Acompania) => u.userId === usrCi) ??
         false;
       const uG =
-        intervention.usrPerro?.some((u: UsrPerro) => u.userId === usrCi) ??
+        intervention.UsrPerroIntervention?.some((u: UsrPerro) => u.userId === usrCi) ??
         false;
       if (uA || uG)
         throw new Error(

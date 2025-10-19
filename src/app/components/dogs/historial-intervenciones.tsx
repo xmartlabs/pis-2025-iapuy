@@ -247,9 +247,9 @@ export default function HistorialIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {Array.isArray(inter.institutions) &&
-                        inter.institutions.length > 0
-                          ? (inter.institutions as Array<{ nombre?: string }>)
+                        {Array.isArray(inter.Institucions) &&
+                        inter.Institucions.length > 0
+                          ? (inter.Institucions as Array<{ nombre?: string }>)
                               .map((inst) => inst?.nombre ?? "")
                               .filter(Boolean)
                               .join(", ")
