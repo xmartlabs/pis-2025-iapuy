@@ -75,10 +75,6 @@ export default function ExpensesList() {
     };
   }, [searchInput]);
 
-  function go(id: string) {
-    router.push(`/app/admin/gastos/detalles?id=${id}`);
-  }
-
   const fetchExpenses = useCallback(
     async (
       pageNum: number,
