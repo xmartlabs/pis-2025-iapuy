@@ -3,7 +3,8 @@ import {
   Building,
   Dog,
   PersonStanding,
-  CalendarRange /*BadgeDollarSign*/,
+  CalendarRange, /*BadgeDollarSign*/
+  BadgeDollarSign,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,12 +58,12 @@ export function AppSidebar() {
       icon: CalendarRange,
       onlyAdmin: false,
     },
-    /*{
+    {
     title: "Gastos",
-    url: tipo === UserType.Administrator ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
+    url: type === UserType.Administrator ?"/app/admin/gastos/listado":"/app/colaboradores/gastos/listado",
     icon:BadgeDollarSign,
     onlyAdmin:false
-  },*/
+  },
   ];
   return (
     <Sidebar>

@@ -1,9 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Institucion } from "@/app/models/institucion.entity";
-import { InstitutionContact } from "@/app/models/institution-contact.entity";
-import { Patologia } from "@/app/models/patologia.entity";
-import { InstitucionPatologias } from "@/app/models/intitucion-patalogia";
 import { InstitucionesService } from "./instituciones.service";
 
 vi.mock("@/app/models/institucion.entity", () => ({
@@ -14,22 +9,54 @@ vi.mock("@/app/models/institucion.entity", () => ({
 }));
 
 vi.mock("@/app/models/institution-contact.entity", () => ({
-  InstitutionContact: { create: vi.fn() },
-}));
-vi.mock("@/app/models/patologia.entity", () => ({
-  Patologia: {
-    findOrCreate: vi.fn().mockResolvedValue([
-      { id: "mockPathologyId", nombre: "Some Pathology" }, // mock instance
-      true, // "created" flag
-    ]),
+  InstitutionContact: {
+    create: vi.fn(),
   },
 }));
-vi.mock("@/app/models/intitucion-patalogia", () => ({
-  InstitucionPatologias: { findOrCreate: vi.fn() },
+
+vi.mock("@/app/models/patologia.entity", () => ({
+  Patologia: {
+    findOrCreate: vi.fn(),
+  },
 }));
 
-describe("InstitutionService", () => {
-  let service: any = undefined;
+vi.mock("@/app/models/intitucion-patalogia.entity", () => ({
+  InstitucionPatologias: {
+    findOrCreate: vi.fn(),
+    create: vi.fn(),
+    findAll: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/models/institucion-intervenciones.entity", () => ({
+  InstitucionIntervencion: {
+    findOrCreate: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/models/usrperro.entity", () => ({
+  UsrPerro: {
+    findOrCreate: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/database", () => ({
+  default: {
+    // eslint-disable-next-line arrow-body-style
+    transaction: vi.fn(async (callback: (t: unknown) => Promise<unknown>) => {
+      return await callback({});
+    }),
+  },
+}));
+
+import { Institucion } from "@/app/models/institucion.entity";
+import { InstitutionContact } from "@/app/models/institution-contact.entity";
+import { Patologia } from "@/app/models/patologia.entity";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+
+describe("InstitucionesService", () => {
+  // eslint-disable-next-line init-declarations
+  let service: InstitucionesService;
 
   beforeEach(() => {
     service = new InstitucionesService();
@@ -45,63 +72,73 @@ describe("InstitutionService", () => {
     pathologies: ["Diabetes", "Hipertensión"],
   };
 
-  it("create should throw an error if institution already exists", async () => {
-    (Institucion.findOne as any).mockResolvedValueOnce({
+  it("debería lanzar error si la institución ya existe", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Institucion.findOne).mockResolvedValueOnce({
       id: 1,
       nombre: "Hospital Central",
-    });
-    const findOneSpy = vi.spyOn(Institucion, "findOne").mockResolvedValue(null);
+    } as never);
 
     await expect(service.create(mockDTO)).rejects.toThrowError(
-      "Ya existe una institucion con el nombre elegido."
+      "Ya existe una institucion con el nombre elegido.",
     );
 
-    expect(findOneSpy).toHaveBeenCalledWith({
-      where: { nombre: mockDTO.name },
-    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Institucion.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { nombre: mockDTO.name },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transaction: expect.any(Object),
+      }),
+    );
   });
-  it("creates institution, contacts, and pathologies successfully", async () => {
-    (Institucion.findOne as any).mockResolvedValueOnce(null);
-    (Institucion.create as any).mockResolvedValueOnce({
+
+  it("debería crear institución, contactos y patologías correctamente", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Institucion.findOne).mockResolvedValueOnce(null as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Institucion.create).mockResolvedValueOnce({
       id: "inst-1",
       nombre: mockDTO.name,
-    });
-    (InstitutionContact.create as any).mockResolvedValue();
+    } as never);
 
-    (InstitucionPatologias.findOrCreate as any).mockResolvedValue();
-    const createInstitutionSpy = vi
-      .spyOn(Institucion, "create")
-      .mockResolvedValue(null);
-    const createInstitutionContactSpy = vi
-      .spyOn(InstitutionContact, "create")
-      .mockResolvedValue(null);
-    const findOrCreatePatologiaSpy = vi
-      .spyOn(Patologia, "findOrCreate")
-      .mockResolvedValue([
-        { id: "mock-id", nombre: "Diabetes" } as Patologia, // mock instance
-        true,
-      ]);
-    const findOrCreateInstitucionPatologiasSpy = vi
-      .spyOn(InstitucionPatologias, "findOrCreate")
-      .mockResolvedValue([
-        {
-          institucionId: "mock-institucion-id",
-          patologiaId: "mock-patologia-id",
-        } as InstitucionPatologias,
-        true,
-      ]);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(InstitutionContact.create).mockResolvedValue({} as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Patologia.findOrCreate).mockResolvedValue([
+      { id: "mock-id", nombre: "Diabetes" },
+      true,
+    ] as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(InstitucionPatologias.findOrCreate).mockResolvedValue([
+      { institucionId: "inst-1", patologiaId: "mock-id" },
+      true,
+    ] as never);
+
     const result = await service.create(mockDTO);
 
-    expect(createInstitutionSpy).toHaveBeenCalledWith({ nombre: mockDTO.name });
-    expect(createInstitutionContactSpy).toHaveBeenCalledTimes(2);
-    expect(findOrCreatePatologiaSpy).toHaveBeenCalledTimes(2);
-    expect(findOrCreateInstitucionPatologiasSpy).toHaveBeenCalledTimes(2);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Institucion.create).toHaveBeenCalledWith(
+      { nombre: mockDTO.name },
+      expect.anything(),
+    );
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(InstitutionContact.create).toHaveBeenCalledTimes(2);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Patologia.findOrCreate).toHaveBeenCalledTimes(2);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(InstitucionPatologias.findOrCreate).toHaveBeenCalledTimes(2);
     expect(result).toEqual({ id: "inst-1", nombre: mockDTO.name });
   });
 
-  it("propagates errors if creation fails", async () => {
-    (Institucion.findOne as any).mockResolvedValueOnce(null);
-    (Institucion.create as any).mockRejectedValueOnce(new Error("DB failure"));
+  it("debería propagar errores si falla la creación", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Institucion.findOne).mockResolvedValueOnce(null as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Institucion.create).mockRejectedValueOnce(
+      new Error("DB failure"),
+    );
 
     await expect(service.create(mockDTO)).rejects.toThrowError("DB failure");
   });

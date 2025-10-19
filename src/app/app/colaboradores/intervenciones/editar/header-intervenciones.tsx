@@ -91,120 +91,58 @@ export default function HeaderIntervenciones({ id }: { id: string | null }) {
       });
     }, [context, id]);
   return (
-    <>
-        <h1
-        className="
-          w-[1044px] 
-          h-[58px] 
-          flex 
-          justify-between 
-          opacity-100 
-          font-inter 
-          font-bold 
-          text-[48px] 
-          leading-[120%] 
-        "
-      >
-        {`Editar ${interv?.institutionName ?? ""} ${
-          interv?.timeStamp
-            ? new Date(interv.timeStamp).toLocaleDateString("es-ES", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "2-digit",
-              })
-            : ""
-        } ${
-          interv?.timeStamp
-            ? new Date(interv.timeStamp).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })
-            : ""
-        }`}
-      </h1>
-      <div className="opacity-60 pointer-events-none">
-        <form className="w-full max-w-[1044px] pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <h2 className="block text-sm font-medium">Fecha*</h2>
-                <input
-                  type="date"
-                  value={
-                    interv?.timeStamp
-                      ? new Date(interv.timeStamp).toISOString().split("T")[0]
-                      : ""
-                  }
-                  disabled
-                  className="h-[48px] w-full border rounded-md px-3 py-2"
-                />
+    <div className="pb-6 ">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1
+              className="
+                font-inter font-semibold
+                text-[32px] sm:text-[40px] md:text-[48px]
+                leading-tight
+              "
+            >
+              {`Editar ${interv?.institutionName ?? ""} ${
+                interv?.timeStamp
+                  ? new Date(interv.timeStamp).toLocaleDateString("es-ES", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                    })
+                  : ""
+              } ${
+                interv?.timeStamp
+                  ? new Date(interv.timeStamp).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                  : ""
+              }`}
+            </h1>
+
+            <Button
+              disabled
+              className="
+                w-[141px] h-[40px]
+                rounded-[6px]
+                bg-[#5B9B40] text-white
+                flex items-center justify-center
+              "
+            >
+              <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
+                Guardar cambios
+              </span>
+            </Button>
+        </div>
+        <div>
+              <div className="max-w-[571] py-6">
+                <h2 className="block text-xs font-normal py-1">TIPO DE INTERVENCIÓN</h2>
+                  {interv?.tipo? interv.tipo.charAt(0).toUpperCase() + interv.tipo.slice(1): ""} {/*upper case first letter*/}
               </div>
               <div>
-                <h2 className="block text-sm font-medium">Hora*</h2>
-                <input
-                  type="time"
-                  value={
-                    interv?.timeStamp
-                      ? new Date(interv.timeStamp)
-                          .toISOString()
-                          .split("T")[1]
-                          .slice(0, 5)
-                      : ""
-                  }
-                  disabled
-                  className="h-[48px] w-full border rounded-md px-3 py-2"
-                />
-              </div>
-            </div>
-
-            <div>
-              <h2 className="block text-sm font-medium">
-                Cantidad de duplas necesaria*
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button className="!w-[44px] !h-[48px] rounded-[6px] !p-[12px] border bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-                  <Minus className="w-[20px] h-[20px] text-black" />
-                </Button>
-                <div className="flex items-center justify-center min-w-[3rem] h-[48px] px-3 py-2 text-sm border rounded-md">
-                  {interv?.pairsQuantity ?? 0}
-                </div>
-                <Button className="!w-[44px] !h-[48px] rounded-[6px] !p-[12px] border bg-[#FFFFFF] flex items-center justify-center gap-[8px]">
-                  <Plus className="w-[20px] h-[20px] text-black" />
-                </Button>
-              </div>
-            </div>
+                <h2 className="block text-xs font-normal py-1">DESCRIPCIÓN</h2>
+                  {interv?.description ?? "—"}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h2 className="block text-sm font-medium">
-                Tipo de Intervención*
-              </h2>
-              <select
-                disabled
-                className="h-[48px] w-full border rounded-md px-3 py-2"
-              >
-                <option>
-                  {interv?.tipo
-                    ? interv.tipo.charAt(0).toUpperCase() + interv.tipo.slice(1)
-                    : ""}
-                </option>{" "}
-                {/*upper case first letter*/}
-              </select>
-            </div>
-            <div>
-              <h2 className="block text-sm font-medium">Institución*</h2>
-              <select
-                disabled
-                className="h-[48px] w-full border rounded-md px-3 py-2"
-              >
-                <option>{interv?.institutionName ?? "—"}</option>
-              </select>
-            </div>
-          </div>
-        </form>
+        </div>
       </div>
-    </>
   );
 }
