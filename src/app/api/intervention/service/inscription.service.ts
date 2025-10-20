@@ -188,7 +188,7 @@ export class InscripcionService {
         attributes: ["id", "nombre"],
       }),
     ]);
-
-    return { pairsQuantity: intervention.pairsQuantity, people, perros };
+    const pairsQuantity = intervention.UsrPerroIntervention ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length : intervention.pairsQuantity;
+    return { pairsQuantity , people, perros };
   }
 }

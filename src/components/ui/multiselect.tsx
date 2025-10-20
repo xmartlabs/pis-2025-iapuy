@@ -94,7 +94,12 @@ export function MultiSelect({
             className
           )}
         >
-          <span className="truncate">{selected.length ? selectedLabels : placeholder}</span>
+          <span className={cn(
+              "truncate",
+              selected.length === 0 && "text-gray-500"
+            )}
+            data-placeholder={selected.length === 0 ? "" : undefined}
+          >{selected.length ? selectedLabels : placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

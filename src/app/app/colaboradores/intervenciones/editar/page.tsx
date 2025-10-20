@@ -21,6 +21,7 @@ export default function PantallaEvaluarIntervencion() {
           <TabsList className="bg-[#DEEBD9] rounded-md py-1 flex items-center justify-center gap-2 max-w-[306px] h-[40px]">
             <TabsTrigger
               value="persyperr"
+              disabled={modo === "evaluar"}
               className="py-2 w-[140px] h-[32px] text-center rounded-md
                       data-[state=active]:bg-white data-[state=active]:text-black 
                       data-[state=inactive]:text-[#5B9B40]"
@@ -29,6 +30,7 @@ export default function PantallaEvaluarIntervencion() {
             </TabsTrigger>
             <TabsTrigger
               value="diainterv"
+              disabled={modo === "inscribirse"}
               className=" py-2 w-[150px] h-[32px] text-center rounded-md
                       data-[state=active]:bg-white data-[state=active]:text-black 
                       data-[state=inactive]:text-[#5B9B40]"

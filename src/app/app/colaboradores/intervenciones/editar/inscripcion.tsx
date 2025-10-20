@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { MultiSelect } from "@/components/ui/multiselect";
 
 type Option = { id: string; nombre: string };
 
@@ -41,7 +42,7 @@ export default function InscribirIntervencion({
   const [duplasCountState, setDuplasCountState] = useState<number>(duplasCount);
   const context = useContext(LoginContext);
 
-  const [selectedAcomp, setSelectedAcomp] = useState<string>("");
+  const [selectedAcomp, setSelectedAcomp] = useState<string[]>([]);
   const [duplas, setDuplas] = useState<DuplaSelection[]>([]);
 
   const router = useRouter();
@@ -162,7 +163,7 @@ export default function InscribirIntervencion({
   function availablePeopleForIndex(index: number) {
     const selectedCis = new Set<string>([
       ...duplas.map((d) => d.ci).filter(Boolean),
-      ...(selectedAcomp ? [selectedAcomp] : []),
+      ...selectedAcomp,
     ]);
 
     const currentCi = duplas[index]?.ci ?? "";
@@ -173,9 +174,7 @@ export default function InscribirIntervencion({
     const selectedCis = new Set<string>(
       duplas.map((d) => d.ci).filter(Boolean)
     );
-    return acompaniantes.filter(
-      (a) => a.id === selectedAcomp || !selectedCis.has(a.id)
-    );
+    return acompaniantes.filter((a) => !selectedCis.has(a.id));
   }
 
   function availablePerrosForIndex(index: number) {
@@ -189,25 +188,53 @@ export default function InscribirIntervencion({
   }
 
   function buildResult(): ResultObject {
+    const dupRes: DuplaSelection[] = [];
+    for(const d of duplas){
+      if(d.perro && d.ci)
+        dupRes.push(d);
+    }
     return {
       intervention,
-      acompaniantes: selectedAcomp ? [selectedAcomp] : [],
-      duplas: duplas.map((d) => ({ ci: d.ci || "", perro: d.perro || "" })),
+      acompaniantes: selectedAcomp,
+      duplas: dupRes.map((d) => ({ ci: d.ci || "", perro: d.perro || "" })),
     };
   }
 
   async function handleSave() {
     try {
+      let insc = false;
       for (const d of duplas) {
-        if (!d.ci || !d.perro) {
+        if (d.ci && d.perro) {
+          insc = true;
+          continue;
+        }
+        if(d.ci) {
           toast.error(
-            "Fallo: Debes completar todos los campos de las duplas.",
+            "Fallo: Debe incluir al perro.",
             {
               duration: 5000,
             }
           );
-          return;
+          return; 
         }
+        if(d.perro){
+          toast.error(
+            "Fallo: Debe incluir al guía",
+            {
+              duration: 5000,
+            }
+          );
+        }
+      }
+      if(!insc && selectedAcomp.length > 0) insc = true;
+      if(!insc){
+        toast.error(
+          "Fallo: Debe haber al menos 1 inscripción",
+          {
+            duration: 5000,
+          }
+        );
+        return;
       }
 
       if (!intervention) {
@@ -366,23 +393,14 @@ export default function InscribirIntervencion({
               </p>
               <div>
                 <Label className="text-sm">Acompañante</Label>
-                <Select
-                  value={selectedAcomp}
-                  onValueChange={(v) => {
-                    setSelectedAcomp(v);
-                  }}
-                >
-                  <SelectTrigger className="w-1/2 mt-2">
-                    <SelectValue placeholder="Selecciona un acompañante" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableAcompanantes().map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {`${a.nombre} (${a.id})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelect className="w-1/2 mt-2 placeholder:text-gray-100"
+                  options={availableAcompanantes().map((a) => (
+                    { value: a.id, label: `${a.nombre} (${a.id})` }
+                  ))}
+                  selected={selectedAcomp}
+                  onChange={(v) => { setSelectedAcomp(v); }}
+                  placeholder="Selecciona un o más acompañantes"
+                  />
               </div>
             </CardContent>
           </Card>
