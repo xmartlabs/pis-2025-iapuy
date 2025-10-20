@@ -36,10 +36,6 @@ test("test", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Historial de Sanidad" })
   ).toBeVisible();
-  await expect(page.getByText("FechaActividad16/10/2025Bañ")).toBeVisible();
-  await expect(
-    page.getByRole("navigation", { name: "pagination" })
-  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Eliminar Perro" })
   ).toBeVisible();

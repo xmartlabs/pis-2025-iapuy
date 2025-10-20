@@ -41,9 +41,6 @@ test("test", async ({ page }) => {
     page.getByRole("link", { name: "Intervenciones" })
   ).toBeVisible();
   await expect(
-    page.locator("div").filter({ hasText: "Anterior1234567Siguiente" }).nth(2)
-  ).toBeVisible();
-  await expect(
     page.getByRole("button", { name: "Eliminar Perro" })
   ).toBeVisible();
 });

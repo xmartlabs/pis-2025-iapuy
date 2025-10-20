@@ -11,19 +11,19 @@ export default defineConfig({
   },
 
   projects: [
-    // 🧩 Setup para ADMIN
+    // Setup para ADMIN
     {
       name: "setup-admin",
       testMatch: /.*admin-login\.setup\.(js|ts)/,
     },
 
-    // 🧩 Setup para COLABORADOR
+    // Setup para COLABORADOR
     {
       name: "setup-colab",
       testMatch: /.*colab-login\.setup\.(js|ts)/,
     },
 
-    // 💻 SOLO UN proyecto para tests principales
+    // SOLO UN proyecto para tests principales
     {
       name: "main-tests",
       use: {
