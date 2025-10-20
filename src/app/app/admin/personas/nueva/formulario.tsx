@@ -37,12 +37,6 @@ const formSchema = z
     nombre: z.stringFormat("nombre", /^[\p{L}]+(?:\s+[\p{L}]+)+$/u, {
       message: "Ingrese nombre completo",
     }),
-    password: z
-      .string()
-      .min(8, { message: "La contraseña debe tener al menos 8 caracteres." })
-      .regex(/[A-Z]/, {
-        message: "La contraseña debe contener al menos una letra mayúscula.",
-      }),
     rol: z.enum(["admin", "colaborador"]),
     banco: z.string().min(1, {
       message: "Debe ingresar un banco",
@@ -106,7 +100,6 @@ export default function Formulario() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nombre: "",
-      password: "",
       rol: "admin",
       banco: "",
       cuentaBancaria: "",
@@ -119,7 +112,6 @@ export default function Formulario() {
 
   const context = useContext(LoginContext);
   const [listaPerros, setListaPerros] = useState<PerroOption[]>([]);
-  const [showPassword, setShowPassword] = useState(false);
   const [reload, setReload] = useState(false);
   const [open, setOpen] = useState(false);
   const [magicLink, setMagicLink] = useState<string | null>(null);
@@ -242,7 +234,7 @@ export default function Formulario() {
             "Content-Type": "application/json",
             ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify(values),
+          body: JSON.stringify({ ...values, password: "" }),
           signal: controller.signal,
         });
 
@@ -390,132 +382,56 @@ export default function Formulario() {
           }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
-          <FormField
-            control={form.control}
-            name="nombre"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
-                  Nombre y apellido*
-                </FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
-                  Contraseña*
-                </FormLabel>
+          <div className="md:col-span-3 flex flex-col md:flex-row items-start md:items-center gap-6">
+            <FormField
+              control={form.control}
+              name="nombre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
+                    Nombre y apellido*
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} className="w-[350px]" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      type={showPassword ? "text" : "password"}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowPassword((s) => !s);
-                      }}
-                      aria-label={
-                        showPassword
-                          ? "Ocultar contraseña"
-                          : "Mostrar contraseña"
-                      }
-                      aria-pressed={showPassword}
-                      className="absolute inset-y-0 right-2 flex items-center px-2 text-sm text-gray-500 hover:text-gray-700 focus:outline-none"
+            <FormField
+              control={form.control}
+              name="rol"
+              render={({ field }) => (
+                <FormItem className="pt-[3%] pb-[3%] h-4/6 mb-[1.5rem]">
+                  <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
+                    Rol*
+                  </FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex gap-4"
                     >
-                      {showPassword ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10a9.99 9.99 0 012.489-6.53M3 3l18 18"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9.88 9.88A3 3 0 0114.12 14.12"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="rol"
-            render={({ field }) => (
-              <FormItem className="pt-[3%] pb-[3%] h-4/6">
-                <FormLabel className="font-sans font-medium text-sm leading-5 text-foreground">
-                  Rol*
-                </FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                  >
-                    <FormItem className="flex items-center gap-3">
-                      <FormControl>
-                        <RadioGroupItem value="admin" />
-                      </FormControl>
-                      <FormLabel>Administrador</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center gap-3">
-                      <FormControl>
-                        <RadioGroupItem value="colaborador" />
-                      </FormControl>
-                      <FormLabel>Colaborador</FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                      <FormItem className="flex items-center gap-3">
+                        <FormControl>
+                          <RadioGroupItem value="admin" />
+                        </FormControl>
+                        <FormLabel>Administrador</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center gap-3">
+                        <FormControl>
+                          <RadioGroupItem value="colaborador" />
+                        </FormControl>
+                        <FormLabel>Colaborador</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="banco"

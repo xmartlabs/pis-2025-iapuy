@@ -102,11 +102,19 @@ export class UserService {
     if (typeof password !== "string") {
       throw new Error("Invalid password type: expected string");
     }
-    if (!password || password.length < 8 || !/[A-Z]/.test(password)) {
-      throw new Error("Password must be at least 8 characters long and contain at least one uppercase letter");
+    if (
+      (password.length < 8 && password.length > 0) ||
+      (password.length > 0 && !/[A-Z]/.test(password))
+    ) {
+      throw new Error(
+        "Password must be at least 8 characters long and contain at least one uppercase letter"
+      );
     }
-    const hashed = await Hashing.hashPassword(password);
+
+    const hashed =
+      password.length > 0 ? await Hashing.hashPassword(password) : password;
     const createUserDto: CreateUserDto = { ...rest, password: hashed };
+
     const transaction = await sequelize.transaction();
 
     const perros = normalizePerros(createUserDto.perros);
@@ -144,12 +152,17 @@ export class UserService {
     const dataToUpdate = { ...updateData };
 
     if (dataToUpdate.password) {
-      
       if (typeof dataToUpdate.password !== "string") {
         throw new Error("Invalid password type: expected string");
       }
-      if (!dataToUpdate.password || dataToUpdate.password.length < 8 || !/[A-Z]/.test(dataToUpdate.password)) {
-        throw new Error("Password must be at least 8 characters long and contain at least one uppercase letter");
+      if (
+        !dataToUpdate.password ||
+        dataToUpdate.password.length < 8 ||
+        !/[A-Z]/.test(dataToUpdate.password)
+      ) {
+        throw new Error(
+          "Password must be at least 8 characters long and contain at least one uppercase letter"
+        );
       }
       dataToUpdate.password = await Hashing.hashPassword(dataToUpdate.password);
     }
