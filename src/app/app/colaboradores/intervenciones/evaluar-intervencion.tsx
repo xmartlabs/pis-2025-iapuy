@@ -80,6 +80,8 @@ export default function EvaluarIntervencion() {
   const id = searchParams.get("id");
   const formRefs = useRef<(HTMLFormElement | null)[]>([]);
   const [expenses, setExpenses] = useState<z.infer<typeof expensesSchema>[]>([]);
+  const expenseSubmittedRef = useRef<Record<number, boolean>>({});
+  const [confirming, setConfirming] = useState(false);
 
   if (!id) {
     throw new Error("Falta el parámetro id en la URL");
@@ -93,17 +95,18 @@ export default function EvaluarIntervencion() {
     try {
       const payloadBase64 = token.split('.')[1];
       const payloadJson = JSON.parse(atob(payloadBase64)) as JwtPayload;
-      userType = payloadJson.type; // "Colaborador" o "Administrador"
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      userType = payloadJson.type;
     } catch {
       reportError("Error al decodificar el token:");
     }
   }
+  
   const isAdmin = userType === "Administrador";
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -165,12 +168,11 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -229,12 +231,11 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -334,12 +335,12 @@ export default function EvaluarIntervencion() {
       "Cada foto debe pesar menos de 15MB"
     );
 
-    const expensesSchema = z.object({
-      interventionID: z.string(),
-      peopleCI: z.string(),
-      type:z.string(),
-      measurementType:z.string(),
-      amount:z.number().positive({ message: "Debe ingresar una cantidad de KM válida." }),
+  const expensesSchema = z.object({
+    interventionID: z.string(),
+    peopleCI: z.string(),
+    type:z.string(),
+    measurementType:z.string(),
+    amount:z.number().positive({ message: "Debe ingresar una cantidad de KM válida." }),
   });
 
   const FormSchema = z.object({
@@ -357,9 +358,9 @@ export default function EvaluarIntervencion() {
     defaultValues: {
       tipo: interv?.tipo,
       patients: [{ name: "", age: "", pathology: "", feeling: "good" }],
-
       photos: undefined,
       driveLink: "",
+      expenses: [{ interventionID: id ?? "", peopleCI: "", type: "", measurementType: "", amount: 1 }],
     } as unknown as FormValues,
   });
 
@@ -378,16 +379,44 @@ export default function EvaluarIntervencion() {
     }
   }, [dogs, form]);
 
+
   const router = useRouter();
   
   const handleExpenseSubmit = (data: z.infer<typeof expensesSchema>, index: number) => {
-    setExpenses((prev) => {
-      const copy = [...prev];
-      copy[index] = data;
-      return copy;
-    });
-  };
 
+      setExpenses((prev) => {
+        const copy = [...prev];
+        copy[index] = data;
+        return copy;
+      });
+
+      try {
+        form.setValue(
+          `expenses.${index}`,
+          data as unknown as FormValues["expenses"][number],
+          { shouldValidate: true, shouldDirty: true }
+        );
+      } catch {
+        reportError("Error setValue expenses.");
+      }
+
+      expenseSubmittedRef.current[index] = true;
+  };
+  
+  const waitForExpenseSubmissions = (expectedCount: number, timeout = 1200) =>
+    new Promise<boolean>((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        const submitted = expenseSubmittedRef.current;
+        const ok = Array.from({ length: expectedCount }).every((_, i) => !!submitted[i]);
+        if (ok) { resolve(true); return; }
+        if (Date.now() - start > timeout) { resolve(false); return; }
+        setTimeout(check, 50);
+      };
+      // si no hay hijos esperados, devolvemos true inmediatamente
+      if (expectedCount === 0) { resolve(true); return; }
+    check();
+  });
 
   // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: FormValues) {
@@ -463,7 +492,7 @@ export default function EvaluarIntervencion() {
               Authorization: `Bearer ${context?.tokenJwt}`,
             },
             body: JSON.stringify({
-              userId: "11111111", // o el real
+              userId: exp.peopleCI || "",
               interventionId: exp.interventionID,
               type: exp.type,
               concept: "",
@@ -492,16 +521,31 @@ export default function EvaluarIntervencion() {
     }
   }
 
-  const handleConfirm = async () => {
-    // 1. Disparar submit de todos los ExpenseForm hijos
-    formRefs.current.forEach((f) => f?.requestSubmit());
 
-    // 2. Ejecutar el submit global del padre
-    await form.handleSubmit(onSubmit)();
+  const handleConfirm = async () => {
+    try {
+      setConfirming(true);
+
+      expenseSubmittedRef.current = {};
+      const expected = expenseCards.length;
+
+      formRefs.current.forEach((f) => f?.requestSubmit());
+
+      const synced = await waitForExpenseSubmissions(expected, 1500);
+      if (!synced) {
+        reportError("No se sincronizaron todos los gastos. Intentá de nuevo o revisá los gastos.");
+        return;
+      }
+
+      await form.handleSubmit(
+        onSubmit,
+      )();
+    } finally {
+      setConfirming(false);
+    }
   };
 
-
-  const addPatCard = () => {
+  const  addPatCard = () => {
     const newIndex = patientsCards.length;
 
     setPatientCard((prev) => [...prev, newIndex]);
@@ -551,10 +595,11 @@ const addExpenseCard = () => {
 
     const currentExpense = form.getValues("expenses") ?? [];
     const newExpense = {
-      name: "",
-      age: "",
-      pathology: "",
-      feeling: "good",
+      interventionID: id ?? "",
+      peopleCI: "",
+      type: "",
+      measurementType: "",
+      amount: 0,
     };
 
 
@@ -1040,73 +1085,78 @@ const addExpenseCard = () => {
                   />
                 </FormControl>
               </div>
-
-              <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
-                Costos
-              </h3>
-
-              <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
-                <AlertCircleIcon />
-                <AlertDescription>
-                  Solo subí el gasto si lo realizaste para trasladar a un perro.
-                </AlertDescription>
-              </Alert>
-              
-              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-                {expenseCards.map((_, index) => (
-                  <Card 
-                    key={index} 
-                    className={cn(
-                          "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                          (isAdmin || false)  && "pointer-events-none opacity-50"
-                    )}
-                  >
-                    {expenseCards.length > 1 && (  
-                      <Button
-                        type="button"
-                        variant="link"
-                        size="icon"
-                        onClick={() => { removeExpenseCard(index); }}
-                        className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
-                      >
-                        <X color="#5B9B40" strokeWidth={1} />
-                      </Button>
-                    )}
-                    <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                      {interv && (
-                        <ExpenseForm
-                          ref={(el) => {
-                            formRefs.current[index] = el;
-                          }}
-                          InterventionID={interv.id}
-                          onSubmit={(data) => { handleExpenseSubmit(data, index); }}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-                <div className="flex flex-row md:flex-col gap-2">
-                  <Button 
-                    type="button"
-                    variant="secondary" 
-                    size="icon"  
-                    onClick = {addExpenseCard} 
-                    className= {cn(
-                      "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
-                      (isAdmin || false) && "pointer-events-none opacity-50"
-                    )}
-                  >
-                    <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
-                  </Button>
-                </div>
-              </div>
-              <Button type="button" onClick={() => { handleConfirm().catch(reportError); }} className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center">
-                <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
-                  Guardar cambios
-                </span>
-              </Button>
             </form>
           </Form>
+          <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
+            Costos
+          </h3>
+
+          <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
+            <AlertCircleIcon />
+            <AlertDescription>
+              Solo subí el gasto si lo realizaste para trasladar a un perro.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            {expenseCards.map((_, index) => (
+              <Card 
+                key={index} 
+                className={cn(
+                      "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                      (isAdmin || false)  && "pointer-events-none opacity-50"
+                )}
+              >
+                {expenseCards.length > 1 && (  
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="icon"
+                    onClick={() => { removeExpenseCard(index); }}
+                    className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                  >
+                    <X color="#5B9B40" strokeWidth={1} />
+                  </Button>
+                )}
+                <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                  {interv?.id && (
+                    <div className="[&_input[name='interventionID']]:hidden">
+                    <ExpenseForm
+                      ref={(el) => { formRefs.current[index] = el; }}
+                      InterventionID={interv.id}
+                      hideIntervention = {true}
+                      onSubmit={(data) => { handleExpenseSubmit(data, index); }}
+                    />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+            <div className="flex flex-row md:flex-col gap-2">
+              <Button 
+                type="button"
+                variant="secondary" 
+                size="icon"  
+                onClick = {addExpenseCard} 
+                className= {cn(
+                  "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+                  (isAdmin || false) && "pointer-events-none opacity-50"
+                )}
+              >
+                <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+              </Button>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => { handleConfirm().catch(reportError); }}
+            disabled={confirming}
+            className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center"
+          >
+            <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
+              {confirming ? "Guardando..." : "Guardar cambios"}
+            </span>
+          </Button>
         </TabsContent>
       </Tabs>
     </div>

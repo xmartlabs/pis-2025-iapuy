@@ -178,6 +178,7 @@ const MeasurementComboBox = ({
 interface Props {
   InterventionID: string;
   onSubmit?: (data: z.infer<typeof FormSchema>) => void;
+  hideIntervention?: boolean; 
 }
 export const FormSchema = z.object({
   interventionID: z.string(),
@@ -189,7 +190,7 @@ export const FormSchema = z.object({
     .positive({ message: "Debe ingresar una cantidad de KM válida." }),
 });
 export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
-  ({ InterventionID, onSubmit }, ref) => {
+  ({ InterventionID, onSubmit, hideIntervention}, ref) => {
     const form = useForm<z.infer<typeof FormSchema>>({
       resolver: zodResolver(FormSchema),
       defaultValues: {
@@ -313,21 +314,26 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
           onSubmit={form.handleSubmit(handleFormSubmit)}
           className="flex flex-col gap-6 w-full"
         >
+          {!hideIntervention && (
           <FormField
             control={form.control}
             name="interventionID"
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2 relative">
                 <FormControl>
-                  <InterventionCombobox
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <div className="pointer-events-none opacity-50">
+                    <InterventionCombobox
+                      value={field.value}
+                      onChange={field.onChange} 
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage className="absolute -bottom-6" />
               </FormItem>
             )}
           />
+          )}
+
           <FormField
             control={form.control}
             name="peopleCI"
@@ -545,6 +551,7 @@ export default function ExpenseDialogTwo({
         {/* Form con ref */}
         <ExpenseForm
           InterventionID={InterventionID}
+          hideIntervention = {false}
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           onSubmit={submit}
           ref={formRef}
