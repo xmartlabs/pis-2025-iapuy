@@ -46,6 +46,9 @@ export class MagicLinkService {
   }
 
   async resetPasword(token: string, newPassword: string) {
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword))
+      throw new Error("Contraseña muy débil");
+
     const ci = await MagicLinkService.verifyResetToken(token);
     const hashedNewPassword = await Hashing.hashPassword(newPassword);
 
