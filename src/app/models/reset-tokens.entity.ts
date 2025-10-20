@@ -4,7 +4,6 @@ import {
   Table,
   Column,
   ForeignKey,
-  BelongsTo,
   PrimaryKey,
 } from "sequelize-typescript";
 import { User } from "./user.entity";
@@ -25,6 +24,5 @@ export class ResetToken extends Model {
   @Column
   declare used: boolean;
 
-  @BelongsTo(() => User)
   declare UserToReset?: User;
 }
