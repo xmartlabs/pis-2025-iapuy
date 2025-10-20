@@ -214,18 +214,14 @@ export default function InstitutionList() {
           <Table className="min-w-full table-fixed border-collapse">
             <TableHeader>
               <TableRow className="border-b border-gray-200 -mt-px">
-                <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
                   Nombre
                 </TableHead>
-                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
                   Referentes
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                  Estado de cuenta
                 </TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody className="divide-y divide-gray-100 bg-white">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
@@ -235,9 +231,6 @@ export default function InstitutionList() {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[160px]" />
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Skeleton className="h-4 w-[110px]" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -252,26 +245,20 @@ export default function InstitutionList() {
                   >
                     <TableCell className="px-6 py-4 align-middle">
                       <div className="flex items-center gap-3">
-                        <span className="text-base md:text-base ml-2 font-semibold">
+                        <span className="text-base md:text-base ml-2">
                           {p.nombre}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell className="px-6 py-4 align-middle">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <div className="flex items-center gap-2 text-sm">
                         {p.InstitutionContacts.map((contact, index) => (
                           <span key={contact.id || index}>
                             {contact.name} - {contact.contact}
                             {index < p.InstitutionContacts.length - 1 && ", "}
                           </span>
                         ))}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-6 py-4 align-middle">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        Al Dia
                       </div>
                     </TableCell>
                   </TableRow>

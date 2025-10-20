@@ -26,11 +26,15 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, X } from "lucide-react";
-import { useEffect, useState, useContext } from "react";
+import { Plus, X, AlertCircleIcon } from "lucide-react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { JwtPayload } from "jsonwebtoken";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
+import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two";
 
 type Pathology = {
   id: string;
@@ -72,15 +76,35 @@ export default function EvaluarIntervencion() {
   const context = useContext(LoginContext);
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
+  const formRefs = useRef<(HTMLFormElement | null)[]>([]);
+  const [expenses, setExpenses] = useState<z.infer<typeof expensesSchema>[]>([]);
+  const expenseSubmittedRef = useRef<boolean[]>([]);
+  const [confirming, setConfirming] = useState(false);
 
   if (!id) {
     throw new Error("Falta el parámetro id en la URL");
   }
 
+  const token = context?.tokenJwt;
+
+  let userType: string | null = null;
+
+  if (token) {
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const payloadJson = JSON.parse(atob(payloadBase64)) as JwtPayload;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      userType = payloadJson.type;
+    } catch {
+      reportError("Error al decodificar el token:");
+    }
+  }
+  
+  const isAdmin = userType === "Administrador";
+
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -142,12 +166,11 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -206,12 +229,11 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
         const baseHeaders: Record<string, string> = {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -270,7 +292,7 @@ export default function EvaluarIntervencion() {
     callApi().catch((err) => {
       reportError(err);
     });
-  }, [context, id]);
+  }, [context, id, token]);
 
   const patientsSchema = z.object({
     name: z.string().min(1, "Nombre requerido"),
@@ -296,7 +318,7 @@ export default function EvaluarIntervencion() {
     feelingDog: z.enum(["good", "regular", "bad"]),
   });
 
-  const MAX_FILE_SIZE = 20 * 1024 * 1024;
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
   const photosSchema = z
     .any()
@@ -311,11 +333,20 @@ export default function EvaluarIntervencion() {
       "Cada foto debe pesar menos de 15MB"
     );
 
+  const expensesSchema = z.object({
+    interventionID: z.string(),
+    peopleCI: z.string(),
+    type:z.string(),
+    measurementType:z.string(),
+    amount:z.number().positive({ message: "Debe ingresar una cantidad de KM válida." }),
+  });
+
   const FormSchema = z.object({
     patients: z.array(patientsSchema).min(1),
     dogs: z.array(dogsExpSchema),
     photos: photosSchema.optional(),
     driveLink: z.string().optional(),
+    expenses: z.array(expensesSchema).optional()
   });
 
   type FormValues = z.infer<typeof FormSchema>;
@@ -325,9 +356,9 @@ export default function EvaluarIntervencion() {
     defaultValues: {
       tipo: interv?.tipo,
       patients: [{ name: "", age: "", pathology: "", feeling: "good" }],
-
       photos: undefined,
       driveLink: "",
+      expenses: [{ interventionID: id ?? "", peopleCI: "", type: "", measurementType: "", amount: 1 }],
     } as unknown as FormValues,
   });
 
@@ -347,6 +378,42 @@ export default function EvaluarIntervencion() {
   }, [dogs, form]);
 
   const router = useRouter();
+  
+  const handleExpenseSubmit = (data: z.infer<typeof expensesSchema>, index: number) => {
+      setExpenses((prev) => {
+        const copy = [...(prev ?? [])];
+        copy[index] = data;
+        return copy;
+      });
+
+      try {
+        form.setValue(
+          `expenses.${index}`,
+          data as unknown as FormValues["expenses"][number],
+          { shouldValidate: true, shouldDirty: true }
+        );
+      } catch {
+        reportError("Error setValue expenses.");
+      }
+
+      expenseSubmittedRef.current[index] = true;
+  };
+  
+  const waitForExpenseSubmissions = (expectedCount: number, timeout = 1200) =>
+    new Promise<boolean>((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        const submitted = expenseSubmittedRef.current;
+        const ok = Array.from({ length: expectedCount }).every((_, i) => !!submitted[i]);
+        if (ok) { resolve(true); return; }
+        if (Date.now() - start > timeout) { resolve(false); return; }
+        setTimeout(check, 50);
+      };
+
+      if (expectedCount === 0) { resolve(true); return; }
+    check();
+  });
+
   // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: FormValues) {
     try {
@@ -377,7 +444,6 @@ export default function EvaluarIntervencion() {
       }));
 
       const formData = new FormData();
-
       formData.append("patients", JSON.stringify(patients));
       formData.append("experiences", JSON.stringify(experiences));
 
@@ -408,12 +474,37 @@ export default function EvaluarIntervencion() {
         }
         return;
       }
-      if (res.ok) {
-        form.reset();
-        router.push("/app/colaboradores/intervenciones/listado?success=1");
-      } else {
+      if (!res.ok) {
         throw new Error("Error en el registro");
       }
+      const expensesToSend = (data.expenses ?? []).filter(
+        (e) => e && typeof e.amount === "number" && e.amount > 0
+      );
+      console.log("Expenses que voy a enviar:", expensesToSend);
+      await Promise.all(
+        expensesToSend.map((exp) =>
+          fetch("/api/expenses", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${context?.tokenJwt}`,
+            },
+            body: JSON.stringify({
+              userId: exp.peopleCI || "",
+              interventionId: exp.interventionID,
+              type: exp.type,
+              concept: "",
+              state: "Pendiente de pago",
+              amount: exp.amount,
+            }),
+          })
+        )
+      );
+
+      form.reset();
+      router.push("/app/colaboradores/intervenciones/listado?success=1");
+
     } catch {
       toast.error(`No se pudo guardar la informacion.`, {
         duration: 5000,
@@ -429,7 +520,34 @@ export default function EvaluarIntervencion() {
     }
   }
 
-  const addPatCard = () => {
+  const [expenseCards, setExpenseCard] = useState<number[]>(() =>
+    (form.getValues("expenses") ?? []).map((_, i) => i)
+  );
+
+  const handleConfirm = async () => {
+    try {
+      setConfirming(true);
+
+      expenseSubmittedRef.current = [];
+      const expected = expenseCards.length;
+
+      formRefs.current.forEach((f) => f?.requestSubmit());
+
+      const synced = await waitForExpenseSubmissions(expected, 1500);
+      if (!synced) {
+        reportError("No se sincronizaron todos los gastos. Intentá de nuevo o revisá los gastos.");
+        return;
+      }
+
+      await form.handleSubmit(
+        onSubmit,
+      )();
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const  addPatCard = () => {
     const newIndex = patientsCards.length;
 
     setPatientCard((prev) => [...prev, newIndex]);
@@ -470,6 +588,72 @@ export default function EvaluarIntervencion() {
         `patients.${index}.feeling`,
       ]);
     }
+  };
+
+  const idCounterRef = useRef<number>((form.getValues("expenses") ?? []).length);
+
+  const addExpenseCard = () => {
+    const newId = idCounterRef.current++;
+    setExpenseCard((prev) => [...prev, newId]);
+
+    const currentExpense = form.getValues("expenses") ?? [];
+    const newExpense = {
+      interventionID: id ?? "",
+      peopleCI: "",
+      type: "Traslado",
+      measurementType: "KM",
+      amount: 1,
+    };
+
+    const updatedExpenses = [...currentExpense, newExpense];
+    form.setValue("expenses", updatedExpenses as FormValues["expenses"]);
+
+    expenseSubmittedRef.current.push(false);
+    formRefs.current.push(null);
+
+    const newIndex = updatedExpenses.length - 1;
+    form.clearErrors([
+      `expenses.${newIndex}.interventionID`,
+      `expenses.${newIndex}.peopleCI`,
+      `expenses.${newIndex}.type`,
+      `expenses.${newIndex}.amount`,
+    ]);
+  };
+
+
+
+ const removeExpenseCard = (cardId: number) => {
+    if (expenseCards.length <= 1) return;
+
+    const pos = expenseCards.indexOf(cardId);
+    if (pos === -1) return;
+
+    setExpenseCard((prev) => prev.filter((i) => i !== cardId));
+
+    const currentExpenses = form.getValues("expenses") ?? [];
+    const updatedExpenses = [...currentExpenses];
+    updatedExpenses.splice(pos, 1);
+    form.setValue("expenses", updatedExpenses);
+
+    setExpenses((prev) => {
+      const copy = [...(prev ?? [])];
+      copy.splice(pos, 1);
+      return copy;
+    });
+
+    if (formRefs.current.length > pos) {
+      formRefs.current.splice(pos, 1);
+    }
+    if (expenseSubmittedRef.current.length > pos) {
+      expenseSubmittedRef.current.splice(pos, 1);
+    }
+
+    form.clearErrors([
+      `expenses.${pos}.interventionID`,
+      `expenses.${pos}.peopleCI`,
+      `expenses.${pos}.type`,
+      `expenses.${pos}.amount`,
+    ]);
   };
 
   return (
@@ -901,35 +1085,98 @@ export default function EvaluarIntervencion() {
                       "
                   />
                 </div>
-                {form.formState.errors.photos && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {form.formState.errors.photos.message as string}
-                  </p>
-                )}
-                <div className="py-6">
-                  <div>
-                    <p className="w-[379px] h-[28px] font-normal text-[14px] leading-[21px]">
-                      Si necesitás subir más, podés dejar acá el link a Drive:
-                    </p>
-                  </div>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Ejemplo: https://drive.google.com/drive/folders/1BP_DxHxEql-iViwo"
-                      {...form.register("driveLink")}
-                      className="max-w-[518px] h-[40px] rounded-md mt-2 border-1 border-[#D4D4D4]"
-                    />
-                  </FormControl>
-                </div>
               </div>
-
-              <Button className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center">
-                <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
-                  Guardar cambios
-                </span>
-              </Button>
+              {form.formState.errors.photos && (
+                <p className="mt-2 text-sm text-red-500">
+                  {form.formState.errors.photos.message as string}
+                </p>
+              )}
+              <div className="py-6">
+                <div>
+                  <p className="w-[379px] h-[28px] font-normal text-[14px] leading-[21px]">
+                    Si necesitás subir más, podés dejar acá el link a Drive:
+                  </p>
+                </div>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Ejemplo: https://drive.google.com/drive/folders/1BP_DxHxEql-iViwo"
+                    {...form.register("driveLink")}
+                    className="max-w-[518px] h-[40px] rounded-md mt-2 border-1 border-[#D4D4D4]"
+                  />
+                </FormControl>
+              </div>
             </form>
           </Form>
+          <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
+            Costos
+          </h3>
+          <div className="py-6">
+            <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
+              <AlertCircleIcon />
+              <AlertDescription>
+                Solo subí el gasto si lo realizaste para trasladar a un perro.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex flex-col gap-4 md:flex-row md:flex-wrap py-6">
+              {expenseCards.map((cardId, index) => (
+                <Card 
+                  key={cardId}
+                  className={cn(
+                        "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                        (isAdmin || false)  && "pointer-events-none opacity-50"
+                  )}
+                >
+                  {expenseCards.length > 1 && (  
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="icon"
+                      onClick={() => { removeExpenseCard(cardId); }}
+                      className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                    >
+                      <X color="#5B9B40" strokeWidth={1} />
+                    </Button>
+                  )}
+                  <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                    {interv?.id && (
+                      <ExpenseForm
+                        ref={(el) => { formRefs.current[index] = el; }}
+                        InterventionID={interv.id}
+                        hideIntervention = {true}
+                        onSubmit={(data) => { handleExpenseSubmit(data, index); }}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex flex-row md:flex-col gap-2">
+                <Button 
+                  type="button"
+                  variant="secondary" 
+                  size="icon"  
+                  onClick = {addExpenseCard} 
+                  className= {cn(
+                    "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+                    (isAdmin || false) && "pointer-events-none opacity-50"
+                  )}
+                >
+                  <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+                </Button>
+              </div>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => { handleConfirm().catch(reportError); }}
+            disabled={confirming}
+            className="min-w-[80px] h-[40px] mb-10 rounded-[6px] px-[20px] py-4 bg-[#5B9B40] text-white gap-[8px] flex items-center justify-center"
+          >
+            <span className="font-bold font-sans text-[16px] leading-[24px] tracking-[-0.01em]">
+              {confirming ? "Guardando..." : "Guardar cambios"}
+            </span>
+          </Button>
         </TabsContent>
       </Tabs>
     </div>

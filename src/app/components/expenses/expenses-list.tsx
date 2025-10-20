@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Plus, Settings } from "lucide-react";
+import { BadgeDollarSign, Settings } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
@@ -24,6 +24,7 @@ import FilterDropdown, {
 import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
+import AddExpenseButton from "./add-expense-button";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -41,8 +42,6 @@ function formatMonthYear(ts: string | number | Date) {
   return `${monthCap} ${d.getFullYear()}`;
 }
 
-//! import AddExpenseButton from "...";
-
 export default function ExpensesList() {
   const [expense, setExpense] = useState<ExpenseDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
@@ -55,7 +54,7 @@ export default function ExpensesList() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [reload] = useState(false);
+  const [reload, setReload] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
@@ -423,17 +422,11 @@ export default function ExpensesList() {
         </div>
 
         <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            className="h-10 max-w-[141px] min-w-[80px] rounded-md flex gap-1 p-2.5 bg-[#5B9B40]
-                     font-sans font-medium text-sm leading-6 text-[#EFF5EC]
-                     transition-colors hover:bg-[#478032] hover:text-white"
-          >
-            <span className="flex text-[#EFF5EC]">
-              <Plus size={16} />
-            </span>
-            Agregar Gasto
-          </Button>
+          <AddExpenseButton
+            onCreated={() => {
+              setReload((r) => !r);
+            }}
+          />
           <Button
             className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
                      opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white
