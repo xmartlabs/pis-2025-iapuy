@@ -32,7 +32,12 @@ export class InscripcionService {
 
     const allCis = [...datos.duplas.map((d) => d.ci), ...datos.acompaniantes];
     const allPerros = datos.duplas.map((d) => d.perro);
-    const cupos = intervention.UsrPerroIntervention ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length : intervention.pairsQuantity ;
+    const cupos = intervention.UsrPerroIntervention
+      ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length
+      : intervention.pairsQuantity;
+
+    if (cupos <= 0)
+      throw new Error("La intervencion ya tiene los cupos llenos.");
 
     const [users, perros] = await Promise.all([
       User.findAll({
@@ -77,7 +82,10 @@ export class InscripcionService {
         );
     }
 
-    if(datos.duplas && datos.duplas.length > cupos) throw new Error(`No se pueden registrar ${datos.duplas.length} duplas, quedan ${cupos} cupos disponibles`);
+    if (datos.duplas && datos.duplas.length > cupos)
+      throw new Error(
+        `No se pueden registrar ${datos.duplas.length} duplas, quedan ${cupos} cupos disponibles`
+      );
 
     for (const usrCi of datos.acompaniantes ?? []) {
       const uA =
@@ -121,10 +129,7 @@ export class InscripcionService {
 
       if (datos.duplas && datos.duplas.length === cupos) {
         promises.push(
-          intervention.update(
-            { status: "Cupo completo" },
-            { transaction }
-          )
+          intervention.update({ status: "Cupo completo" }, { transaction })
         );
       }
 
@@ -188,7 +193,9 @@ export class InscripcionService {
         attributes: ["id", "nombre"],
       }),
     ]);
-    const pairsQuantity = intervention.UsrPerroIntervention ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length : intervention.pairsQuantity;
-    return { pairsQuantity , people, perros };
+    const pairsQuantity = intervention.UsrPerroIntervention
+      ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length
+      : intervention.pairsQuantity;
+    return { pairsQuantity, people, perros };
   }
 }
