@@ -150,7 +150,7 @@ export default function NewIntervention() {
         institution: values.institution,
         description: values.description,
         fotosUrls: [],
-        state: "Pendiente",
+        state: "Pendiente de asignacion",
       };
       if (!retrying) {
         const interventions = await fetchInterventionsByInstitution(
