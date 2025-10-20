@@ -3,7 +3,7 @@ import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
@@ -301,24 +301,32 @@ export class ExpensesService {
     };
   }
 
-  async createExpense(request: CreateExpenseDto): Promise<Expense> {
+  async createExpense(
+    request: CreateExpenseDto,
+    options?: { transaction?: Transaction }
+  ): Promise<Expense> {
+    const transaction = options?.transaction;
     const [intervention, user] = await Promise.all([
-      Intervention.findOne({
-        where: { id: request.interventionId },
-        attributes: ["id"],
-      }),
+      request.interventionId && request.interventionId.trim() !== ""
+        ? Intervention.findOne({
+            where: { id: request.interventionId },
+            attributes: ["id"],
+            ...(transaction && { transaction }),
+          })
+        : null,
       User.findOne({
         where: { ci: request.userId },
         attributes: ["ci"],
+        ...(transaction && { transaction }),
       }),
     ]);
-    if (
-      request.type !== "Baño" &&
-      request.type !== "Vacunacion" &&
-      request.type !== "Desparasitacion Interna" &&
-      request.type !== "Desparasitacion Externa" &&
-      !intervention
-    ) {
+    const isSanidadType =
+      request.type === "Baño" ||
+      request.type === "Vacunacion" ||
+      request.type === "Desparasitacion Interna" ||
+      request.type === "Desparasitacion Externa";
+
+    if (!isSanidadType && !intervention) {
       throw new Error(
         `Intervention with id "${request.interventionId}" not found`
       );
@@ -326,14 +334,22 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
-    const expense = await Expense.create({
-      userId: request.userId,
-      interventionId: request.interventionId,
-      type: request.type,
-      concept: request.concept,
-      state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
-      amount: request.amount,
-    });
+    const expense = await Expense.create(
+      {
+        userId: request.userId,
+        interventionId:
+          request.interventionId && request.interventionId.trim() !== ""
+            ? request.interventionId
+            : null,
+        sanidadId: request.sanidadId,
+        dateSanity: request.dateSanity,
+        type: request.type,
+        concept: request.concept,
+        state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
+        amount: request.amount,
+      },
+      transaction ? { transaction } : {}
+    );
 
     return expense;
   }
@@ -353,5 +369,20 @@ export class ExpensesService {
       toUpdate as unknown as Partial<Expense>
     );
     return updated;
+  }
+
+  getFixedCost(sanidadtype: string): number {
+    switch (sanidadtype) {
+      case "Baño":
+        return 50;
+      case "Vacunacion":
+        return 80;
+      case "Desparasitacion Interna":
+        return 30;
+      case "Desparasitacion Externa":
+        return 40;
+      default:
+        return 0;
+    }
   }
 }
