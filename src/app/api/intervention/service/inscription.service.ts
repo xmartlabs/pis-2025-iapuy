@@ -53,8 +53,9 @@ export class InscripcionService {
 
     for (const dupla of datos.duplas ?? []) {
       const uG =
-        intervention.UsrPerroIntervention?.some((u: UsrPerro) => u.userId === dupla.ci) ??
-        false;
+        intervention.UsrPerroIntervention?.some(
+          (u: UsrPerro) => u.userId === dupla.ci
+        ) ?? false;
 
       const uA =
         intervention.Acompania?.some((u: Acompania) => u.userId === dupla.ci) ??
@@ -83,8 +84,9 @@ export class InscripcionService {
         intervention.Acompania?.some((u: Acompania) => u.userId === usrCi) ??
         false;
       const uG =
-        intervention.UsrPerroIntervention?.some((u: UsrPerro) => u.userId === usrCi) ??
-        false;
+        intervention.UsrPerroIntervention?.some(
+          (u: UsrPerro) => u.userId === usrCi
+        ) ?? false;
       if (uA || uG)
         throw new Error(
           `El usuario de ci: ${usrCi} ya participa de la intervención`
@@ -138,5 +140,55 @@ export class InscripcionService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  async listarOpciones(id: string): Promise<{
+    pairsQuantity: number;
+    people: { ci: string; nombre: string }[];
+    perros: { id: string; nombre: string }[];
+  }> {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      attributes: ["id", "pairsQuantity"],
+
+      include: [
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["userId", "perroId"],
+        },
+        {
+          model: Acompania,
+          as: "Acompania",
+          attributes: ["userId"],
+        },
+      ],
+    });
+
+    if (!intervention)
+      throw new Error("Intervencion no existe en la base de datos.");
+
+    const usersIds = [
+      ...(intervention.UsrPerroIntervention?.map(
+        (usrperro) => usrperro.userId
+      ) ?? []),
+      ...(intervention.Acompania?.map((aco) => aco.userId) ?? []),
+    ];
+    const perrosIds =
+      intervention.UsrPerroIntervention?.map((usrperro) => usrperro.perroId) ??
+      [];
+
+    const [people, perros] = await Promise.all([
+      User.findAll({
+        where: { ci: { [Op.notIn]: usersIds } },
+        attributes: ["ci", "nombre"],
+      }),
+      Perro.findAll({
+        where: { id: { [Op.notIn]: perrosIds } },
+        attributes: ["id", "nombre"],
+      }),
+    ]);
+
+    return { pairsQuantity: intervention.pairsQuantity, people, perros };
   }
 }

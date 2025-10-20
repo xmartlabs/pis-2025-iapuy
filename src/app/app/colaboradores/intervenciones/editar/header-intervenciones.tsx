@@ -2,7 +2,6 @@
 
 import { LoginContext } from "@/app/context/login-context";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 
 const BASE_API_URL = (

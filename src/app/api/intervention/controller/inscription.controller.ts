@@ -21,4 +21,12 @@ export class InscripcionController {
       );
     }
   }
+
+  async listarOpciones(id: string): Promise<{
+    pairsQuantity: number;
+    people: { ci: string; nombre: string }[];
+    perros: { id: string; nombre: string }[];
+  }> {
+    return await this.inscripcionService.listarOpciones(id);
+  }
 }
