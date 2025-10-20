@@ -7,10 +7,13 @@ export async function middleware(req: NextRequest) {
   const method = req.method;
 
   // Se excluye las rutas de login y refresh
-  if (pathname.startsWith("/api/auth")) {
+  if (
+    pathname.startsWith("/api/auth") ||
+    (pathname.startsWith("/api/magic-link") && method === "PUT")
+  ) {
     return NextResponse.next();
   }
-  
+
   const token = req.headers.get("authorization")?.split(" ")[1];
   if (!token) {
     return NextResponse.json(

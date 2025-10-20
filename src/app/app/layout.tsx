@@ -8,6 +8,7 @@ import {
 import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
 import { DropDownMenu } from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
+import { Toaster } from "@/components/ui/sonner";
 import { useContext, useEffect } from "react";
 import type { UserType } from "@/app/page";
 import { usePathname, useRouter } from "next/navigation";
@@ -137,6 +138,7 @@ export default function LoginLayout({ children }: Props) {
         <main className={shouldShowSidebar ? "!ml-8 !mt-[60px]" : ""}>
           {children}
         </main>
+        <Toaster position="bottom-right" richColors />
       </SidebarInset>
     </SidebarProvider>
   );

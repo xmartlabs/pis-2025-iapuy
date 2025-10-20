@@ -563,7 +563,13 @@ export default function ExpensesList() {
         </div>
       </div>
 
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }

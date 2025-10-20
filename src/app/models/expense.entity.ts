@@ -48,6 +48,12 @@ export class Expense extends Model {
   declare interventionId: string;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare sanidadId: string;
+
+  @Column({
     type: DataType.ENUM(...EXPENSE_TYPES),
     validate: {
       isIn: [EXPENSE_TYPES],

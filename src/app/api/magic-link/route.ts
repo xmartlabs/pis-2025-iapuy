@@ -73,3 +73,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  const { token, newPassword } = (await request.json()) as {
+    token: string;
+    newPassword: string;
+  };
+
+  if (!token || !newPassword)
+    return NextResponse.json(
+      { error: "Missing token or new password" },
+      { status: 400 }
+    );
+
+  try {
+    await magicLinkController.changePassword(token, newPassword);
+
+    return NextResponse.json(null, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -16,7 +16,13 @@ export class PerrosService {
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Perro>> {
-    const result = await Perro.findAndCountAll({
+    const count = await Perro.count({
+      where: pagination.query
+        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+        : undefined,
+    });
+
+    const result = await Perro.findAll({
       where: pagination.query
         ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
         : undefined,
@@ -35,7 +41,6 @@ export class PerrosService {
               attributes: ["id"],
               model: Intervention,
               as: "Intervencion",
-              where: {},
               required: true,
             },
           ],
@@ -60,7 +65,7 @@ export class PerrosService {
       subQuery: false,
     });
 
-    const rowsPlain = result.rows.map((perro) => {
+    const rowsPlain = result.map((perro) => {
       const p = perro.get({ plain: true }) as Perro;
 
       const usrPerros = p.UsrPerros || [];
@@ -75,7 +80,7 @@ export class PerrosService {
     }) as unknown as Perro[];
 
     const processed = {
-      count: result.count,
+      count,
       rows: rowsPlain,
     };
 

@@ -284,13 +284,6 @@ export default function HistorialIntervenciones() {
           </Table>
         </div>
       </div>
-      {totalPages > 1 && (
-        <CustomPagination
-          page={page}
-          totalPages={totalPages}
-          setPage={setPage}
-        />
-      )}
     </div>
   );
 }

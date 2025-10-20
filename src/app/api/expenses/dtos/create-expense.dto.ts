@@ -5,6 +5,10 @@ export class CreateExpenseDto {
 
   declare interventionId: string;
 
+  declare sanidadId?: string;
+
+  declare dateSanity?: Date;
+
   declare type: ExpenseType;
 
   declare concept: string;

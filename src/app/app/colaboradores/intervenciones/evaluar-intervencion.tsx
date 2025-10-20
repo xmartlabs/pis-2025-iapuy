@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { Resolver } from "react-hook-form";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ import { Plus, X, AlertCircleIcon } from "lucide-react";
 import { useEffect, useState, useContext, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { JwtPayload } from "jsonwebtoken";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -377,7 +376,6 @@ export default function EvaluarIntervencion() {
       });
     }
   }, [dogs, form]);
-
 
   const router = useRouter();
   
