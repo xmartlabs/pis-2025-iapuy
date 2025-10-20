@@ -12,6 +12,8 @@ import type { PayloadForUser } from "../../perros/detalles/route";
 import { Perro } from "@/app/models/perro.entity";
 import type { FindOptions } from "sequelize";
 import { User } from "@/app/models/user.entity";
+import { ExpensesService } from "../../expenses/service/expenses.service";
+import type { CreateExpenseDto } from "../../expenses/dtos/create-expense.dto";
 
 export class RegistrosSanidadService {
   async findAll(
@@ -90,17 +92,19 @@ export class RegistrosSanidadService {
         );
 
       const fechaDate = new Date(createRegistroSanidadDto.fecha);
+      let sanidadEventId: string = "";
 
       if (createRegistroSanidadDto.tipoSanidad === "banio") {
-        await Banio.create(
+        const banio = await Banio.create(
           {
             fecha: fechaDate,
             registroSanidadId: regSanidad.id,
           },
           { transaction: t }
         );
+        sanidadEventId = banio.id;
       } else if (createRegistroSanidadDto.tipoSanidad === "desparasitacion") {
-        await Desparasitacion.create(
+        const desparasitacion = await Desparasitacion.create(
           {
             fecha: fechaDate,
             medicamento: createRegistroSanidadDto.medicamento,
@@ -109,8 +113,9 @@ export class RegistrosSanidadService {
           },
           { transaction: t }
         );
+        sanidadEventId = desparasitacion.id;
       } else {
-        await Vacuna.create(
+        const vacuna = await Vacuna.create(
           {
             fecha: fechaDate,
             vac: createRegistroSanidadDto.vac,
@@ -119,6 +124,44 @@ export class RegistrosSanidadService {
           },
           { transaction: t }
         );
+        sanidadEventId = vacuna.id;
+      }
+      const expensesService = new ExpensesService();
+      const perro = await Perro.findByPk(createRegistroSanidadDto.perroId, {
+        transaction: t,
+      });
+
+      if (perro && perro.duenioId) {
+        // Map tipoSanidad to expense type
+        let expenseType:
+          | "Baño"
+          | "Vacunacion"
+          | "Desparasitacion Interna"
+          | "Desparasitacion Externa" = "Baño";
+        if (createRegistroSanidadDto.tipoSanidad === "banio") {
+          expenseType = "Baño";
+        } else if (createRegistroSanidadDto.tipoSanidad === "desparasitacion") {
+          expenseType =
+            createRegistroSanidadDto.tipoDesparasitacion === "Interna"
+              ? "Desparasitacion Interna"
+              : "Desparasitacion Externa";
+        } else {
+          expenseType = "Vacunacion";
+        }
+
+        const createExpenseDto: CreateExpenseDto = {
+          userId: perro.duenioId,
+          interventionId: "",
+          sanidadId: sanidadEventId,
+          dateSanity: fechaDate,
+          type: expenseType,
+          concept: "",
+          state: "Pendiente de pago",
+          amount: expensesService.getFixedCost(expenseType),
+        };
+        await expensesService.createExpense(createExpenseDto, {
+          transaction: t,
+        });
       }
       return regSanidad;
     });

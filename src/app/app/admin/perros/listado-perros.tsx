@@ -226,7 +226,7 @@ export default function ListadoPerrosTable() {
         </div>
       </div>
       <div>
-        <div className="flex justify-end items-end gap-4 mb-4">
+        <div className="flex justify-start sm:justify-end items-center">
           <CustomSearchBar
             searchInput={searchInput}
             setSearchInput={setSearchInput}
@@ -238,7 +238,7 @@ export default function ListadoPerrosTable() {
             setOpen={setOpen}
           />
         </div>
-        <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+        <div className="mx-auto w-full border border-gray-300 mt-4 rounded-lg">
           <div className="w-full overflow-x-auto">
             <Table className="min-w-full table-fixed border-collapse">
               <TableHeader>
@@ -280,14 +280,14 @@ export default function ListadoPerrosTable() {
                   perros.map((p) => (
                     <TableRow
                       key={p.id}
-                      className="hover:bg-gray-50 transition-colors duration-150"
+                      className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
                       onClick={() => {
                         go(p.id);
                       }}
                     >
                       <TableCell className="px-6 py-4 align-middle">
                         <div className="flex items-center gap-3">
-                          <span className="text-base md:text-base ml-2 font-semibold">
+                          <span className="text-base md:text-base ml-2">
                             {p.nombre}
                           </span>
                         </div>

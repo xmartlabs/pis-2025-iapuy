@@ -90,16 +90,17 @@ export default function IntervencionPage() {
     fetchDetallesIntervencion(id)
       .then((pageResult: ApiResponse) => {
         setInfoIntervention(pageResult);
+        const date = new Date(pageResult.timeStamp);
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(
+          date.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}/${date.getFullYear()} ${date
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
         setInterventionName(
-          `${pageResult.Institucions[0]?.nombre} ${new Date(
-            pageResult.timeStamp
-          ).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}`
+          `${pageResult.Institucions[0]?.nombre} ${formattedDate}`
         );
       })
       .catch(() => {});
@@ -131,15 +132,9 @@ export default function IntervencionPage() {
           titulo="TIPO DE INTERVENCIÓN"
           valor={infoIntervention.tipo ? infoIntervention.tipo : ""}
         />
-        <Dato
-          titulo="DESCRIPCIÓN"
-          valor={
-            infoIntervention.description &&
-            infoIntervention.description.length > 0
-              ? infoIntervention.description
-              : "Sin descripción."
-          }
-        />
+        {infoIntervention.description && (
+          <Dato titulo="DESCRIPCIÓN" valor={infoIntervention.description} />
+        )}
       </div>
 
       <TabSelector Titles={tabsTitles} onTabChange={handleTabChange} />
