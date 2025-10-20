@@ -15,6 +15,7 @@ import type { CreationOptional } from "sequelize";
 import { Institucion } from "./institucion.entity";
 import { UsrPerro } from "./usrperro.entity";
 import { Paciente } from "./pacientes.entity";
+import { Acompania } from "./acompania.entity";
 
 export type TipoIntervention = "Educativa" | "Recreativa" | "Terapeutica";
 
@@ -79,4 +80,5 @@ export class Intervention extends Model {
   declare Users?: User[];
   declare UsrPerroIntervention?: UsrPerro[];
   declare Pacientes?: Paciente[];
+  declare Acompania?: Acompania[];
 }

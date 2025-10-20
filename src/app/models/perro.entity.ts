@@ -17,7 +17,6 @@ import {
 import { Sequelize } from "sequelize";
 
 import { User } from "./user.entity";
-import { UsrPerro } from "./usrperro.entity";
 
 @Table({ tableName: "perros" })
 export class Perro extends Model{
@@ -47,6 +46,5 @@ export class Perro extends Model{
   @DeletedAt
   declare deletedAt: CreationOptional<Date>;
 
-  declare UsrPerros?: UsrPerro[];
   declare User: User;
 }

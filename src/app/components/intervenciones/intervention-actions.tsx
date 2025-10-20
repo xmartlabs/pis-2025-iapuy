@@ -9,12 +9,12 @@ const statusMap: Record<
   string,
   [string | null, string | null, boolean, string | null]
 > = {
-  "Pendiente de asignacion": ["pencil", "", true, "Inscribir"],
+  "Pendiente de asignacion": ["pencil", "/app/colaboradores/intervenciones/editar?modo=inscribirse", true, "Inscribir"],
   // TODO: cambiar link cuando se tenga la pagina de inscripcion
   "Cupo completo": [null, null, false, null],
   Realizada: [
     "plus",
-    "/app/colaboradores/intervenciones/evaluar",
+    "/app/colaboradores/intervenciones/editar?modo=evaluar",
     true,
     "Agregar info",
   ],
@@ -43,7 +43,7 @@ export default function InterventionActionButton({
         <div className="w-full flex items-center justify-start text-[#5B9B40] gap-2 hover:text-white">
           <Button
             onClick={(e) => {
-              const buildLink = link ? link + (req ? `?id=${id}` : "") : null;
+              const buildLink = link ? link + (req ? `&id=${id}` : "") : null;
               e.stopPropagation();
 
               if (buildLink) router.push(buildLink);
