@@ -92,17 +92,19 @@ export class RegistrosSanidadService {
         );
 
       const fechaDate = new Date(createRegistroSanidadDto.fecha);
+      let sanidadEventId: string = "";
 
       if (createRegistroSanidadDto.tipoSanidad === "banio") {
-        await Banio.create(
+        const banio = await Banio.create(
           {
             fecha: fechaDate,
             registroSanidadId: regSanidad.id,
           },
           { transaction: t }
         );
+        sanidadEventId = banio.id;
       } else if (createRegistroSanidadDto.tipoSanidad === "desparasitacion") {
-        await Desparasitacion.create(
+        const desparasitacion = await Desparasitacion.create(
           {
             fecha: fechaDate,
             medicamento: createRegistroSanidadDto.medicamento,
@@ -111,8 +113,9 @@ export class RegistrosSanidadService {
           },
           { transaction: t }
         );
+        sanidadEventId = desparasitacion.id;
       } else {
-        await Vacuna.create(
+        const vacuna = await Vacuna.create(
           {
             fecha: fechaDate,
             vac: createRegistroSanidadDto.vac,
@@ -121,6 +124,7 @@ export class RegistrosSanidadService {
           },
           { transaction: t }
         );
+        sanidadEventId = vacuna.id;
       }
       const expensesService = new ExpensesService();
       const perro = await Perro.findByPk(createRegistroSanidadDto.perroId, {
@@ -148,6 +152,8 @@ export class RegistrosSanidadService {
         const createExpenseDto: CreateExpenseDto = {
           userId: perro.duenioId,
           interventionId: "",
+          sanidadId: sanidadEventId,
+          dateSanity: fechaDate,
           type: expenseType,
           concept: "",
           state: "Pendiente de pago",

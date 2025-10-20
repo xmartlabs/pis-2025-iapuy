@@ -341,6 +341,8 @@ export class ExpensesService {
           request.interventionId && request.interventionId.trim() !== ""
             ? request.interventionId
             : null,
+        sanidadId: request.sanidadId,
+        dateSanity: request.dateSanity,
         type: request.type,
         concept: request.concept,
         state: request.state === "Pendiente de pago" ? "no pagado" : "pagado",
