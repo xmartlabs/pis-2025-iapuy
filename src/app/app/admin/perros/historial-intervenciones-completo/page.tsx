@@ -15,21 +15,127 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
+import CustomPagination from "@/app/components/pagination";
+import CustomBreadCrumb2Links from "@/app/components/bread-crumb/bread-crumb-2links";
 
 export default function HistorialIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
-  const [page] = useState<number>(1);
-  const [size] = useState<number>(8);
+  const [page, setPage] = useState<number>(1);
+  const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [reload] = useState(false);
+  const [dogName, setDogName] = useState<string>("");
 
   const context = useContext(LoginContext);
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   function go(id: string) {
     router.push(`/app/admin/intervenciones/detalles?id=${id}`);
   }
+
+  const fetchDogDetails = useCallback(
+    async (
+      id: string,
+      signal?: AbortSignal,
+      triedRefresh = false
+    ): Promise<{ perro?: { nombre?: string } } | null> => {
+      const url = new URL(`/api/perros/detalles`, location.origin);
+      url.searchParams.set("id", id);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+      const combinedSignal = signal ?? controller.signal;
+
+      try {
+        const token = context?.tokenJwt;
+        const baseHeaders: Record<string, string> = {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        const resp = await fetch(url.toString(), {
+          method: "GET",
+          headers: baseHeaders,
+          signal: combinedSignal,
+        });
+
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(
+            new URL("/api/auth/refresh", location.origin),
+            {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              signal: combinedSignal,
+            }
+          );
+
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken) {
+              context?.setToken(newToken);
+              const retryResp = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${newToken}`,
+                },
+                signal: combinedSignal,
+              });
+
+              if (!retryResp.ok) {
+                const txt = await retryResp.text().catch(() => "");
+                throw new Error(
+                  `API ${retryResp.status}: ${retryResp.statusText}${
+                    txt ? ` - ${txt}` : ""
+                  }`
+                );
+              }
+
+              const ct2 = retryResp.headers.get("content-type") ?? "";
+              if (!ct2.includes("application/json"))
+                throw new Error("Expected JSON response");
+
+              const body2 = (await retryResp.json()) as unknown;
+              if (!body2 || typeof body2 !== "object")
+                throw new Error("Malformed API response");
+              return body2 as { perro?: { nombre?: string } };
+            }
+          }
+        }
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
+        }
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as unknown;
+        if (!body || typeof body !== "object")
+          throw new Error("Malformed API response");
+        return body as { perro?: { nombre?: string } };
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") {
+          return null;
+        }
+        return null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    [context]
+  );
 
   const fetchIntervenciones = useCallback(
     async (
@@ -151,18 +257,23 @@ export default function HistorialIntervenciones() {
     [context]
   );
 
-  const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
 
-    fetchIntervenciones(id, page, size, controller.signal)
-      .then((res) => {
-        if (res) {
-          setIntervention(res.data);
-          setTotalPages(res.totalPages ?? 1);
+    Promise.all([
+      fetchDogDetails(id, controller.signal),
+      fetchIntervenciones(id, page, size, controller.signal),
+    ])
+      .then(([dogDetails, interventionRes]) => {
+        if (dogDetails?.perro?.nombre) {
+          setDogName(dogDetails.perro.nombre);
+        }
+        if (interventionRes) {
+          setIntervention(interventionRes.data);
+          setTotalPages(interventionRes.totalPages ?? 1);
         }
       })
       .catch(() => {})
@@ -173,10 +284,18 @@ export default function HistorialIntervenciones() {
     return () => {
       controller.abort();
     };
-  }, [id, page, size, reload, fetchIntervenciones]);
+  }, [id, page, size, reload, fetchIntervenciones, fetchDogDetails]);
 
   return (
     <div className="flex flex-col gap-5 w-full">
+      <div className="w-full">
+        <CustomBreadCrumb2Links
+          link={["/app/admin/perros/listado", "Perros"]}
+          link2={[`/app/admin/perros/detalles?id=${id}`, dogName]}
+          current={"Historial de Intervenciones"}
+          className="mb-8"
+        />
+      </div>
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <h1
           className="font-serif font-semibold text-2xl leading-8 tracking-tight text-[#1B2F13] font-size-text-2xl font-family-font-serif"
@@ -184,21 +303,8 @@ export default function HistorialIntervenciones() {
         >
           Historial de Intervenciones
         </h1>
-
-        {intervention.length >= size && totalPages > 1 && (
-          <button
-            onClick={() => {
-              router.push(
-                `/app/admin/perros/historial-intervenciones-completo?id=${id}`
-              );
-            }}
-            className="text-right text-[#5B9B40] hover:text-green-800 cursor-pointer"
-          >
-            Ver historial completo
-          </button>
-        )}
       </div>
-      <div className="mx-auto w-full border border-gray-300 rounded-lg">
+      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
           <Table className="w-full border-collapse">
             <TableHeader>
@@ -231,7 +337,7 @@ export default function HistorialIntervenciones() {
                 intervention.map((inter) => (
                   <TableRow
                     key={inter.id}
-                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                    className="hover:bg-gray-50 transition-colors duration-150"
                     onClick={() => {
                       go(inter.id);
                     }}
@@ -272,11 +378,12 @@ export default function HistorialIntervenciones() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={3}
-                    className="text-center py-6 text-gray-400"
-                  >
-                    No se encuentran registros de intervenciones
+                  <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        No se encuentran registros de intervenciones
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -284,6 +391,13 @@ export default function HistorialIntervenciones() {
           </Table>
         </div>
       </div>
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }

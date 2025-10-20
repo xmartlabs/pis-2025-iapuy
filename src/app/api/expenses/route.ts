@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.json(res);
   } catch (error) {
+    console.log(error);
     const message = getErrorMessage(error);
     return NextResponse.json({ error: message }, { status: 400 });
   }
-
 }
 
 export async function POST(request: NextRequest) {
@@ -65,8 +65,8 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const raw = (await request.json()) as unknown;
     const data =
-    (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (
         raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
       ) as Partial<Expense>;
     const id = searchParams.get("id");
