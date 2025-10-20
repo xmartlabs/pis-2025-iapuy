@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InscripcionService } from "./inscription.service";
 import sequelize from "@/lib/database";
@@ -12,28 +17,32 @@ import type { InscripcionDto } from "../dtos/inscription.dto";
 vi.mock("@/app/models/usrperro.entity", () => ({
   UsrPerro: {
     create: vi.fn(),
-    some: vi.fn(),
+    bulkCreate: vi.fn(),
   },
 }));
 vi.mock("@/app/models/acompania.entity", () => ({
   Acompania: {
     create: vi.fn(),
-    some: vi.fn(),
+    bulkCreate: vi.fn(),
   },
 }));
 vi.mock("@/app/models/user.entity", () => ({
   User: {
     findOne: vi.fn(),
+    findAll: vi.fn(),
   },
 }));
 vi.mock("@/app/models/perro.entity", () => ({
   Perro: {
     findOne: vi.fn(),
+    findAll: vi.fn(),
+    some: vi.fn(),
   },
 }));
-vi.mock("@/app/models/intervention", () => ({
+vi.mock("@/app/models/intervention.entity", () => ({
   Intervention: {
     findOne: vi.fn(),
+    update: vi.fn(),
   },
 }));
 vi.mock('@/lib/database', () => ({
@@ -49,15 +58,41 @@ describe("InscriptionService", ()=>{
   // eslint-disable-next-line init-declarations
   let service: InscripcionService;
 
+  function getInValues(obj: any) {
+    const sym = Object.getOwnPropertySymbols(obj).find(s => String(s).includes('Symbol(in)'));
+    return sym ? obj[sym] : undefined;
+  }
+
   beforeEach(() => {
     service = new InscripcionService();
-    vi.clearAllMocks();
   })
 
+  vi.spyOn(Intervention, 'findOne').mockImplementation((args: any) => {
+      const { where: { id } } = args;
+
+      if (id === 'INT-1') {
+        return {
+          id,
+          pairsQuantity: 2,
+          UsrPerroIntervention: [],
+          Acompania: [],
+        } as any;
+      }
+
+      return null; 
+    });
+
+    vi.spyOn(User, 'findAll').mockImplementation((args: any) => {
+      const inVals = getInValues(args.where.ci);
+      return (inVals ?? []).map((ci: string) => ({ ci }));
+    });
+
+    vi.spyOn(Perro, 'findAll').mockImplementation((args: any) => {
+      const inVals = getInValues(args.where.id);
+      return (inVals ?? []).map((id: number) => ({ id }));
+    });
+
   it("should register one companion", async () => {
-    Intervention.findOne = vi.fn().mockResolvedValue({ id: "INT-1" });
-    User.findOne = vi.fn().mockResolvedValue({ id: "USR-1" });
-    
     const dto: InscripcionDto = {
       intervention: 'INT-1',
       acompaniantes: ['USR-1'],
@@ -68,10 +103,6 @@ describe("InscriptionService", ()=>{
   });
 
   it("should register one guide with dog", async () => {
-    Intervention.findOne = vi.fn().mockResolvedValue({ id: "INT-1" });
-    User.findOne = vi.fn().mockResolvedValue({ id: "USR-1" });
-    Perro.findOne = vi.fn().mockResolvedValue({ id: "DOG-1" });
-    
     const dto: InscripcionDto = {
       intervention: 'INT-1',
       acompaniantes: [],

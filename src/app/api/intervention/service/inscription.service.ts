@@ -32,6 +32,7 @@ export class InscripcionService {
 
     const allCis = [...datos.duplas.map((d) => d.ci), ...datos.acompaniantes];
     const allPerros = datos.duplas.map((d) => d.perro);
+    const cupos = intervention.UsrPerroIntervention ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length : intervention.pairsQuantity ;
 
     const [users, perros] = await Promise.all([
       User.findAll({
@@ -75,6 +76,8 @@ export class InscripcionService {
         );
     }
 
+    if(datos.duplas && datos.duplas.length > cupos) throw new Error(`No se pueden registrar ${datos.duplas.length} duplas, quedan ${cupos} cupos disponibles`);
+
     for (const usrCi of datos.acompaniantes ?? []) {
       const uA =
         intervention.Acompania?.some((u: Acompania) => u.userId === usrCi) ??
@@ -91,24 +94,39 @@ export class InscripcionService {
     const transaction = await sequelize.transaction();
 
     try {
-      await Promise.all([
+      const promises: Promise<unknown>[] = [];
+
+      promises.push(
         UsrPerro.bulkCreate(
-          datos.duplas?.map((dupla) => {
-            return {
-              intervencionId: datos.intervention,
-              perroId: dupla.perro,
-              userId: dupla.ci,
-            };
-          }),
+          datos.duplas?.map((dupla) => ({
+            intervencionId: datos.intervention,
+            perroId: dupla.perro,
+            userId: dupla.ci,
+          })),
           { transaction }
-        ),
+        )
+      );
+
+      promises.push(
         Acompania.bulkCreate(
-          datos.acompaniantes?.map((usrCi) => {
-            return { userId: usrCi, intervencionId: datos.intervention };
-          }),
+          datos.acompaniantes?.map((usrCi) => ({
+            userId: usrCi,
+            intervencionId: datos.intervention,
+          })),
           { transaction }
-        ),
-      ]);
+        )
+      );
+
+      if (datos.duplas && datos.duplas.length === cupos) {
+        promises.push(
+          intervention.update(
+            { status: "Cupo completo" },
+            { transaction }
+          )
+        );
+      }
+
+      await Promise.all(promises);
 
       await transaction.commit();
 
