@@ -1,5 +1,5 @@
-import ListadoGastos from "../ListadoGastos";
+import ExpensesList from "@/app/components/expenses/expenses-list";
 
 export default function PantallaGastosCollaborador() {
-  return <ListadoGastos />;
+  return <ExpensesList />;
 }

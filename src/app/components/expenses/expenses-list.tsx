@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
-import { useRouter } from "next/navigation";
 import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
@@ -62,7 +61,6 @@ export default function ExpensesList() {
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 
   const context = useContext(LoginContext);
-  const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -572,7 +570,13 @@ export default function ExpensesList() {
         </div>
       </div>
 
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
+      {totalPages > 1 && (
+        <CustomPagination
+          page={page}
+          totalPages={totalPages}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 }
