@@ -13,4 +13,8 @@ export class MagicLinkController {
 
     return url;
   }
+
+  async changePassword(token: string, newPassword: string) {
+    await this.magicLinkService.resetPasword(token, newPassword);
+  }
 }
