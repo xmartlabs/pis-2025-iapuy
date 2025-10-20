@@ -1,5 +1,6 @@
 import { ResetToken } from "@/app/models/reset-tokens.entity";
 import { User } from "@/app/models/user.entity";
+import { Hashing } from "@/lib/crypto/hash";
 import sequelize from "@/lib/database";
 import { initDatabase } from "@/lib/init-database";
 import { createHash, randomBytes } from "node:crypto";
@@ -41,7 +42,14 @@ export class MagicLinkService {
     record.used = true;
     await record.save();
 
-    return record.UserToReset!.ci;
+    return record.userId;
+  }
+
+  async resetPasword(token: string, newPassword: string) {
+    const ci = await MagicLinkService.verifyResetToken(token);
+    const hashedNewPassword = await Hashing.hashPassword(newPassword);
+
+    await User.update({ password: hashedNewPassword }, { where: { ci } });
   }
 
   generateToken(): { token: string; tokenHash: string } {
