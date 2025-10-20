@@ -73,14 +73,13 @@ export default function EvaluarIntervencion() {
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
-  const [expenseCards, setExpenseCard] = useState([0]);
   const [interv, setInterv] = useState<Intervention>();
   const context = useContext(LoginContext);
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const formRefs = useRef<(HTMLFormElement | null)[]>([]);
   const [expenses, setExpenses] = useState<z.infer<typeof expensesSchema>[]>([]);
-  const expenseSubmittedRef = useRef<Record<number, boolean>>({});
+  const expenseSubmittedRef = useRef<boolean[]>([]);
   const [confirming, setConfirming] = useState(false);
 
   if (!id) {
@@ -383,9 +382,8 @@ export default function EvaluarIntervencion() {
   const router = useRouter();
   
   const handleExpenseSubmit = (data: z.infer<typeof expensesSchema>, index: number) => {
-
       setExpenses((prev) => {
-        const copy = [...prev];
+        const copy = [...(prev ?? [])];
         copy[index] = data;
         return copy;
       });
@@ -413,7 +411,7 @@ export default function EvaluarIntervencion() {
         if (Date.now() - start > timeout) { resolve(false); return; }
         setTimeout(check, 50);
       };
-      // si no hay hijos esperados, devolvemos true inmediatamente
+
       if (expectedCount === 0) { resolve(true); return; }
     check();
   });
@@ -481,9 +479,12 @@ export default function EvaluarIntervencion() {
       if (!res.ok) {
         throw new Error("Error en el registro");
       }
-
+      const expensesToSend = (data.expenses ?? []).filter(
+        (e) => e && typeof e.amount === "number" && e.amount > 0
+      );
+      console.log("Expenses que voy a enviar:", expensesToSend);
       await Promise.all(
-        expenses.map((exp) =>
+        expensesToSend.map((exp) =>
           fetch("/api/expenses", {
             method: "POST",
             headers: {
@@ -521,12 +522,15 @@ export default function EvaluarIntervencion() {
     }
   }
 
+  const [expenseCards, setExpenseCard] = useState<number[]>(() =>
+    (form.getValues("expenses") ?? []).map((_, i) => i)
+  );
 
   const handleConfirm = async () => {
     try {
       setConfirming(true);
 
-      expenseSubmittedRef.current = {};
+      expenseSubmittedRef.current = [];
       const expected = expenseCards.length;
 
       formRefs.current.forEach((f) => f?.requestSubmit());
@@ -588,51 +592,70 @@ export default function EvaluarIntervencion() {
     }
   };
 
-const addExpenseCard = () => {
-    const newIndex = expenseCards.length;
+  const idCounterRef = useRef<number>((form.getValues("expenses") ?? []).length);
 
-    setExpenseCard((prev) => [...prev, newIndex]);
+  const addExpenseCard = () => {
+    const newId = idCounterRef.current++;
+    setExpenseCard((prev) => [...prev, newId]);
 
     const currentExpense = form.getValues("expenses") ?? [];
     const newExpense = {
       interventionID: id ?? "",
       peopleCI: "",
-      type: "",
-      measurementType: "",
-      amount: 0,
+      type: "Traslado",
+      measurementType: "KM",
+      amount: 1,
     };
-
 
     const updatedExpenses = [...currentExpense, newExpense];
     form.setValue("expenses", updatedExpenses as FormValues["expenses"]);
 
+    expenseSubmittedRef.current.push(false);
+    formRefs.current.push(null);
+
+    const newIndex = updatedExpenses.length - 1;
     form.clearErrors([
       `expenses.${newIndex}.interventionID`,
       `expenses.${newIndex}.peopleCI`,
       `expenses.${newIndex}.type`,
       `expenses.${newIndex}.amount`,
     ]);
-
   };
 
-  const removeExpenseCard = (index: number) => {
-    if (expenseCards.length > 1) {
-      const updatedCards = [...expenseCards];
-      updatedCards.splice(index, 1);
-      setExpenseCard(updatedCards);
 
-      const currentExpenses = form.getValues("expenses") ?? [];
-      const updatedExpenses = [...currentExpenses];
-      updatedExpenses.splice(index, 1);
-      form.setValue("expenses", updatedExpenses);
 
-      form.clearErrors([
-        `expenses.${index}.interventionID`,
-        `expenses.${index}.peopleCI`,
-        `expenses.${index}.type`,
-        `expenses.${index}.amount`,
-      ]);
+ const removeExpenseCard = (cardId: number) => {
+    if (expenseCards.length <= 1) return;
+
+    const pos = expenseCards.indexOf(cardId);
+    if (pos === -1) return;
+
+    setExpenseCard((prev) => prev.filter((i) => i !== cardId));
+
+    const currentExpenses = form.getValues("expenses") ?? [];
+    const updatedExpenses = [...currentExpenses];
+    updatedExpenses.splice(pos, 1);
+    form.setValue("expenses", updatedExpenses);
+
+    setExpenses((prev) => {
+      const copy = [...(prev ?? [])];
+      copy.splice(pos, 1);
+      return copy;
+    });
+
+    if (formRefs.current.length > pos) {
+      formRefs.current.splice(pos, 1);
     }
+    if (expenseSubmittedRef.current.length > pos) {
+      expenseSubmittedRef.current.splice(pos, 1);
+    }
+
+    form.clearErrors([
+      `expenses.${pos}.interventionID`,
+      `expenses.${pos}.peopleCI`,
+      `expenses.${pos}.type`,
+      `expenses.${pos}.amount`,
+    ]);
   };
 
   return (
@@ -1090,61 +1113,60 @@ const addExpenseCard = () => {
           <h3 className="text-2xl font-bold tracking-normal leading-[1.4]">
             Costos
           </h3>
-
-          <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
-            <AlertCircleIcon />
-            <AlertDescription>
-              Solo subí el gasto si lo realizaste para trasladar a un perro.
-            </AlertDescription>
-          </Alert>
-          
-          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-            {expenseCards.map((_, index) => (
-              <Card 
-                key={index} 
-                className={cn(
-                      "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                      (isAdmin || false)  && "pointer-events-none opacity-50"
-                )}
-              >
-                {expenseCards.length > 1 && (  
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="icon"
-                    onClick={() => { removeExpenseCard(index); }}
-                    className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
-                  >
-                    <X color="#5B9B40" strokeWidth={1} />
-                  </Button>
-                )}
-                <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                  {interv?.id && (
-                    <div className="[&_input[name='interventionID']]:hidden">
-                    <ExpenseForm
-                      ref={(el) => { formRefs.current[index] = el; }}
-                      InterventionID={interv.id}
-                      hideIntervention = {true}
-                      onSubmit={(data) => { handleExpenseSubmit(data, index); }}
-                    />
-                    </div>
+          <div className="py-6">
+            <Alert variant= "destructive" className="max-w-[588px] border-[#DC2626]">
+              <AlertCircleIcon />
+              <AlertDescription>
+                Solo subí el gasto si lo realizaste para trasladar a un perro.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex flex-col gap-4 md:flex-row md:flex-wrap py-6">
+              {expenseCards.map((cardId, index) => (
+                <Card 
+                  key={cardId}
+                  className={cn(
+                        "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                        (isAdmin || false)  && "pointer-events-none opacity-50"
                   )}
-                </CardContent>
-              </Card>
-            ))}
-            <div className="flex flex-row md:flex-col gap-2">
-              <Button 
-                type="button"
-                variant="secondary" 
-                size="icon"  
-                onClick = {addExpenseCard} 
-                className= {cn(
-                  "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
-                  (isAdmin || false) && "pointer-events-none opacity-50"
-                )}
-              >
-                <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
-              </Button>
+                >
+                  {expenseCards.length > 1 && (  
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="icon"
+                      onClick={() => { removeExpenseCard(cardId); }}
+                      className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                    >
+                      <X color="#5B9B40" strokeWidth={1} />
+                    </Button>
+                  )}
+                  <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                    {interv?.id && (
+                      <ExpenseForm
+                        ref={(el) => { formRefs.current[index] = el; }}
+                        InterventionID={interv.id}
+                        hideIntervention = {true}
+                        onSubmit={(data) => { handleExpenseSubmit(data, index); }}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex flex-row md:flex-col gap-2">
+                <Button 
+                  type="button"
+                  variant="secondary" 
+                  size="icon"  
+                  onClick = {addExpenseCard} 
+                  className= {cn(
+                    "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+                    (isAdmin || false) && "pointer-events-none opacity-50"
+                  )}
+                >
+                  <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+                </Button>
+              </div>
             </div>
           </div>
           <Button
