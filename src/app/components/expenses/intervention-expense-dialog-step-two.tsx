@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useWatch, useForm } from "react-hook-form";
+import { useWatch, useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -178,7 +178,7 @@ const MeasurementComboBox = ({
 interface Props {
   InterventionID: string;
   onSubmit?: (data: z.infer<typeof FormSchema>) => void;
-  hideIntervention?: boolean; 
+  hideIntervention?: boolean;
 }
 export const FormSchema = z.object({
   interventionID: z.string(),
@@ -190,7 +190,7 @@ export const FormSchema = z.object({
     .positive({ message: "Debe ingresar una cantidad de KM válida." }),
 });
 export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
-  ({ InterventionID, onSubmit, hideIntervention}, ref) => {
+  ({ InterventionID, onSubmit, hideIntervention }, ref) => {
     const form = useForm<z.infer<typeof FormSchema>>({
       resolver: zodResolver(FormSchema),
       defaultValues: {
@@ -307,160 +307,149 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
       }
     };
     return (
-      <Form {...form}>
-        <form
-          ref={ref}
-          // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="flex flex-col gap-6 w-full"
-        >
-          {!hideIntervention && (
-          <FormField
-            control={form.control}
-            name="interventionID"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2 relative">
-                <FormControl>
-                  <div className="pointer-events-none opacity-50">
-                    <InterventionCombobox
-                      value={field.value}
-                      onChange={field.onChange} 
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage className="absolute -bottom-6" />
-              </FormItem>
-            )}
-          />
-          )}
-
-          <FormField
-            control={form.control}
-            name="peopleCI"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2 relative">
-                <FormControl>
-                  <PeopleComboBox
-                    value={field.value}
-                    onChange={field.onChange}
-                    people={people}
-                  />
-                </FormControl>
-                <FormMessage className="absolute -bottom-6" />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2 relative">
-                <FormControl>
-                  <RadioGroup
-                    className="flex flex-row gap-6"
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                    }}
-                    value={field.value as string | undefined}
-                  >
-                    <div className="flex items-center">
-                      <RadioGroupItem value="Traslado" id="option-true" />
-                      <Label htmlFor="option-true" className="ml-2">
-                        Traslado
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center">
-                      <RadioGroupItem
-                        value="Estacionamiento/Taxi"
-                        id="option-false"
-                      />
-                      <Label htmlFor="option-false" className="ml-2">
-                        Estacionamiento/Taxi
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage className="absolute -bottom-6" />
-              </FormItem>
-            )}
-          />
-          <div className="flex flex-row gap-6 w-full items-start">
-            <div className="flex-1">
+      <FormProvider {...form}>
+        <Form {...form}>
+          <form
+            ref={ref}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onSubmit={form.handleSubmit(handleFormSubmit)}
+            className="flex flex-col gap-6 w-full"
+          >
+            {!hideIntervention && (
               <FormField
                 control={form.control}
-                name="measurementType"
+                name="interventionID"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col !gap-0 !p-0 !m-0">
-                    <Label className="text-sm font-medium text-gray-700 mb-2">
-                      Medición
-                    </Label>
+                  <FormItem className="flex flex-col gap-2 relative">
                     <FormControl>
-                      <MeasurementComboBox
-                        value={isTraslado ? field.value : "Pesos"}
-                        onChange={isTraslado ? field.onChange : () => {}}
-                        disabled={!isTraslado}
-                      />
+                      <div className="pointer-events-none opacity-50">
+                        <InterventionCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      </div>
                     </FormControl>
-                    <FormMessage className="mt-1" />
+                    <FormMessage className="absolute -bottom-6" />
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="flex-1">
-              {isTraslado ? (
+            )}
+
+            <FormField
+              control={form.control}
+              name="peopleCI"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-2 relative">
+                  <FormControl>
+                    <PeopleComboBox
+                      value={field.value}
+                      onChange={field.onChange}
+                      people={people}
+                    />
+                  </FormControl>
+                  <FormMessage className="absolute -bottom-6" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-2 relative">
+                  <FormControl>
+                    <RadioGroup
+                      className="flex flex-row gap-6"
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      value={field.value as string | undefined}
+                    >
+                      <div className="flex items-center">
+                        <RadioGroupItem value="Traslado" id="option-true" />
+                        <Label htmlFor="option-true" className="ml-2">
+                          Traslado
+                        </Label>
+                      </div>
+
+                      <div className="flex items-center">
+                        <RadioGroupItem
+                          value="Estacionamiento/Taxi"
+                          id="option-false"
+                        />
+                        <Label htmlFor="option-false" className="ml-2">
+                          Estacionamiento/Taxi
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage className="absolute -bottom-6" />
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-row gap-6 w-full items-start">
+              <div className="flex-1">
                 <FormField
                   control={form.control}
-                  name="amount"
+                  name="measurementType"
                   render={({ field }) => (
                     <FormItem className="flex flex-col !gap-0 !p-0 !m-0">
-                      <Label
-                        className="text-sm font-medium text-gray-700 mb-2"
-                        htmlFor="amount"
-                      >
-                        {selectedMeasurementType === "Pesos"
-                          ? "Monto"
-                          : "Cantidad de KM"}
+                      <Label className="text-sm font-medium text-gray-700 mb-2">
+                        Medición
                       </Label>
                       <FormControl>
-                        <Input
-                          id="amount"
-                          type="number"
-                          {...field}
-                          onChange={(e) => {
-                            field.onChange(e.target.valueAsNumber);
-                          }}
+                        <MeasurementComboBox
+                          value={isTraslado ? field.value : "Pesos"}
+                          onChange={isTraslado ? field.onChange : () => {}}
+                          disabled={!isTraslado}
                         />
                       </FormControl>
-                      {selectedMeasurementType === "KM" && (
-                        <Label className="text-xs text-gray-500 mt-2">
-                          Equivalente en pesos uruguayos
-                        </Label>
-                      )}
                       <FormMessage className="mt-1" />
                     </FormItem>
                   )}
                 />
-              ) : (
-                <div></div>
-                /*
-                <button className="w-full px-4 py-2 bg-[#5B9B40] text-white rounded-md hover:bg-[#4D8B36]">Acción</button>
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col gap-1 relative">
-                      <FormControl>
-                        <Input id="amount" value="$" disabled />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />*/
-              )}
+              </div>
+              <div className="flex-1">
+                {isTraslado ? (
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col !gap-0 !p-0 !m-0">
+                        <Label
+                          className="text-sm font-medium text-gray-700 mb-2"
+                          htmlFor="amount"
+                        >
+                          {selectedMeasurementType === "Pesos"
+                            ? "Monto"
+                            : "Cantidad de KM"}
+                        </Label>
+                        <FormControl>
+                          <Input
+                            id="amount"
+                            type="number"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e.target.valueAsNumber);
+                            }}
+                          />
+                        </FormControl>
+                        {selectedMeasurementType === "KM" && (
+                          <Label className="text-xs text-gray-500 mt-2">
+                            Equivalente en pesos uruguayos
+                          </Label>
+                        )}
+                        <FormMessage className="mt-1" />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div></div>
+                )}
+              </div>
             </div>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </FormProvider>
     );
   }
 );
@@ -551,7 +540,7 @@ export default function ExpenseDialogTwo({
         {/* Form con ref */}
         <ExpenseForm
           InterventionID={InterventionID}
-          hideIntervention = {false}
+          hideIntervention={false}
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           onSubmit={submit}
           ref={formRef}

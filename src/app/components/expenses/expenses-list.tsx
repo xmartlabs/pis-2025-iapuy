@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Settings } from "lucide-react";
+import { BadgeDollarSign, Settings, ArrowRight } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import FilterDropdown, {

@@ -136,4 +136,19 @@ export class PerrosService {
     const total = await Perro.destroy({ where: { id } });
     return total > 0;
   }
+
+  async listOptions(
+    userType: string,
+    ci: string
+  ): Promise<{ id: string; nombre: string }[]> {
+    return await Perro.findAll({
+      where:
+        userType === "Colaborador"
+          ? {
+              duenioId: ci,
+            }
+          : undefined,
+      attributes: ["id", "nombre"],
+    });
+  }
 }
