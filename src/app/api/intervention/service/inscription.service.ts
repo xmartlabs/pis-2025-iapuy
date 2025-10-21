@@ -151,6 +151,11 @@ export class InscripcionService {
     pairsQuantity: number;
     people: { ci: string; nombre: string }[];
     perros: { id: string; nombre: string }[];
+    duplas: {
+      guia: { ci: string; nombre: string };
+      perro: { id: string; nombre: string };
+    }[];
+    acompaniantes: { ci: string; nombre: string }[];
   }> {
     const intervention = await Intervention.findOne({
       where: { id },
@@ -161,11 +166,30 @@ export class InscripcionService {
           model: UsrPerro,
           as: "UsrPerroIntervention",
           attributes: ["userId", "perroId"],
+          include: [
+            {
+              model: User,
+              as: "User",
+              attributes: ["nombre"],
+            },
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["nombre"],
+            },
+          ],
         },
         {
           model: Acompania,
           as: "Acompania",
           attributes: ["userId"],
+          include: [
+            {
+              model: User,
+              as: "User",
+              attributes: ["nombre"],
+            },
+          ],
         },
       ],
     });
@@ -173,29 +197,30 @@ export class InscripcionService {
     if (!intervention)
       throw new Error("Intervencion no existe en la base de datos.");
 
-    const usersIds = [
-      ...(intervention.UsrPerroIntervention?.map(
-        (usrperro) => usrperro.userId
-      ) ?? []),
-      ...(intervention.Acompania?.map((aco) => aco.userId) ?? []),
-    ];
-    const perrosIds =
-      intervention.UsrPerroIntervention?.map((usrperro) => usrperro.perroId) ??
-      [];
-
     const [people, perros] = await Promise.all([
       User.findAll({
-        where: { ci: { [Op.notIn]: usersIds } },
         attributes: ["ci", "nombre"],
       }),
       Perro.findAll({
-        where: { id: { [Op.notIn]: perrosIds } },
         attributes: ["id", "nombre"],
       }),
     ]);
-    const pairsQuantity = intervention.UsrPerroIntervention
-      ? intervention.pairsQuantity - intervention.UsrPerroIntervention.length
-      : intervention.pairsQuantity;
-    return { pairsQuantity, people, perros };
+
+    const duplas =
+      intervention.UsrPerroIntervention?.map((usrperro) => {
+        return {
+          guia: { ci: usrperro.userId, nombre: usrperro.User?.nombre ?? "" },
+          perro: { id: usrperro.perroId, nombre: usrperro.Perro?.nombre ?? "" },
+        };
+      }) ?? [];
+
+    const acompaniantes =
+      intervention.Acompania?.map((aco) => {
+        return { ci: aco.userId, nombre: aco.User?.nombre ?? "" };
+      }) ?? [];
+
+    const pairsQuantity = intervention.pairsQuantity;
+
+    return { pairsQuantity, people, perros, duplas, acompaniantes };
   }
 }

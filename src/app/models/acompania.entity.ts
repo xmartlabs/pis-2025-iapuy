@@ -30,4 +30,6 @@ export class Acompania extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
 }

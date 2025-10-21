@@ -39,6 +39,8 @@ export default function InscribirIntervencion({
   const [guides, setGuides] = useState<Option[]>([]);
   const [perros, setPerros] = useState<Option[]>([]);
   const [acompaniantes, setAcompaniantes] = useState<Option[]>([]);
+  const [lockedDuplas, setLockedDuplas] = useState<DuplaSelection[]>([]);
+  const [lockedAcompIds, setLockedAcompIds] = useState<string[]>([]);
   const [duplasCountState, setDuplasCountState] = useState<number>(duplasCount);
   const context = useContext(LoginContext);
 
@@ -46,6 +48,54 @@ export default function InscribirIntervencion({
   const [duplas, setDuplas] = useState<DuplaSelection[]>([]);
 
   const router = useRouter();
+
+  const fetchWithRefresh = React.useCallback(
+    async (input: RequestInfo, init?: RequestInit) => {
+      const res = await fetch(input, init);
+      if (res.status !== 401) return res;
+
+      const resp2 = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      if (!resp2.ok) return res;
+      const refreshBody = (await resp2.json().catch(() => null)) as {
+        accessToken?: string;
+      } | null;
+      const newToken = refreshBody?.accessToken ?? null;
+      if (!newToken) return res;
+      context?.setToken?.(newToken);
+
+      const newHeaders = {
+        ...(init?.headers as Record<string, string> | undefined),
+        Authorization: `Bearer ${newToken}`,
+      } as Record<string, string>;
+
+      const retry = await fetch(input, { ...init, headers: newHeaders });
+      return retry;
+    },
+    [context]
+  );
+
+  const postInscription = React.useCallback(
+    async (bodyStr: string) => {
+      const token = context?.tokenJwt;
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const res = await fetchWithRefresh(`/api/intervention/inscription`, {
+        method: "POST",
+        headers: baseHeaders,
+        body: bodyStr,
+      });
+
+      return res;
+    },
+    [context, fetchWithRefresh]
+  );
 
   useEffect(() => {
     const callApi = async () => {
@@ -60,7 +110,7 @@ export default function InscribirIntervencion({
           intervention ?? ""
         )}`;
 
-        let response = await fetch(url, { headers: baseHeaders });
+        let response = await fetchWithRefresh(url, { headers: baseHeaders });
 
         if (response.status === 401) {
           const resp2 = await fetch("/api/auth/refresh", {
@@ -75,14 +125,12 @@ export default function InscribirIntervencion({
             if (newToken) {
               context?.setToken?.(newToken);
 
-              response = await fetch(url, {
-                method: "GET",
+              response = await fetchWithRefresh(url, {
                 headers: {
                   Accept: "application/json",
                   Authorization: `Bearer ${newToken}`,
                 },
               });
-
               if (!response.ok) {
                 const txt = await response.text().catch(() => "");
                 const suffix = txt ? ` - ${txt}` : "";
@@ -111,19 +159,42 @@ export default function InscribirIntervencion({
           pairsQuantity?: number;
           people?: { ci: string; nombre: string }[];
           perros?: { id: string; nombre: string }[];
+          duplas?: {
+            guia: { ci: string; nombre: string };
+            perro: { id: string; nombre: string };
+          }[];
+          acompaniantes?: { ci: string; nombre: string }[];
         } | null;
 
         const pairs = body?.pairsQuantity ?? duplasCount;
         const people = body?.people ?? [];
         const perrosData = body?.perros ?? [];
+        const duplasData = body?.duplas ?? [];
+        const acompData = body?.acompaniantes ?? [];
 
-        setGuides(people.map((p) => ({ id: String(p.ci), nombre: p.nombre })));
-        setAcompaniantes(
-          people.map((p) => ({ id: String(p.ci), nombre: p.nombre }))
-        );
-        setPerros(
-          perrosData.map((p) => ({ id: String(p.id), nombre: p.nombre }))
-        );
+        const peopleOptions = people.map((p) => ({
+          id: String(p.ci),
+          nombre: p.nombre,
+        }));
+        const perrosOptions = perrosData.map((p) => ({
+          id: String(p.id),
+          nombre: p.nombre,
+        }));
+
+        const locked = duplasData.map((d) => ({
+          ci: String(d.guia.ci),
+          perro: String(d.perro.id),
+          key: `locked-${String(d.guia.ci)}-${String(d.perro.id)}`,
+        }));
+
+        const lockedAcomps = acompData.map((a) => String(a.ci));
+
+        setGuides(peopleOptions);
+        setAcompaniantes(peopleOptions);
+        setPerros(perrosOptions);
+        setLockedDuplas(locked);
+        setLockedAcompIds(lockedAcomps);
+        setSelectedAcomp(Array.from(new Set(lockedAcomps)));
         setDuplasCountState(pairs);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -134,19 +205,24 @@ export default function InscribirIntervencion({
       // eslint-disable-next-line no-console
       console.error(err);
     });
-  }, [intervention, context, duplasCount]);
+  }, [intervention, context, duplasCount, fetchWithRefresh]);
 
   useEffect(() => {
+    const editableCount = Math.max(0, duplasCountState - lockedDuplas.length);
     const initial: DuplaSelection[] = [];
-    for (let i = 0; i < duplasCountState; i++) {
+
+    for (const ld of lockedDuplas) initial.push({ ...ld });
+
+    for (let i = 0; i < editableCount; i++) {
       initial.push({
         ci: "",
         perro: "",
         key: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       });
     }
+
     setDuplas(initial);
-  }, [duplasCountState]);
+  }, [duplasCountState, lockedDuplas]);
 
   function setDuplaValue(
     index: number,
@@ -174,6 +250,7 @@ export default function InscribirIntervencion({
     const selectedCis = new Set<string>(
       duplas.map((d) => d.ci).filter(Boolean)
     );
+
     return acompaniantes.filter((a) => !selectedCis.has(a.id));
   }
 
@@ -187,110 +264,69 @@ export default function InscribirIntervencion({
     );
   }
 
+  function findPersonName(ci: string) {
+    return guides.find((g) => g.id === ci)?.nombre ?? ci;
+  }
+
+  function findPerroName(id: string) {
+    return perros.find((p) => p.id === id)?.nombre ?? id;
+  }
+
   function buildResult(): ResultObject {
+    const editableDuplas = duplas.slice(lockedDuplas.length);
     const dupRes: DuplaSelection[] = [];
-    for(const d of duplas){
-      if(d.perro && d.ci)
-        dupRes.push(d);
+    for (const d of editableDuplas) {
+      if (d.perro && d.ci) dupRes.push(d);
     }
+
+    const newAcomps = selectedAcomp.filter(
+      (id) => !lockedAcompIds.includes(id)
+    );
+
     return {
       intervention,
-      acompaniantes: selectedAcomp,
+      acompaniantes: newAcomps,
       duplas: dupRes.map((d) => ({ ci: d.ci || "", perro: d.perro || "" })),
     };
   }
 
+  function validateEditableDuplas() {
+    const editableDuplas = duplas.slice(lockedDuplas.length);
+    let hasInscription = lockedDuplas.length > 0;
+    for (const d of editableDuplas) {
+      if (d.ci && d.perro) {
+        hasInscription = true;
+        continue;
+      }
+      if (d.ci) return { ok: false, message: "Fallo: Debe incluir al perro." };
+      if (d.perro) return { ok: false, message: "Fallo: Debe incluir al guía" };
+    }
+    if (!hasInscription && selectedAcomp.length > 0) hasInscription = true;
+    if (!hasInscription)
+      return { ok: false, message: "Fallo: Debe haber al menos 1 inscripción" };
+    return { ok: true };
+  }
+
   async function handleSave() {
     try {
-      let insc = false;
-      for (const d of duplas) {
-        if (d.ci && d.perro) {
-          insc = true;
-          continue;
-        }
-        if(d.ci) {
-          toast.error(
-            "Fallo: Debe incluir al perro.",
-            {
-              duration: 5000,
-            }
-          );
-          return; 
-        }
-        if(d.perro){
-          toast.error(
-            "Fallo: Debe incluir al guía",
-            {
-              duration: 5000,
-            }
-          );
-        }
-      }
-      if(!insc && selectedAcomp.length > 0) insc = true;
-      if(!insc){
-        toast.error(
-          "Fallo: Debe haber al menos 1 inscripción",
-          {
-            duration: 5000,
-          }
-        );
+      const v = validateEditableDuplas();
+      if (!v.ok) {
+        toast.error(v.message, { duration: 5000 });
         return;
       }
 
       if (!intervention) {
-        toast.error("Fallo: Falta id de la intervención.", {
-          duration: 5000,
-        });
+        toast.error("Fallo: Falta id de la intervención.", { duration: 5000 });
         return;
       }
 
       const result = buildResult();
-
       const body = JSON.stringify(result);
 
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      let res = await fetch(`/api/intervention/inscription`, {
-        method: "POST",
-        headers: baseHeaders,
-        body,
-      });
-
-      if (res.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken?.(newToken);
-
-            res = await fetch(`/api/intervention/inscription`, {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${newToken}`,
-              },
-              body,
-            });
-          }
-        }
-      }
+      const res = await postInscription(body);
 
       if (res.ok) {
-        toast.success("Inscripción realizada con éxito.", {
-          duration: 5000,
-        });
+        toast.success("Inscripción realizada con éxito.", { duration: 5000 });
         router.push("/app/colaboradores/intervenciones/listado");
         return;
       }
@@ -307,14 +343,10 @@ export default function InscribirIntervencion({
         // leave text as-is
       }
 
-      toast.error(`Fallo: ${errMsg || res.statusText}`, {
-        duration: 5000,
-      });
+      toast.error(`Fallo: ${errMsg || res.statusText}`, { duration: 5000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast.error(`Fallo: ${message}`, {
-        duration: 5000,
-      });
+      toast.error(`Fallo: ${message}`, { duration: 5000 });
     }
   }
 
@@ -322,63 +354,81 @@ export default function InscribirIntervencion({
     <div className="p-6 max-w-6xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Duplas */}
-        {duplas.map((d, idx) => (
-          <Card key={d.key} className="border-[#bdd7b3]">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">
-                Dupla {idx + 1}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm">Guía</Label>
-                  <Select
-                    value={duplas[idx].ci}
-                    onValueChange={(v) => {
-                      setDuplaValue(idx, "ci", v);
-                    }}
-                  >
-                    <SelectTrigger className="w-full mt-2">
-                      <SelectValue placeholder="Selecciona un guía" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availablePeopleForIndex(idx).map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
-                          {`${g.nombre} (${g.id})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs mt-2 text-gray-600">
-                    Responsable de acompañar al perro en todo momento.
-                  </p>
-                </div>
+        {duplas.map((d, idx) => {
+          const isLocked = idx < lockedDuplas.length;
+          return (
+            <Card key={d.key} className="border-[#bdd7b3]">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold">
+                  Dupla {idx + 1}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLocked ? (
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-sm">Guía</Label>
+                      <p className="mt-2">{`${findPersonName(d.ci)} (${
+                        d.ci
+                      })`}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm">Perro</Label>
+                      <p className="mt-2">{findPerroName(d.perro)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm">Guía</Label>
+                      <Select
+                        value={duplas[idx].ci}
+                        onValueChange={(v) => {
+                          setDuplaValue(idx, "ci", v);
+                        }}
+                      >
+                        <SelectTrigger className="w-full mt-2">
+                          <SelectValue placeholder="Selecciona un guía" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePeopleForIndex(idx).map((g) => (
+                            <SelectItem key={g.id} value={g.id}>
+                              {`${g.nombre} (${g.id})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs mt-2 text-gray-600">
+                        Responsable de acompañar al perro en todo momento.
+                      </p>
+                    </div>
 
-                <div>
-                  <Label className="text-sm">Perro</Label>
-                  <Select
-                    value={duplas[idx].perro}
-                    onValueChange={(v) => {
-                      setDuplaValue(idx, "perro", v);
-                    }}
-                  >
-                    <SelectTrigger className="w-full mt-2">
-                      <SelectValue placeholder="Selecciona un perro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availablePerrosForIndex(idx).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    <div>
+                      <Label className="text-sm">Perro</Label>
+                      <Select
+                        value={duplas[idx].perro}
+                        onValueChange={(v) => {
+                          setDuplaValue(idx, "perro", v);
+                        }}
+                      >
+                        <SelectTrigger className="w-full mt-2">
+                          <SelectValue placeholder="Selecciona un perro" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePerrosForIndex(idx).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
 
         {/* Acompañantes card - full width on small screens */}
         <div className="md:col-span-2">
@@ -393,14 +443,21 @@ export default function InscribirIntervencion({
               </p>
               <div>
                 <Label className="text-sm">Acompañante</Label>
-                <MultiSelect className="w-1/2 mt-2 placeholder:text-gray-100"
-                  options={availableAcompanantes().map((a) => (
-                    { value: a.id, label: `${a.nombre} (${a.id})` }
-                  ))}
+                <MultiSelect
+                  className="w-1/2 mt-2 placeholder:text-gray-100"
+                  options={availableAcompanantes().map((a) => ({
+                    value: a.id,
+                    label: `${a.nombre} (${a.id})`,
+                  }))}
                   selected={selectedAcomp}
-                  onChange={(v) => { setSelectedAcomp(v); }}
+                  onChange={(v) => {
+                    const merged = Array.from(
+                      new Set([...lockedAcompIds, ...v])
+                    );
+                    setSelectedAcomp(merged);
+                  }}
                   placeholder="Selecciona un o más acompañantes"
-                  />
+                />
               </div>
             </CardContent>
           </Card>
