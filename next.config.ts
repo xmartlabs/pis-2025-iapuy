@@ -27,6 +27,14 @@ const nextConfig: NextConfig = {
    experimental: {
     authInterrupts: true,
   },
+  rewrites() {
+    return Promise.resolve([
+      {
+        source: '/interventionsPictures/:path*',
+        destination: '/api/interventionsPictures/:path*',
+      },
+    ])
+  },
 };
  
 
