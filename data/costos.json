@@ -1,5 +1,6 @@
 {
-  "banios": 150,
-  "desparasitaciones": 450,
-  "vacunas": 350
+  "banios": 250,
+  "desparasitacionesInterna": 250,
+  "desparasitacionesExterna": 450,
+  "vacunas": 150
 }

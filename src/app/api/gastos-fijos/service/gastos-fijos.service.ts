@@ -1,10 +1,11 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path, { dirname } from "path";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import path, { dirname } from "node:path";
 import UpdateGastosDTO from "../dtos/update-gastos.dto";
 
 class GastosFijosService {
   private static banios: number;
-  private static desparasitaciones: number;
+  private static desparasitacionesInterna: number;
+  private static desparasitacionesExterna: number;
   private static vacunas: number;
   private static initialized = false;
 
@@ -22,7 +23,9 @@ class GastosFijosService {
       const costos = JSON.parse(data);
 
       this.banios = costos.banios ?? 250;
-      this.desparasitaciones = costos.desparasitaciones ?? 250;
+      this.desparasitacionesInterna = costos.desparasitacionesInterna ?? 250;
+      this.desparasitacionesExterna = costos.desparasitacionesExterna ?? 250;
+
       this.vacunas = costos.vacunas ?? 250;
 
       console.log("[GastosFijosService] Loaded costos from file:", costos);
@@ -33,7 +36,8 @@ class GastosFijosService {
 
       const defaultCostos = {
         banios: 250,
-        desparasitaciones: 250,
+        desparasitacionesInterna: 250,
+        desparasitacionesExterna: 250,
         vacunas: 250,
       };
 
@@ -46,7 +50,8 @@ class GastosFijosService {
       );
 
       this.banios = 250;
-      this.desparasitaciones = 250;
+      this.desparasitacionesInterna = 250;
+      this.desparasitacionesExterna = 250;
       this.vacunas = 250;
     }
 
@@ -57,8 +62,12 @@ class GastosFijosService {
     return GastosFijosService.banios;
   }
 
-  getCostoDesparasitacion(): number {
-    return GastosFijosService.desparasitaciones;
+  getCostoDesparasitacionInterna(): number {
+    return GastosFijosService.desparasitacionesInterna;
+  }
+
+  getCostoDesparasitacionExterna(): number {
+    return GastosFijosService.desparasitacionesExterna;
   }
 
   getCostoVacunas(): number {
@@ -67,12 +76,14 @@ class GastosFijosService {
 
   getCostos(): {
     banios: number;
-    desparasitaciones: number;
+    desparasitacionesExterna: number;
+    desparasitacionesInterna: number;
     vacunas: number;
   } {
     return {
       banios: GastosFijosService.banios,
-      desparasitaciones: GastosFijosService.desparasitaciones,
+      desparasitacionesExterna: GastosFijosService.desparasitacionesExterna,
+      desparasitacionesInterna: GastosFijosService.desparasitacionesInterna,
       vacunas: GastosFijosService.vacunas,
     };
   }
@@ -80,8 +91,12 @@ class GastosFijosService {
   async setCostos(costos: UpdateGastosDTO) {
     const persist = {
       banios: costos.banios ?? GastosFijosService.banios,
-      desparasitaciones:
-        costos.desparasitaciones ?? GastosFijosService.desparasitaciones,
+      desparasitacionesInterna:
+        costos.desparasitacionesInterna ??
+        GastosFijosService.desparasitacionesInterna,
+      desparasitacionesExterna:
+        costos.desparasitacionesExterna ??
+        GastosFijosService.desparasitacionesExterna,
       vacunas: costos.vacunas ?? GastosFijosService.vacunas,
     };
     await writeFile(
@@ -91,8 +106,12 @@ class GastosFijosService {
     );
 
     if (costos.banios) GastosFijosService.banios = costos.banios;
-    if (costos.desparasitaciones)
-      GastosFijosService.desparasitaciones = costos.desparasitaciones;
+    if (costos.desparasitacionesInterna)
+      GastosFijosService.desparasitacionesInterna =
+        costos.desparasitacionesInterna;
+    if (costos.desparasitacionesExterna)
+      GastosFijosService.desparasitacionesExterna =
+        costos.desparasitacionesExterna;
     if (costos.vacunas) GastosFijosService.vacunas = costos.vacunas;
   }
 }

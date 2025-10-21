@@ -8,7 +8,11 @@ export default class UpdateGastosDTO {
 
   @IsOptional()
   @IsNumber()
-  desparasitaciones?: number;
+  desparasitacionesInterna?: number;
+
+  @IsOptional()
+  @IsNumber()
+  desparasitacionesExterna?: number;
 
   @IsOptional()
   @IsNumber()

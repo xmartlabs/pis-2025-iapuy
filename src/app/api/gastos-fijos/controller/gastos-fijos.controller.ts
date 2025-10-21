@@ -4,7 +4,8 @@ import { gastosService } from "../service/gastos-fijos.service";
 export class GastosFijosController {
   getCostos(): {
     banios: number;
-    desparasitaciones: number;
+    desparasitacionesExterna: number;
+    desparasitacionesInterna: number;
     vacunas: number;
   } {
     return gastosService.getCostos();
