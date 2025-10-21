@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowLeft, CheckCircle, Copy, Link } from "lucide-react";
+import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
 
 const formSchema = z
   .object({
@@ -77,6 +78,11 @@ const perrosSchema = z.object({
 const perrosArraySchema = z.array(perrosSchema);
 const perrosEnvelopeSchema = z.object({ data: perrosArraySchema });
 const refreshSchema = z.object({ accessToken: z.string() });
+
+const dogs = new Array<{
+                id: string,
+                perro: CreatePerroDTO,
+              }>;
 
 type Perro = z.infer<typeof perrosSchema>;
 type PerroOption = { value: string; label: string };
@@ -226,6 +232,11 @@ export default function Formulario() {
       const token = context?.tokenJwt ?? undefined;
       const url = `/api/users`;
 
+      const perrosDtoList = dogs.map(d => ({
+        ...d,
+        perro: { ...d.perro },
+      }));
+
       const doPost = async (authToken?: string) =>
         await fetch(url.toString(), {
           method: "POST",
@@ -234,7 +245,7 @@ export default function Formulario() {
             "Content-Type": "application/json",
             ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify({ ...values, password: "" }),
+          body: JSON.stringify({ ...values, perrosDto: perrosDtoList, password: "" }),
           signal: controller.signal,
         });
 
@@ -580,8 +591,8 @@ export default function Formulario() {
           open={open}
           setOpen={setOpen}
           onCreated={handlePerroCreated}
-          ownerRequired={false}
-          ownerDisabled={true}
+          creatingOwner={true}
+          dogs={dogs}
         />
       </Form>
       {/* Magic link modal */}

@@ -117,12 +117,20 @@ export class UserService {
 
     const transaction = await sequelize.transaction();
 
-    const perros = normalizePerros(createUserDto.perros);
+    let perros = normalizePerros(createUserDto.perros);
     try {
       const esAdmin = createUserDto.rol === "admin";
       const usr = await User.create(
         { ...createUserDto, esAdmin },
         { transaction }
+      );
+      await Promise.all(
+        createUserDto.perrosDto.map(async (dog) => {
+          const p = await Perro.create({ ...dog.perro });
+          perros = perros.map(d =>
+            d === dog.id ? p.id : d
+          );
+        })
       );
       await Promise.all(
         perros.map(async (perro) => {
