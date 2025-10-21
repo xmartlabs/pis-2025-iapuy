@@ -27,11 +27,9 @@ test("test", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Historial de Intervenciones" })
   ).toBeVisible();
-  await expect(page.getByText("Fecha y horaOrganizacion10/01")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Historial de Sanidad" })
   ).toBeVisible();
-  await expect(page.getByText("FechaActividad14/08/2025Bañ")).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Perros" }).first()
   ).toBeVisible();

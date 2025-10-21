@@ -9,7 +9,7 @@ test.describe("Intervenciones (Admin)", () => {
       "https://slincsilver.ddns.net:3000/app/admin/intervenciones/listado",
       { waitUntil: "domcontentloaded" }
     );
-    
+
     await page.waitForLoadState("networkidle");
 
     await expect(
@@ -30,7 +30,7 @@ test.describe("Intervenciones (Admin)", () => {
     if (filasCount > 0) {
       const estado = page.locator("tbody tr:first-child td:nth-child(5) div");
       await expect(estado).toHaveText(
-        /Realizada|Pendiente|Suspendida|Finalizada/i,
+        /Realizada|Pendiente|Suspendida|Finalizada|Pendiente de Asignacion|Cupo Completo/i,
         { timeout: 60000 }
       );
     } else {

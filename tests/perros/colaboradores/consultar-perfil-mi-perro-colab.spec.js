@@ -26,7 +26,7 @@ test("test", async ({ page }) => {
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Eliminar Perro" })
-  ).toBeVisible();
+  ).not.toBeVisible();
   await expect(
     page.getByRole("button", { name: "Registrar Sanidad" })
   ).toBeVisible();
