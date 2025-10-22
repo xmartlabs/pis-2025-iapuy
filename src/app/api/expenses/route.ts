@@ -1,6 +1,6 @@
 import { initDatabase } from "@/lib/init-database";
 import { ExpensesController } from "./controller/expenses.controller";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
 import type { PayloadForUser } from "../perros/detalles/route";
 import jwt from "jsonwebtoken";
