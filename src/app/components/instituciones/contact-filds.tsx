@@ -29,9 +29,11 @@ interface ContactFieldsProps {
   index: number;
   appendContact: (value: { name: string; contact: string }) => void;
   removeContact: (index: number) => void;
+  renderAppend:boolean;
+  renderRemove:boolean;
 }
 
-export default function ContactFields({ control, index,appendContact,removeContact}: ContactFieldsProps) {
+export default function ContactFields({ control, index,appendContact,removeContact,renderAppend,renderRemove}: ContactFieldsProps) {
 
 
   return (
@@ -75,14 +77,17 @@ export default function ContactFields({ control, index,appendContact,removeConta
                 )}
             />
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 min-w-[40px]">
+          {renderAppend && (
             <Button
                 type="button"
                 onClick={() => { appendContact({ name: "", contact: "" }); }}
-                className="w-10 h-10 p-3 bg-white border border-[#BDD7B3] rounded-md flex items-center justify-center"
+                className="w-10 h-10 p-3 !bg-white border border-[#BDD7B3] rounded-md flex items-center justify-center"
             >
                 <Plus className="w-4 h-4" stroke="#5B9B40" />
             </Button>
+          )}
+            {renderRemove &&(
             <Button
                 type="button"
                 variant="destructive"
@@ -90,7 +95,7 @@ export default function ContactFields({ control, index,appendContact,removeConta
                 className="w-10 h-10 p-3 bg-white rounded-md bg-red-600 flex items-center"
             >
                 <Minus />
-            </Button>
+            </Button>)}
         </div>
         
     </div>

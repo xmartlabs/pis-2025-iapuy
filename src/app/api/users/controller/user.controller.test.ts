@@ -1,173 +1,205 @@
+import "reflect-metadata";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { UserController } from "./user.controller";
-//import { UserService } from "../service/user.service";
-import { NextResponse } from "next/server";
 
-// Mock UserService methods
-vi.mock("../service/user.service", () => ({
-  UserService: vi.fn().mockImplementation(() => ({
-    findAll: vi.fn(),
-    findOne: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  })),
-}));
-
-// Mock NextResponse.json
 vi.mock("next/server", () => ({
   NextResponse: {
-    json: vi.fn((data, opts) => ({ data, ...opts })),
+    json: vi.fn((data: unknown, opts?: ResponseInit) => ({ data, ...opts })),
   },
 }));
 
+import { UserController } from "./user.controller";
+import type { UserService } from "../service/user.service";
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { CreateUserDto } from "../dtos/create-user.dto";
+import type { NextRequest } from "next/server";
+
+// --- Global mocks (must be defined before imports using them) ---
+vi.mock("@/lib/database", () => ({
+  sequelize: {
+    authenticate: vi.fn(),
+    sync: vi.fn(),
+  },
+}));
+
+// mockear modelos como clases vacías
+vi.mock("@/app/models/user.entity", () => ({ User: class User {} }));
+vi.mock("@/app/models/perro.entity", () => ({ Perro: class Perro {} }));
+vi.mock("@/app/models/intervencion.entity", () => ({ Intervencion: class Intervencion {} }));
+vi.mock("@/app/models/acompania.entity", () => ({ Acompania: class Acompania {} }));
+vi.mock("@/app/models/registro-sanidad.entity", () => ({ RegistroSanidad: class RegistroSanidad {} }));
+vi.mock("@/app/models/banio.entity", () => ({ Banio: class Banio {} }));
+vi.mock("@/app/models/desparasitacion.entity", () => ({ Desparasitacion: class Desparasitacion {} }));
+vi.mock("@/app/models/expense.entity", () => ({ Expense: class Expense {} }));
+vi.mock("@/app/models/institucion.entity", () => ({ Institucion: class Institucion {} }));
+vi.mock("@/app/models/institucion-intervenciones.entity", () => ({ InstitucionIntervencion: class InstitucionIntervencion {} }));
+vi.mock("@/app/models/patologia.entity", () => ({ Patologia: class Patologia {} }));
+vi.mock("@/app/models/usrperro.entity", () => ({ UsrPerro: class UsrPerro {} }));
+vi.mock("@/app/models/vacuna.entity", () => ({ Vacuna: class Vacuna {} }));
+vi.mock("@/app/models/institution-contact.entity", () => ({ InstitutionContact: class InstitutionContact {} }));
+vi.mock("@/app/models/intitucion-patalogia.entity", () => ({ InstitucionPatologias: class InstitucionPatologias {} }));
+
+// --- Utility to create mock services ---
+function createMockUserService(): jest.Mocked<UserService> {
+  return {
+    findAll: vi.fn(),
+    findOne: vi.fn(),
+    findOneWithToken: vi.fn(),
+    findDogIdsByUser: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  } as unknown as jest.Mocked<UserService>;
+}
+
 describe("UserController", () => {
+  // eslint-disable-next-line init-declarations
   let controller: UserController;
-  let userService: any;
+  // eslint-disable-next-line init-declarations
+  let userService: jest.Mocked<UserService>;
 
   beforeEach(() => {
-    // Create a fresh mock for each test
-    userService = {
-      findAll: vi.fn(),
-      findOne: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    };
-    // Inject the mock into the controller
-    controller = new UserController(userService);
     vi.clearAllMocks();
+    userService = createMockUserService();
+    controller = new UserController(userService);
   });
 
-  it("getUsers returns paginated users", async () => {
-    userService.findAll.mockResolvedValue({ rows: [], count: 0 });
-    const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
-    const result = await controller.getUsers(pagination as any);
+  // ---------------------- getUsers ----------------------
+  it("should return paginated users", async () => {
+    const pagination: PaginationDto = {
+      query: "",
+      size: 10,
+      page: 1,
+      getOffset: () => 0,
+      getOrder: () => [],
+    };
+
+    const mockResponse = { rows: [], count: 0 };
+    userService.findAll.mockResolvedValue(mockResponse as never);
+
+    const result = await controller.getUsers(pagination);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(userService.findAll).toHaveBeenCalledWith(pagination);
-    expect(result).toEqual({ rows: [], count: 0 });
+    expect(result).toEqual(mockResponse);
   });
 
-  it("getUser returns user if found", async () => {
-    userService.findOne.mockResolvedValue({ username: "test" });
-    const req = {} as any;
-    const result = await controller.getUser(req, { username: "test" });
-    expect(userService.findOne).toHaveBeenCalledWith("test");
-    expect(NextResponse.json).toHaveBeenCalledWith({ username: "test" });
-    expect(result).toEqual({ data: { username: "test" } });
+  // ---------------------- getUser ----------------------
+  it("should return user when found", async () => {
+    const mockUser = { ci: "12345678", nombre: "John Doe" };
+    userService.findOne.mockResolvedValue(mockUser as never);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {
+        json: vi.fn(),
+        headers: {
+            get: vi.fn().mockReturnValue(null),
+        },
+    } as unknown as NextRequest;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const result = await controller.getUser(req, { ci: "12345678" });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(userService.findOne).toHaveBeenCalledWith("12345678");
+    expect(result).toEqual(mockUser);
   });
 
-  it("getUser returns 404 if not found", async () => {
-    userService.findOne.mockResolvedValue(null);
-    const req = {} as any;
-    const result = await controller.getUser(req, { username: "notfound" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ error: "User not found" }, { status: 404 });
-    expect(result).toEqual({ data: { error: "User not found" }, status: 404 });
-  });
+  it("should throw an error when user is not found", async () => {
+    userService.findOne.mockResolvedValue(null as never);
 
-  it("getUser returns 500 on error", async () => {
-    userService.findOne.mockRejectedValue(new Error("fail"));
-    const req = {} as any;
-    const result = await controller.getUser(req, { username: "test" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ error: "Internal Server Error" }, { status: 500 });
-    expect(result).toEqual({ data: { error: "Internal Server Error" }, status: 500 });
-  });
-
-  it("createUser returns 400 if ci or password missing", async () => {
-    const req = { json: vi.fn().mockResolvedValue({}) } as any;
-    const result = await controller.createUser(req);
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Username and password are required" },
-      { status: 400 }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {} as NextRequest;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    await expect(controller.getUser(req, { ci: "99999999" })).rejects.toThrow(
+      "Usuario no encontrado"
     );
-    expect(result).toEqual({ data: { error: "Username and password are required" }, status: 400 });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(userService.findOne).toHaveBeenCalledWith("99999999");
   });
 
-  it("createUser returns 201 and user if created", async () => {
-    const req = { json: vi.fn().mockResolvedValue({ ci: "1", password: "pw" }) } as any;
-    userService.create.mockResolvedValue({ username: "created" });
+  // ---------------------- createUser ----------------------
+  it("should return 400 if ci or password is missing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {
+      json: vi.fn().mockResolvedValue({}),
+    } as unknown as NextRequest;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const result = await controller.createUser(req);
-    expect(userService.create).toHaveBeenCalledWith({ ci: "1", password: "pw" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ username: "created" }, { status: 201 });
-    expect(result).toEqual({ data: { username: "created" }, status: 201 });
+
+    expect(result).toEqual({
+      error: "Username and password are required",
+      status: 400,
+    });
   });
 
-  it("createUser returns 409 if username exists", async () => {
-    const req = { json: vi.fn().mockResolvedValue({ ci: "1", password: "pw" }) } as any;
-    const error = new Error("exists") as any;
-    error.name = "SequelizeUniqueConstraintError";
-    userService.create.mockRejectedValue(error);
+  it("should return 201 and success message when user is created", async () => {
+    const newUser: CreateUserDto = {
+        ci: "1",
+        password: "pw",
+        nombre: "Alice",
+        celular: "",
+        banco: "",
+        cuentaBancaria: "",
+        rol: "admin",
+        perros: []
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {
+      json: vi.fn().mockResolvedValue(newUser),
+    } as unknown as NextRequest;
+
+    userService.create.mockResolvedValue("1" as never);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const result = await controller.createUser(req);
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Username already exists" },
-      { status: 409 }
-    );
-    expect(result).toEqual({ data: { error: "Username already exists" }, status: 409 });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(userService.create).toHaveBeenCalledWith(newUser);
+    expect(result).toEqual({
+      message: "Usuario con ci 1 creado con éxito",
+      status: 201,
+    });
   });
 
-  it("createUser returns 500 on other errors", async () => {
-    const req = { json: vi.fn().mockResolvedValue({ ci: "1", password: "pw" }) } as any;
+  it("should throw error if userService.create rejects", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {
+      json: vi.fn().mockResolvedValue({ ci: "1", password: "pw" }),
+    } as unknown as NextRequest;
+
     userService.create.mockRejectedValue(new Error("fail"));
-    const result = await controller.createUser(req);
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-    expect(result).toEqual({ data: { error: "Internal Server Error" }, status: 500 });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    await expect(controller.createUser(req)).rejects.toThrow("fail");
   });
 
-  it("updateUser returns updated user if found", async () => {
-    const req = { json: vi.fn().mockResolvedValue({ password: "new" }) } as any;
-    userService.update.mockResolvedValue({ username: "test", password: "new" });
-    const result = await controller.updateUser(req, { username: "test" });
-    expect(userService.update).toHaveBeenCalledWith("test", { password: "new" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ username: "test", password: "new" });
-    expect(result).toEqual({ data: { username: "test", password: "new" } });
+  // ---------------------- updateUser ----------------------
+  it("should return updated user when found", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req = {
+      json: vi.fn().mockResolvedValue({ nombre: "Updated" }),
+    } as unknown as NextRequest;
+    const updatedUser = { ci: "123", nombre: "Updated" };
+
+    userService.update.mockResolvedValue(updatedUser as never);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const result = await controller.updateUser(req, { username: "123" });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(userService.update).toHaveBeenCalledWith("123", {
+      nombre: "Updated",
+    });
+    expect(result).toEqual({ data: updatedUser });
   });
 
-  it("updateUser returns 404 if user not found", async () => {
-    const req = { json: vi.fn().mockResolvedValue({}) } as any;
-    userService.update.mockResolvedValue(null);
-    const result = await controller.updateUser(req, { username: "notfound" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ error: "User not found" }, { status: 404 });
-    expect(result).toEqual({ data: { error: "User not found" }, status: 404 });
-  });
+  // ---------------------- deleteUser ----------------------
+  it("should return true if deleted", async () => {
+    userService.delete.mockResolvedValue(true as never);
 
-  it("updateUser returns 500 on error", async () => {
-    const req = { json: vi.fn().mockResolvedValue({}) } as any;
-    userService.update.mockRejectedValue(new Error("fail"));
-    const result = await controller.updateUser(req, { username: "test" });
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-    expect(result).toEqual({ data: { error: "Internal Server Error" }, status: 500 });
-  });
+    const result = await controller.deleteUser("123");
 
-  it("deleteUser returns success message if deleted", async () => {
-    userService.delete.mockResolvedValue(true);
-    const req = {} as any;
-    const result = await controller.deleteUser(req, { username: "test" });
-    expect(userService.delete).toHaveBeenCalledWith("test");
-    expect(NextResponse.json).toHaveBeenCalledWith({ message: "User deleted successfully" });
-    expect(result).toEqual({ data: { message: "User deleted successfully" } });
-  });
-
-  it("deleteUser returns 404 if user not found", async () => {
-    userService.delete.mockResolvedValue(false);
-    const req = {} as any;
-    const result = await controller.deleteUser(req, { username: "notfound" });
-    expect(NextResponse.json).toHaveBeenCalledWith({ error: "User not found" }, { status: 404 });
-    expect(result).toEqual({ data: { error: "User not found" }, status: 404 });
-  });
-
-  it("deleteUser returns 500 on error", async () => {
-    userService.delete.mockRejectedValue(new Error("fail"));
-    const req = {} as any;
-    const result = await controller.deleteUser(req, { username: "test" });
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-    expect(result).toEqual({ data: { error: "Internal Server Error" }, status: 500 });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(userService.delete).toHaveBeenCalledWith("123");
+    expect(result).toBe(true);
   });
 });

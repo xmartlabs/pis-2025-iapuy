@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-// Importa funciones de Vitest para definir y ejecutar tests.
-
+import type { Mock } from "vitest";
 import { UserService } from "./user.service";
-// Importa la clase UserService que se va a testear.
-
 import { User } from "@/app/models/user.entity";
-// Importa el modelo User para poder mockear sus métodos.
+import type { PaginationDto } from "@/lib/pagination/pagination.dto";
+import type { CreateUserDto } from "../dtos/create-user.dto";
+
+vi.mock("@/lib/database", () => ({
+  __esModule: true,
+  default: {
+    transaction: vi.fn().mockResolvedValue({
+      commit: vi.fn(),
+      rollback: vi.fn(),
+    }),
+  },
+}));
 
 vi.mock("@/app/models/user.entity", () => ({
   User: {
@@ -15,86 +23,183 @@ vi.mock("@/app/models/user.entity", () => ({
     destroy: vi.fn(),
   },
 }));
-// Mockea el modelo User y sus métodos principales para evitar llamadas reales a la base de datos.
 
 vi.mock("../../../models/intervencion.entity", () => ({
   Intervencion: {},
 }));
-// Mockea el modelo Intervencion para evitar inicialización de Sequelize.
 
 vi.mock("@/app/models/perro.entity", () => ({
   Perro: {},
 }));
-// Mockea el modelo Perro para evitar inicialización de Sequelize.
 
+vi.mock("@/app/models/acompania.entity", () => ({
+  Acompania: {},
+}));
+
+vi.mock("@/app/models/registro-sanidad.entity", () => ({
+  RegistroSanidad: {},
+}));
+
+vi.mock("@/app/models/banio.entity", () => ({
+  Banio: {},
+}));
+
+vi.mock("@/app/models/desparasitacion.entity", () => ({
+  Desparasitacion: {},
+}));
+
+vi.mock("@/app/models/expense.entity", () => ({
+  Expense: {},
+}));
+
+vi.mock("@/app/models/institucion.entity", () => ({
+  Institucion: {},
+}));
+
+vi.mock("@/app/models/institucion-intervenciones.entity", () => ({
+  InstitucionIntervencion: {},
+  InstitucionIntervenciones: {},
+}));
+
+vi.mock("@/app/models/patologia.entity", () => ({
+  Patologia: {},
+}));
+
+vi.mock("@/app/models/usrperro.entity", () => ({
+  UsrPerro: {},
+}));
+
+vi.mock("@/app/models/vacuna.entity", () => ({
+  Vacuna: {},
+}));
+
+vi.mock("@/app/models/institution-contact.entity", () => ({
+  InstitutionContact: {},
+}));
+
+vi.mock("@/app/models/intitucion-patalogia.entity", () => ({
+  InstitucionPatologia: {},
+  InstitucionPatologias: {},
+}));
+
+// ---- Tests ----
 describe("UserService", () => {
-  // Define el grupo de tests para UserService.
-  let service: UserService;
+  // eslint-disable-next-line init-declarations
+  let service!: UserService;
 
   beforeEach(() => {
     service = new UserService();
     vi.clearAllMocks();
   });
-  // Antes de cada test, crea una nueva instancia de UserService y limpia los mocks.
 
   it("findAll should return paginated users", async () => {
-    (User.findAndCountAll as any).mockResolvedValue({ rows: [], count: 0 });
-    // Simula que findAndCountAll retorna una lista vacía y un conteo de 0.
-    const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
-    // Crea un objeto de paginación simulado.
-    const result = await service.findAll(pagination as any);
-    // Llama al método findAll del servicio.
-    expect(User.findAndCountAll).toHaveBeenCalled();
-    // Verifica que el método del modelo fue llamado.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findAndCountAllMock = User.findAndCountAll as Mock;
+    findAndCountAllMock.mockResolvedValue({
+      rows: [],
+      count: 0,
+    });
+
+    const pagination: PaginationDto = {
+      query: "",
+      size: 10,
+      page: 1,
+      getOffset: () => 0,
+      getOrder: () => [],
+    };
+
+    const result = await service.findAll(pagination);
+
+    expect(findAndCountAllMock).toHaveBeenCalled();
     expect(result).toBeDefined();
-    // Verifica que el resultado existe.
   });
 
   it("findOne should return a user", async () => {
-    (User.findByPk as any).mockResolvedValue({ username: "test" });
-    // Simula que findByPk retorna un usuario con username "test".
-    const result = await service.findOne("test");
-    // Llama al método findOne del servicio.
-    expect(User.findByPk).toHaveBeenCalledWith("test");
-    // Verifica que el método fue llamado con el argumento correcto.
-    expect(result).toEqual({ username: "test" });
-    // Verifica que el resultado es el esperado.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    const mockUser = { ci: "12345678", nombre: "Pepe" };
+    findByPkMock.mockResolvedValue(mockUser);
+
+    const result = await service.findOne("12345678");
+
+    expect(findByPkMock).toHaveBeenCalledWith("12345678", expect.any(Object));
+    expect(result).toEqual(mockUser);
   });
 
   it("create should create a user", async () => {
-    (User.create as any).mockResolvedValue({ username: "new" });
-    // Simula que create retorna un usuario con username "new".
-    const result = await service.create({ username: "new" } as any);
-    // Llama al método create del servicio.
-    expect(User.create).toHaveBeenCalled();
-    // Verifica que el método fue llamado.
-    expect(result).toEqual({ username: "new" });
-    // Verifica que el resultado es el esperado.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const createMock = User.create as Mock;
+    const ci = "12345678";
+    const newUser: CreateUserDto = {
+      ci: "12345678",
+      password: "1234",
+      nombre: "Pepe",
+      celular: "099999999",
+      banco: "Banco X",
+      cuentaBancaria: "1234567890",
+      rol: "admin",
+      perros: [],
+    };
+
+    createMock.mockResolvedValue(newUser);
+    const result = await service.create(newUser);
+
+    expect(createMock).toHaveBeenCalled();
+    expect(result).toEqual(ci);
   });
 
   it("findOne should return null if user not found", async () => {
-    (User.findByPk as any).mockResolvedValue(null);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    findByPkMock.mockResolvedValue(null);
+
     const result = await service.findOne("notfound");
     expect(result).toBeNull();
   });
 
   it("delete should return true if deleted", async () => {
-    (User.destroy as any).mockResolvedValue(1);
-    // Simula que destroy elimina un usuario (retorna 1).
-    const result = await service.delete("test");
-    // Llama al método delete del servicio.
-    expect(User.destroy).toHaveBeenCalledWith({ where: { username: "test" } });
-    // Verifica que el método fue llamado con los argumentos correctos.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const destroyMock = User.destroy as Mock;
+    destroyMock.mockResolvedValue(1);
+
+    const result = await service.delete("12345678");
+    expect(destroyMock).toHaveBeenCalledWith({
+      where: { ci: "12345678" },
+    });
     expect(result).toBe(true);
-    // Verifica que el resultado es true.
   });
 
   it("delete should return false if not deleted", async () => {
-    (User.destroy as any).mockResolvedValue(0);
-    // Simula que destroy no elimina ningún usuario (retorna 0).
-    const result = await service.delete("test");
-    // Llama al método delete del servicio.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const destroyMock = User.destroy as Mock;
+    destroyMock.mockResolvedValue(0);
+
+    const result = await service.delete("12345678");
     expect(result).toBe(false);
-    // Verifica que el resultado es false.
+  });
+
+  it("update should modify user if found", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    const updateMock = vi.fn().mockResolvedValue({
+      ci: "12345678",
+      nombre: "Carlos",
+    });
+    findByPkMock.mockResolvedValue({ update: updateMock });
+
+    const result = await service.update("12345678", { nombre: "Carlos" });
+
+    expect(findByPkMock).toHaveBeenCalledWith("12345678");
+    expect(updateMock).toHaveBeenCalledWith({ nombre: "Carlos" });
+    expect(result).toEqual({ ci: "12345678", nombre: "Carlos" });
+  });
+
+  it("update should return null if user not found", async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const findByPkMock = User.findByPk as Mock;
+    findByPkMock.mockResolvedValue(null);
+
+    const result = await service.update("99999999", { nombre: "Nuevo" });
+    expect(result).toBeNull();
   });
 });

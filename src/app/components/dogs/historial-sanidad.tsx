@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
@@ -13,16 +14,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LoginContext } from "@/app/context/login-context";
-import CustomPagination from "../pagination";
+import { SanidadContext } from "@/app/context/sanidad-context";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(3);
+  const [page] = useState<number>(1);
+  const [size] = useState<number>(8);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
   const context = useContext(LoginContext);
+  const sanidadContext = useContext(SanidadContext);
+  const router = useRouter();
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
@@ -92,19 +95,42 @@ export default function HistorialSanidad() {
         setRegistros([]);
         setIsOpenError(true);
       });
-  }, [id, context, page, size, fetchRegistrosSanidad]);
+  }, [
+    id,
+    context,
+    page,
+    size,
+    fetchRegistrosSanidad,
+    sanidadContext.lastUpdate,
+  ]);
 
   const columnHeader: string[] = ["Fecha", "Actividad"];
 
   return (
     <>
       <div className="flex flex-col gap-5 w-full">
-        <h2
-          className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Historial de sanidad
-        </h2>
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <h1
+            className="font-serif font-semibold text-2xl text-[#1B2F13] tracking-tight font-size-text-2xl font-family-font-serif"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            Historial de Sanidad
+          </h1>
+
+          {registros.length >= size && totalPages > 1 && (
+            <button
+              onClick={() => {
+                router.push(
+                  `/app/admin/perros/historial-sanidad-completo?id=${id}`
+                );
+              }}
+              className="text-right text-[#5B9B40] hover:text-green-800 cursor-pointer"
+            >
+              Ver historial completo
+            </button>
+          )}
+        </div>
+
         <div
           className="rounded-md border  w-full font-normal"
           style={{ fontFamily: "Archivo, sans-serif" }}
@@ -128,49 +154,50 @@ export default function HistorialSanidad() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
-              {registros && registros.length > 0
-                ? registros.map((registro, i) => (
-                    <TableRow key={i}>
-                      <TableCell
-                        className={`h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal`}
-                      >
-                        {`${new Date(registro.date).toLocaleDateString(
-                          "pt-BR",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }
-                        )}`}
-                      </TableCell>
-                      <TableCell
-                        className={`h-[56px] px-4 text-sm font-normal`}
-                      >
-                        {String(registro.activity)}
-                      </TableCell>
-                      <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            className="shrink-0 p-1 hidden"
-                            onClick={() => {
-                              setIsOpenEdit(true);
-                            }}
-                          >
-                            <Pencil />
-                          </button>
-                          <button className="shrink-0 p-1 hidden">
-                            <Trash2 />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : null}
+              {registros && registros.length > 0 ? (
+                registros.map((registro, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal">
+                      {`${new Date(registro.date).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}`}
+                    </TableCell>
+                    <TableCell className="h-[56px] px-4 text-sm font-normal">
+                      {String(registro.activity)}
+                    </TableCell>
+                    <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          className="shrink-0 p-1 hidden"
+                          onClick={() => {
+                            setIsOpenEdit(true);
+                          }}
+                        >
+                          <Pencil />
+                        </button>
+                        <button className="shrink-0 p-1 hidden">
+                          <Trash2 />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center py-6 text-gray-400"
+                  >
+                    No se encuentran registros de sanidad
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
 
       {isOpenEdit && (
         <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">

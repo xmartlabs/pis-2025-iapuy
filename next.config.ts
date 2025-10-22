@@ -24,6 +24,19 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+   experimental: {
+    authInterrupts: true,
+  },
+  rewrites() {
+    return Promise.resolve([
+      {
+        source: '/interventionsPictures/:path*',
+        destination: '/api/interventionsPictures/:path*',
+      },
+    ])
+  },
 };
+ 
+
 
 export default nextConfig;

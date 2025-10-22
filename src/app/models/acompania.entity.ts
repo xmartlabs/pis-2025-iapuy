@@ -1,4 +1,6 @@
+/* eslint-disable new-cap */
 import {
+  DataType,
   Column,
   CreatedAt,
   DeletedAt,
@@ -13,7 +15,7 @@ import { Intervention } from "./intervention.entity";
 @Table({ tableName: "acompaniantes" })
 export class Acompania extends Model {
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Intervention)
@@ -28,4 +30,6 @@ export class Acompania extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
 }

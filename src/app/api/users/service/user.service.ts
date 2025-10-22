@@ -50,8 +50,8 @@ export class UserService {
           as: "perros",
         },
       ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
+      limit: pagination.size > 0 ? pagination.size : undefined,
+      offset: pagination.size > 0 ? pagination.getOffset() : undefined,
       order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
     });
 
@@ -102,8 +102,19 @@ export class UserService {
     if (typeof password !== "string") {
       throw new Error("Invalid password type: expected string");
     }
-    const hashed = await Hashing.hashPassword(password);
+    if (
+      (password.length < 8 && password.length > 0) ||
+      (password.length > 0 && !/[A-Z]/.test(password))
+    ) {
+      throw new Error(
+        "Password must be at least 8 characters long and contain at least one uppercase letter"
+      );
+    }
+
+    const hashed =
+      password.length > 0 ? await Hashing.hashPassword(password) : password;
     const createUserDto: CreateUserDto = { ...rest, password: hashed };
+
     const transaction = await sequelize.transaction();
 
     const perros = normalizePerros(createUserDto.perros);
@@ -137,7 +148,25 @@ export class UserService {
   ): Promise<User | null> {
     const user = await User.findByPk(username);
     if (!user) return null;
-    return await user.update(updateData);
+
+    const dataToUpdate = { ...updateData };
+
+    if (dataToUpdate.password) {
+      if (typeof dataToUpdate.password !== "string") {
+        throw new Error("Invalid password type: expected string");
+      }
+      if (
+        !dataToUpdate.password ||
+        dataToUpdate.password.length < 8 ||
+        !/[A-Z]/.test(dataToUpdate.password)
+      ) {
+        throw new Error(
+          "Password must be at least 8 characters long and contain at least one uppercase letter"
+        );
+      }
+      dataToUpdate.password = await Hashing.hashPassword(dataToUpdate.password);
+    }
+    return await user.update(dataToUpdate);
   }
 
   async delete(ci: string): Promise<boolean> {

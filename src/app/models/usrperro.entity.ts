@@ -1,5 +1,6 @@
 /* eslint-disable new-cap */
 import {
+  DataType,
   Column,
   CreatedAt,
   DeletedAt,
@@ -12,19 +13,20 @@ import {
 import { User } from "./user.entity";
 import { Intervention } from "./intervention.entity";
 import { Perro } from "./perro.entity";
+import type { CreationOptional } from "sequelize";
 
 @Table({ tableName: "usrperros" })
 export class UsrPerro extends Model {
   @PrimaryKey
-  @Column
-  declare id: string;
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+  declare id: CreationOptional<string>;
 
   @ForeignKey(() => User)
-  @Column
+  @Column({ type: DataType.STRING })
   declare userId: string;
 
   @ForeignKey(() => Perro)
-  @Column
+  @Column({ type: DataType.STRING })
   declare perroId: string;
 
   @ForeignKey(() => Intervention)
@@ -39,4 +41,7 @@ export class UsrPerro extends Model {
 
   @DeletedAt
   declare deletedAt: Date;
+
+  declare User?: User;
+  declare Perro?: Perro;
 }

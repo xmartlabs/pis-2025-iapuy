@@ -2,11 +2,13 @@
 import { useContext, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoginContext } from "@/app/context/login-context";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -19,7 +21,7 @@ import {
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import {UserType} from "@/app/page"
 type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
@@ -29,8 +31,10 @@ export default function DetallePersona() {
   const context = useContext(LoginContext);
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const userCi = context?.userCI;
+  const userType:UserType |null=context?.userType ??null;
 
   const fetchUser = useCallback(
     async (
@@ -142,10 +146,27 @@ export default function DetallePersona() {
         clearTimeout(timeout);
       }
     },
-    [userCi, context]
+    [context]
   );
 
   useEffect(() => {
+    if (searchParams.get('passwordChanged') === 'true') {
+      toast.success(`¡Contraseña cambiada con éxito!`, {
+        duration: 5000,
+        icon: null,
+        className: "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+        style: {
+          background: "#DEEBD9",
+          border: "1px solid #BDD7B3",
+          color: "#121F0D",
+        },
+      });
+      
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('passwordChanged');
+      window.history.replaceState({}, '', url.toString());
+    }
     const controller = new AbortController();
 
     fetchUser(controller.signal)
@@ -160,7 +181,7 @@ export default function DetallePersona() {
     return () => {
       controller.abort();
     };
-  }, [fetchUser]);
+  }, [fetchUser, searchParams]);
 
   return (
     <div className="!overflow-x-auto">
@@ -179,22 +200,24 @@ export default function DetallePersona() {
             <Label htmlFor="text">Nombre</Label>
             <Input type="text" id="nombre" defaultValue={user?.nombre || ""} />
           </div>
-          <div className=" items-center gap-3">
-            <Label htmlFor="text">Rol</Label>
-            <RadioGroup
-              className="flex pt-5"
-              value={user?.esAdmin ? "administrador" : "colaborador"}
-            >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="administrador" id="r1" />
-                <Label htmlFor="r1">Administrador</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="colaborador" id="r2" />
-                <Label htmlFor="r2">Colaborador</Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {userType===UserType.Administrator &&(
+            <div className=" items-center gap-3">
+              <Label htmlFor="text">Rol</Label>
+              <RadioGroup
+                className="flex pt-5"
+                value={user?.esAdmin ? "administrador" : "colaborador"}
+              >
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="administrador" id="r1" />
+                  <Label htmlFor="r1">Administrador</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="colaborador" id="r2" />
+                  <Label htmlFor="r2">Colaborador</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}  
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <div className="grid  items-center gap-3">
@@ -236,9 +259,9 @@ export default function DetallePersona() {
                   <SelectLabel>Perros</SelectLabel>
                   {user && Array.isArray(user.perros) && user.perros.length > 0
                     ? user.perros.map((p, index) =>
-                        p?.nombre ? (
-                          <SelectItem key={index} value={p.nombre}>
-                            {p.nombre}
+                        p?(
+                          <SelectItem key={index} value={p}>
+                            {p}
                           </SelectItem>
                         ) : null
                       )
@@ -260,7 +283,7 @@ export default function DetallePersona() {
               <>
                 <AlertTitle>
                   Si necesitás una nueva contraseña, Hacé{" "}
-                  <a href="/perfil/cambiar-contraseña" className="!underline">
+                  <a href="/app/perfil/change-password" className="!underline">
                     click acá
                   </a>
                   .

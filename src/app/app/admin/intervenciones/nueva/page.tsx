@@ -1,92 +1,23 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useContext, useCallback, useEffect, useState } from "react";
+import { useContext, useCallback, useEffect, useState, useRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
-import { AlertCircleIcon, MinusIcon, PlusIcon } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
-import InterventionRow from "@/app/app/admin/intervenciones/nueva/intervention-row";
-
-const formSchema = z
-  .object({
-    date: z
-      .string()
-      .min(1, { message: "Debe seleccionar una fecha" })
-      .refine(
-        (dateString) => {
-          const selectedDate = new Date(dateString);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          return selectedDate >= today;
-        },
-        {
-          message: "La fecha debe ser hoy o en el futuro",
-        }
-      ),
-    hour: z
-      .string()
-      .min(1, { message: "Debe seleccionar una hora" })
-      .refine(
-        (timeString) => {
-          const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-          return timeRegex.test(timeString);
-        },
-        {
-          message: "Formato de hora inválido (HH:MM)",
-        }
-      ),
-    pairQuantity: z.number().min(1, { message: "Debe ingresar una cantidad" }),
-    type: z.enum(["Educativa", "Recreativa", "Terapeutica"]),
-    institution: z.string().min(1, {
-      message: "Debe ingresar una institución",
-    }),
-    description: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.date && data.hour) {
-      const selectedDateTime = new Date(`${data.date}T${data.hour}`);
-      const now = new Date();
-
-      if (selectedDateTime <= now) {
-        ctx.addIssue({
-          code: "custom",
-          message: "La fecha y hora debe ser en el futuro",
-          path: ["hour"],
-        });
-      }
-    }
-  });
+import InterventionRow from "@/app/components/intervenciones/intervention-row";
+import NuevaIntervencionForm, {
+  type FormValues,
+  type NuevaIntervencionFormRef,
+} from "@/app/components/intervenciones/form-new-intervention";
+import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 
 type Institution = {
   id: string;
   name: string;
 };
-
-type FormValues = z.infer<typeof formSchema>;
 
 export default function NewIntervention() {
   const [error, setError] = useState<string | null>(null);
@@ -96,22 +27,10 @@ export default function NewIntervention() {
   );
   const context = useContext(LoginContext);
   const router = useRouter();
-  const interventionTypes = ["Educativa", "Recreativa", "Terapeutica"];
   const [repeatedIntervention, setRepeatedIntervention] =
     useState<InterventionDto | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: "",
-      hour: "",
-      pairQuantity: 1,
-      type: "Educativa",
-      institution: "",
-      description: "",
-    },
-  });
+  const formRef = useRef<NuevaIntervencionFormRef>(null);
   const fetchInterventionsByInstitution = useCallback(
     async (
       institutionName: string,
@@ -227,12 +146,11 @@ export default function NewIntervention() {
       const backendData = {
         timeStamp: combinedDateTime.toISOString(),
         pairsQuantity: values.pairQuantity,
-        type: values.type.toLowerCase(),
+        type: values.type,
         institution: values.institution,
         description: values.description,
-        cost: 0,
         fotosUrls: [],
-        state: "Pendiente",
+        state: "Pendiente de asignacion",
       };
       if (!retrying) {
         const interventions = await fetchInterventionsByInstitution(
@@ -303,11 +221,8 @@ export default function NewIntervention() {
         );
       }
       setInstitution(null);
-      toast("Intervención creada con éxito", {
-        description: "La intervención ha sido creada exitosamente.",
-      });
       setRetrying(false);
-      router.push("/app/admin/intervenciones/listado");
+      router.push("/app/admin/intervenciones/listado?success=1");
     } catch {
       toast("Error creando intervención");
     }
@@ -421,12 +336,21 @@ export default function NewIntervention() {
         }
       });
   }, [fetchInstitutions, context?.tokenJwt]);
-
   return (
     <div className="mr-[20px]">
+      
+      <CustomBreadCrumb link={["/app/admin/intervenciones/listado", "Intervenciones"]} current={"Nueva intervención"} className={"mb-8"}></CustomBreadCrumb>
+      <div className="w-full sm:mb-[20px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
+        <h1
+          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          Nueva Intervención
+        </h1>
+      </div>
       {error && <p className="text-red-500 text-center">{error}</p>}
       {repeatedIntervention !== null && institution !== null && (
-        <div className="grid border border-red-500 rounded-md p-2 w-full">
+        <div className="grid border border-red-500 rounded-md p-2 w-full mb-8">
           <div className="flex">
             <AlertCircleIcon className="text-red-500 mr-1" />{" "}
             <p className="text-red-500"> Posible intervención duplicada: </p>
@@ -437,204 +361,26 @@ export default function NewIntervention() {
           />
         </div>
       )}
-
-      <div className="w-full mb-4 sm:mb-[20px] pt-8 sm:pt-[60px] flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-0">
-        <h1
-          className="text-3xl sm:text-4xl lg:text-5xl leading-none font-semibold tracking-[-0.025em]"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Nueva Intervención
-        </h1>
-      </div>
-      <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-
-            form
-              .handleSubmit(onSubmit)()
-              .catch((err) => {
-                toast("Error en el formulario", {
-                  description: err instanceof Error ? err.message : String(err),
-                });
-              });
+      <NuevaIntervencionForm
+        ref={formRef}
+        institutions={institutions || []}
+        onSubmit={onSubmit}
+      />
+      <div className="flex justify-start items-center mt-2">
+        <Button
+          type="button"
+          onClick={() => {
+            formRef.current?.submitForm().catch(() => {});
           }}
-          className="w-full"
+          className="max-w-[148px] max-h-[40px] min-w-[80px] px-3 py-2
+                      flex items-center justify-center gap-1
+                      rounded-md
+                      bg-[#5B9B40] text-white
+                      opacity-50"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="grid grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha*</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="hour"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hora*</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="pairQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cantidad de duplas necesaria*</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const newValue = Math.max(1, field.value - 1);
-                          field.onChange(newValue);
-                        }}
-                        disabled={field.value <= 1}
-                        aria-label="Disminuir cantidad"
-                      >
-                        <MinusIcon />
-                      </Button>
-                      <div className="flex items-center justify-center min-w-[3rem] h-10 px-3 py-2 text-sm border border-input bg-background rounded-md">
-                        {field.value}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const newValue = field.value + 1;
-                          field.onChange(newValue);
-                        }}
-                        aria-label="Aumentar cantidad"
-                      >
-                        <PlusIcon />
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Intervención*</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione el tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {interventionTypes.map((type, index) => (
-                          <SelectItem key={index} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="institution"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Institución*</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione una institución" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {institutions && institutions.length > 0 ? (
-                          institutions
-                            .filter(
-                              (inst) => inst?.name && inst.name.trim() !== ""
-                            )
-                            .map((inst, index) => (
-                              <SelectItem key={index} value={inst.name}>
-                                {inst.name}
-                              </SelectItem>
-                            ))
-                        ) : (
-                          <SelectItem value="no-institutions" disabled>
-                            No hay instituciones disponibles
-                          </SelectItem>
-                        )}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <textarea
-                      {...field}
-                      className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md"
-                      rows={4}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="flex justify-start items-center mt-2">
-            <Button
-              type="submit"
-              className="text-sm leading-6 medium !bg-[var(--custom-green)] !text-white w-full sm:w-auto"
-            >
-              Crear Intervención
-            </Button>
-          </div>
-        </form>
-      </Form>
+          Crear Intervención
+        </Button>
+      </div>
       <Toaster richColors position="bottom-right" />
     </div>
   );
