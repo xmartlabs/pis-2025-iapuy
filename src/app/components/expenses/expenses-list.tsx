@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import ReactDOM from "react-dom";
 import CustomSearchBar from "@/app/components/search-bar";
 import {
   Table,
@@ -12,7 +19,7 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Settings, ArrowRight } from "lucide-react";
+import { BadgeDollarSign, Settings, EllipsisIcon } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
@@ -24,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+import MenuPortal from "./list/menu-portal";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -57,6 +65,13 @@ export default function ExpensesList() {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+
+  const [openMenu, setOpenMenu] = useState<boolean>(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
+    null
+  );
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const [menuExpenseId, setMenuExpenseId] = useState<string | null>(null);
 
   const context = useContext(LoginContext);
 
@@ -540,7 +555,56 @@ export default function ExpensesList() {
                     </TableCell>
 
                     <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const btn = e.currentTarget as HTMLElement;
+                          anchorRef.current = btn;
+                          const rect = btn.getBoundingClientRect();
+                          setMenuPos({
+                            top: rect.bottom + window.scrollY,
+                            left: rect.right + window.scrollX,
+                          });
+                          setMenuExpenseId(exp.id);
+                          setOpenMenu(true);
+                        }}
+                      >
+                        <EllipsisIcon className="text-[#5B9B40]" />
+                      </button>
+
+                      {openMenu && menuExpenseId === exp.id && menuPos
+                        ? ReactDOM.createPortal(
+                            <MenuPortal
+                              pos={menuPos}
+                              onClose={() => {
+                                setOpenMenu(false);
+                              }}
+                              anchor={anchorRef.current}
+                            >
+                              <div className="flex flex-col">
+                                <button
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                  onClick={() => {}}
+                                >
+                                  Ver o Editar
+                                </button>
+                                <button
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                  onClick={() => {}}
+                                >
+                                  Cambiar a Pagado
+                                </button>
+                                <button
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                  onClick={() => {}}
+                                >
+                                  Eliminar Gasto
+                                </button>
+                              </div>
+                            </MenuPortal>,
+                            document.body
+                          )
+                        : null}
                     </TableCell>
                   </TableRow>
                 ))
