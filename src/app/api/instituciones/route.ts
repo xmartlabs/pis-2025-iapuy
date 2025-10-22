@@ -9,10 +9,18 @@ await initDatabase();
 export async function GET(request: NextRequest) {
   try {
     const pagination = await extractPagination(request);
-    return institutionsController.getInstitutions(pagination);
+    const institutions = await institutionsController.getInstitutions(
+      pagination
+    );
+    return NextResponse.json(institutions, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return new Response(undefined, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -31,7 +39,47 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error." },
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const id = request.nextUrl.searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing id parameter" },
+        { status: 400 }
+      );
+    }
+    await institutionsController.deleteInstitution(id);
+    return NextResponse.json(
+      { message: "Institution deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Institution not found")
+    ) {
+      return NextResponse.json(
+        { error: "Institution not found" },
+        { status: 404 }
+      );
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
       { status: 500 }
     );
   }

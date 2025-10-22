@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-return */
 "use client";
 import {
   SidebarProvider,
@@ -5,11 +6,12 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
-import {DropDownMenu} from "@/app/components/sidebar/user-dropdown";
+import { DropDownMenu } from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
+import { Toaster } from "@/components/ui/sonner";
 import { useContext, useEffect } from "react";
 import type { UserType } from "@/app/page";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
 type Props = Readonly<{ children: React.ReactNode }>;
@@ -17,8 +19,12 @@ type Props = Readonly<{ children: React.ReactNode }>;
 export default function LoginLayout({ children }: Props) {
   const context = useContext(LoginContext);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname === "/app/reset-password") {
+      return;
+    }
     let mounted = true;
     interface RefreshResponse {
       accessToken: string;
@@ -112,14 +118,27 @@ export default function LoginLayout({ children }: Props) {
     iniciales = "ZZ";
   }
 
+  const noSidebarRoutes = ["/app/perfil/change-password"]; // routes where sidebar is not shown
+
+  const shouldShowSidebar = !noSidebarRoutes.includes(pathname);
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      {shouldShowSidebar && <AppSidebar />}
       <SidebarInset>
-        <SidebarTrigger className="block md:hidden" />
+        {shouldShowSidebar && <SidebarTrigger className="block md:hidden" />}
         {/* eslint-disable-next-line no-void*/}
-        <DropDownMenu iniciales={iniciales} handleLogout={() => void handleLogout()}/>
-        <main className="!ml-8 !mt-[60px]">{children}</main>
+        {shouldShowSidebar && (
+          <DropDownMenu
+            iniciales={iniciales}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            handleLogout={() => handleLogout()}
+          />
+        )}
+        <main className={shouldShowSidebar ? "!ml-8 !mt-[60px]" : ""}>
+          {children}
+        </main>
+        <Toaster position="bottom-right" richColors />
       </SidebarInset>
     </SidebarProvider>
   );

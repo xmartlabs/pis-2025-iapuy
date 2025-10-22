@@ -3,12 +3,23 @@ import { Institucion } from "@/app/models/institucion.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
-import { Op } from "sequelize";
+import { Op, type WhereOptions } from "sequelize";
 import { UsrPerro } from "@/app/models/usrperro.entity";
 import type { PayloadForUser } from "../../users/service/user.service";
 import type { CreateInterventionDto } from "../dtos/create-intervention.dto";
 import { InstitucionIntervencion } from "@/app/models/institucion-intervenciones.entity";
 import sequelize from "@/lib/database";
+import { Paciente } from "@/app/models/pacientes.entity";
+
+import path from "path";
+import fs from "fs";
+import type { EvaluateInterventionDTO } from "../dtos/evaluate-intervention.dto";
+import { PerroExperiencia } from "@/app/models/perros-experiencia.entity";
+import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
+import { Perro } from "@/app/models/perro.entity";
+import { Patologia } from "@/app/models/patologia.entity";
+import { User } from "@/app/models/user.entity";
+import { Acompania } from "@/app/models/acompania.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -38,6 +49,10 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 
+type InterventionWithInstitution = Intervention & {
+  institutionName: string | null;
+};
+
 export class InterventionService {
   async findAll(
     pagination: PaginationDto,
@@ -46,7 +61,7 @@ export class InterventionService {
     statuses: string | null
   ): Promise<PaginationResultDto<Intervention>> {
     const whereBase: Record<string, unknown> =
-      payload.type === "Administrador"
+      payload.type === "Administrador" || payload.type === "Colaborador"
         ? {}
         : {
             userId: payload.ci,
@@ -178,7 +193,170 @@ export class InterventionService {
     });
     return getPaginationResultFromModel(pagination, result);
   }
+  async findAllSimple(
+    payload: PayloadForUser,
+    statuses: string | null
+  ): Promise<
+    Array<{
+      intervensionId: string;
+      type: string;
+      timestamp: Date;
+      institutionId: string;
+      institutionName: string;
+    }>
+  > {
+    const includeBase: Record<string, unknown>[] = [
+      {
+        model: Institucion,
+        as: "Institucions",
+        attributes: ["id", "nombre"],
+        through: { attributes: [] },
+      },
+    ];
 
+    let interventions: Intervention[] = [];
+    const whereBase: WhereOptions = {};
+    if (statuses && statuses.trim()) {
+      const statusesArr = statuses
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statusesArr.length) {
+        whereBase.status = { [Op.in]: statusesArr };
+      }
+    }
+
+    if (payload.type === "Administrador") {
+      interventions = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: includeBase,
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+    } else {
+      // Interventions in which the Collaborator 'Acompanies'
+      const viaUsers = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: User,
+            as: "Users",
+            where: { ci: payload.ci },
+            through: { attributes: [] },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // Interventions in which the Collaborator takes part
+      const viaUsrPerro = await Intervention.findAll({
+        where: Object.assign({}, whereBase),
+        include: [
+          ...includeBase,
+          {
+            model: UsrPerro,
+            as: "UsrPerroIntervention",
+            where: { userId: payload.ci },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ["id", "tipo", "timeStamp"],
+      });
+
+      // merge results, remove duplicates
+      const map = new Map<string, Intervention>();
+      [...viaUsers, ...viaUsrPerro].forEach((i) => map.set(i.id, i));
+      interventions = Array.from(map.values());
+    }
+
+    const mapped = interventions.map((r) => {
+      const institution = r.Institucions?.[0];
+      return {
+        intervensionId: r.id,
+        type: r.tipo.toString(),
+        timestamp: r.timeStamp,
+        institutionId: institution?.id ?? "",
+        institutionName: institution?.nombre ?? "",
+      };
+    });
+
+    return mapped;
+  }
+
+  async findUsersInvolvedInIntervention(
+    payload: PayloadForUser,
+    interventionId: string
+  ): Promise<
+    Array<{
+      userCi: string;
+      userName: string;
+    }>
+  > {
+    const intervention = await this.findIntervention(interventionId);
+    if (intervention === null) {
+      throw new Error(`Intervention with id "${interventionId}" not found`);
+    }
+
+    const interventionWithUsers = await Intervention.findByPk(interventionId, {
+      include: [
+        {
+          model: User,
+          as: "Users",
+          attributes: ["ci", "nombre"],
+          through: { attributes: [] },
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          include: [
+            {
+              model: User,
+              as: "User",
+              attributes: ["ci", "nombre"],
+            },
+          ],
+          required: false,
+        },
+      ],
+    });
+
+    if (!interventionWithUsers) return [];
+
+    const acompaniaUsers = interventionWithUsers.Users ?? [];
+    const usrPerroUsers =
+      interventionWithUsers.UsrPerroIntervention?.map((u) => u.User).filter(
+        Boolean
+      ) ?? [];
+    if (acompaniaUsers.length === 0 && usrPerroUsers.length === 0) return [];
+
+    const allUsers = [...acompaniaUsers, ...usrPerroUsers];
+
+    if (payload.type === "Colaborador") {
+      // If the collaborator is not involved in the intervention return error.
+      const isInvolved = allUsers.some(
+        (u) => u !== undefined && u.ci === payload.ci
+      );
+      if (!isInvolved) {
+        throw new Error(
+          "El colaborador no participa ni acompaña en la intervención seleccionada."
+        );
+      }
+
+      // if collaborator is involved, return only their own data
+      return [{ userCi: payload.ci, userName: payload.name }];
+    }
+    const map = new Map<string, { userCi: string; userName: string }>();
+    allUsers.forEach((u) => {
+      if (u !== undefined) {
+        map.set(u.ci, { userCi: u.ci, userName: u.nombre });
+      }
+    });
+
+    return Array.from(map.values());
+  }
   async findInterventionByDogId(
     pagination: PaginationDto,
     dogId: string,
@@ -186,7 +364,7 @@ export class InterventionService {
   ): Promise<PaginationResultDto<Intervention>> {
     const interventionWhere = pagination.query
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
-      : {};
+      : undefined;
 
     const result = await Intervention.findAndCountAll({
       where: interventionWhere,
@@ -235,7 +413,6 @@ export class InterventionService {
       const intervention = await Intervention.create(
         {
           timeStamp: request.timeStamp,
-          costo: request.cost,
           tipo: request.type,
           pairsQuantity: request.pairsQuantity,
           description: request.description,
@@ -259,5 +436,206 @@ export class InterventionService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  async evaluate(id: string, body: EvaluateInterventionDTO) {
+    const transaction = await sequelize.transaction();
+    try {
+      const intervention = await Intervention.findByPk(id, { transaction });
+      if (!intervention) throw new Error("Intervention not found");
+
+      const picturesUrls: string[] = [];
+      if (body.pictures && body.pictures.length > 0) {
+        const uploadDir = path.join(
+          process.cwd(),
+          "public",
+          "interventionsPictures",
+          id
+        );
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        for (const file of body.pictures) {
+          if (file.size > 15 * 1024 * 1024) {
+            throw new Error(
+              `El archivo ${file.name} excede el tamaño máximo permitido el cual es de 15MB`
+            );
+          }
+          if (!file.type.startsWith("image/")) {
+            throw new Error(`El archivo ${file.name} no es una imagen válida`);
+          }
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = path.join(uploadDir, fileName);
+          // eslint-disable-next-line no-await-in-loop
+          const buffer = Buffer.from(await file.arrayBuffer());
+          fs.writeFileSync(filePath, buffer);
+          picturesUrls.push(`/interventionsPictures/${id}/${fileName}`);
+        }
+        intervention.fotosUrls = picturesUrls;
+      }
+
+      if (body.driveLink) {
+        intervention.driveLink = body.driveLink;
+      }
+      intervention.status = "Evaluada"; //! agrego este estado para que no la vuelvan a evaluar????
+      await intervention.save({ transaction });
+      await Promise.all(
+        body.patients.map((patient) =>
+          Paciente.create(
+            {
+              nombre: patient.name,
+              edad: patient.age,
+              ...(patient.pathology_id !== "" && {
+                patologia_id: patient.pathology_id,
+              }),
+              intervencion_id: id,
+              experiencia: patient.experience,
+            },
+            { transaction }
+          )
+        )
+      );
+
+      await Promise.all(
+        body.experiences.map((dogExperience) =>
+          PerroExperiencia.create(
+            {
+              perro_id: dogExperience.perro_id,
+              intervencion_id: id,
+              experiencia: dogExperience.experiencia,
+            },
+            { transaction }
+          )
+        )
+      );
+
+      await transaction.commit();
+      return intervention;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async findAllPathologiesbyId(id: string) {
+    const intervention = await Intervention.findByPk(id);
+    if (intervention?.tipo !== "Terapeutica") {
+      return [];
+    }
+    const relation = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+    if (!relation) {
+      return [];
+    }
+    const institutionId = relation.institucionId;
+    const pathologiesRelation = await InstitucionPatologias.findAll({
+      where: { institucionId: institutionId },
+    });
+    const pathologies = await Promise.all(
+      pathologiesRelation.map((rel) =>
+        Patologia.findByPk(rel.patologiaId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return pathologies;
+  }
+
+  async findAllDogsbyId(id: string) {
+    const pairsUserDog = await UsrPerro.findAll({
+      where: { intervencionId: id },
+    });
+    if (!pairsUserDog) {
+      return [];
+    }
+    const dogs = await Promise.all(
+      pairsUserDog.map((pair) =>
+        Perro.findByPk(pair.perroId, {
+          attributes: ["id", "nombre"],
+        })
+      )
+    );
+    return dogs;
+  }
+
+  async findIntervention(id: string) {
+    const intervention = await Intervention.findByPk(id);
+
+    if (!intervention) return null;
+    const link = await InstitucionIntervencion.findOne({
+      where: { intervencionId: id },
+    });
+
+    let institutionName = null;
+    if (link?.institucionId) {
+      const institution = await Institucion.findByPk(link.institucionId, {
+        attributes: ["nombre"],
+      });
+      institutionName = institution?.nombre ?? null;
+    }
+
+    return {
+      ...intervention.toJSON(),
+      institutionName,
+    } as InterventionWithInstitution;
+  }
+
+  async delete(id: string): Promise<void> {
+    const res = await Intervention.destroy({ where: { id } });
+    if (res === 0) {
+      throw new Error(`Intervention not found with id ${id}`);
+    }
+  }
+
+  async getInterventionDetails(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      include: [
+        {
+          model: Institucion,
+          as: "Institucions",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          attributes: ["perroId", "userId"],
+          include: [
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: PerroExperiencia,
+                  as: "DogExperiences",
+                  attributes: ["id", "experiencia"],
+                  where: { intervencion_id: id },
+                  required: false,
+                },
+              ],
+            },
+            { model: User, as: "User", attributes: ["ci", "nombre"] },
+          ],
+        },
+        {
+          model: Paciente,
+          as: "Pacientes",
+          attributes: ["id", "nombre", "edad", "patologia_id", "experiencia"],
+          include: [
+            { model: Patologia, as: "Patologia", attributes: ["id", "nombre"] },
+          ],
+        },
+        {
+          model: Acompania,
+          as: "Acompania",
+          attributes: ["userId"],
+          include: [{ model: User, as: "User", attributes: ["ci", "nombre"] }],
+        },
+      ],
+    });
+    return intervention;
   }
 }

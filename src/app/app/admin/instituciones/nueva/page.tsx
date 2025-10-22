@@ -165,7 +165,7 @@ export default function Nueva() {
                   <FormItem className="flex-1">
                     <FormLabel>Patologías</FormLabel>
                     <FormControl>
-                      <div className="flex flex-wrap gap-2 items-center  px-2 py-1 min-h-[40px]">
+                      <div className="flex flex-wrap gap-2 items-center py-1 min-h-[40px]">
                         {field.value?.map((p: string, i: number) => (
                           <div
                             key={i}
@@ -190,7 +190,7 @@ export default function Nueva() {
                             setTempValue(e.target.value);
                           }}
                           onKeyDown={handleKeyDown}
-                          className="flex-1 min-w-[60px] border-none p-0 focus:ring-0"
+                          className="flex-1 min-w-[60px] border border-#D4D4D4 rounded-md p-0 focus:ring-0"
                         />
                       </div>
                     </FormControl>
@@ -207,6 +207,8 @@ export default function Nueva() {
                   index={index}
                   appendContact={append}
                   removeContact={remove}
+                  renderAppend={index===fields.length-1}
+                  renderRemove={index>0}
                 />
               </div>
             ))}

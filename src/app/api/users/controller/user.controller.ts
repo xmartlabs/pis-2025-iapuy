@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { UserService } from "../service/user.service";
 import type { CreateUserDto } from "../dtos/create-user.dto";
 import type { UpdateUserDto } from "../dtos/update-user.dto";
@@ -44,9 +44,9 @@ export class UserController {
 
   async createUser(request: NextRequest) {
     const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
-    if (!usrData.ci || !usrData.password) {
+    if (!usrData.ci) {
       return {
-        error: "Username and password are required",
+        error: "Username is required",
         status: 400,
       };
     }
@@ -59,29 +59,22 @@ export class UserController {
   }
 
   async updateUser(request: NextRequest, { username }: { username: string }) {
-    try {
-      const body: UpdateUserDto = (await request.json()) as UpdateUserDto;
-      const user = await this.userService.update(username, body);
+    const body: UpdateUserDto = (await request.json()) as UpdateUserDto;
+    const user = await this.userService.update(username, body);
 
-      if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(user);
-    } catch {
-      return NextResponse.json(
-        { error: "Internal Server Error" },
-        { status: 500 }
-      );
+    if (!user) {
+      return { error: "User not found", status: 404 };
     }
+
+    return user;
   }
 
   async deleteUser(ci: string): Promise<boolean> {
     return await this.userService.delete(ci);
   }
-  async getUserDogs( ci:string){
-    const dogs= await this.userService.findDogIdsByUser(ci);
-    
+  async getUserDogs(ci: string) {
+    const dogs = await this.userService.findDogIdsByUser(ci);
+
     return dogs;
   }
 }

@@ -15,12 +15,11 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
-import CustomPagination from "../pagination";
 
 export default function HistorialIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [size] = useState<number>(3);
+  const [page] = useState<number>(1);
+  const [size] = useState<number>(8);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [reload] = useState(false);
@@ -183,10 +182,23 @@ export default function HistorialIntervenciones() {
           className="font-serif font-semibold text-2xl leading-8 tracking-tight text-[#1B2F13] font-size-text-2xl font-family-font-serif"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
-          Intervenciones
+          Historial de Intervenciones
         </h1>
+
+        {intervention.length >= size && totalPages > 1 && (
+          <button
+            onClick={() => {
+              router.push(
+                `/app/admin/perros/historial-intervenciones-completo?id=${id}`
+              );
+            }}
+            className="text-right text-[#5B9B40] hover:text-green-800 cursor-pointer"
+          >
+            Ver historial completo
+          </button>
+        )}
       </div>
-      <div className="mx-auto w-full border border-gray-300 pb-2 rounded-lg">
+      <div className="mx-auto w-full border border-gray-300 rounded-lg">
         <div className="sm:w-full overflow-x-auto">
           <Table className="w-full border-collapse">
             <TableHeader>
@@ -219,7 +231,7 @@ export default function HistorialIntervenciones() {
                 intervention.map((inter) => (
                   <TableRow
                     key={inter.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
+                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
                     onClick={() => {
                       go(inter.id);
                     }}
@@ -247,9 +259,9 @@ export default function HistorialIntervenciones() {
 
                     <TableCell className="p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        {Array.isArray(inter.institutions) &&
-                        inter.institutions.length > 0
-                          ? (inter.institutions as Array<{ nombre?: string }>)
+                        {Array.isArray(inter.Institucions) &&
+                        inter.Institucions.length > 0
+                          ? (inter.Institucions as Array<{ nombre?: string }>)
                               .map((inst) => inst?.nombre ?? "")
                               .filter(Boolean)
                               .join(", ")
@@ -260,12 +272,11 @@ export default function HistorialIntervenciones() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <p className="text-sm text-muted-foreground">
-                        No se encuentran intervenciones
-                      </p>
-                    </div>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center py-6 text-gray-400"
+                  >
+                    No se encuentran registros de intervenciones
                   </TableCell>
                 </TableRow>
               )}
@@ -273,7 +284,6 @@ export default function HistorialIntervenciones() {
           </Table>
         </div>
       </div>
-      <CustomPagination page={page} totalPages={totalPages} setPage={setPage} />
     </div>
   );
 }

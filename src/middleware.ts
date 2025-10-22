@@ -7,7 +7,10 @@ export async function middleware(req: NextRequest) {
   const method = req.method;
 
   // Se excluye las rutas de login y refresh
-  if (pathname.startsWith("/api/auth")) {
+  if (
+    pathname.startsWith("/api/auth") ||
+    (pathname.startsWith("/api/magic-link") && method === "PUT")
+  ) {
     return NextResponse.next();
   }
 
@@ -29,10 +32,12 @@ export async function middleware(req: NextRequest) {
         (pathname.startsWith("/api/users/") && pathname.endsWith("/perros")) ||
         pathname.startsWith("/api/perros/detalles") ||
         pathname.startsWith("/api/registros-sanidad") ||
-        pathname.startsWith("/api/gastos") ||
+        pathname.startsWith("/api/expenses") ||
         pathname.startsWith("/api/users/profile") ||
         pathname.startsWith("/api/perros/interventions") ||
-        (pathname.startsWith("/api/intervention") && method === "GET")
+        pathname.startsWith("/api/perros/options") ||
+        (pathname.startsWith("/api/intervention") && method === "GET") ||
+        (pathname.startsWith("/api/intervention") && method === "PUT")
       ) {
         return NextResponse.next();
       }
