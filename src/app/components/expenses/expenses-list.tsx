@@ -12,9 +12,19 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Settings, ArrowRight } from "lucide-react";
+import {
+  BadgeDollarSign,
+  Settings,
+  EllipsisVertical,
+} from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import FilterDropdown, {
@@ -24,6 +34,8 @@ import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+
+import DeleteExpenseDialog from "./delete-expense-dialog";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -57,6 +69,8 @@ export default function ExpensesList() {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<ExpenseDto | null>(null);
 
   const context = useContext(LoginContext);
 
@@ -540,7 +554,42 @@ export default function ExpensesList() {
                     </TableCell>
 
                     <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md flex items-center justify-center">
+                            <EllipsisVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {}}>
+                            Ver o editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {}}>
+                            Cambiar a Pagado
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setExpenseToDelete(exp);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            Eliminar gasto
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {expenseToDelete && (
+                        <DeleteExpenseDialog
+                          open={deleteDialogOpen}
+                          exp={expenseToDelete}
+                          onClose={() => {
+                            setDeleteDialogOpen(false);
+                            setExpenseToDelete(null);
+                          }}
+                          onSuccess={() => {
+                            setReload((r) => !r);
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
