@@ -1,6 +1,6 @@
 import { initDatabase } from "@/lib/init-database";
 import { ExpensesController } from "./controller/expenses.controller";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { extractPagination } from "@/lib/pagination/extraction";
 import type { PayloadForUser } from "../perros/detalles/route";
 import jwt from "jsonwebtoken";
@@ -114,5 +114,38 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: "Bad request" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const authHeader = request.headers.get("authorization") ?? "";
+  const accessToken = authHeader.split(" ")[1];
+
+  if (!accessToken) {
+    throw new Error("No se encontro un token de acceso en la solicitud.");
+  }
+
+  const payload = jwt.decode(accessToken) as PayloadForUser;
+
+  const id = request.nextUrl.searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  try {
+    const affected = await expensesController.delete(id, payload);
+
+    if (affected === 0)
+      return NextResponse.json(
+        { error: "No expense with that id found." },
+        { status: 404 }
+      );
+
+    return NextResponse.json(null, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
   }
 }

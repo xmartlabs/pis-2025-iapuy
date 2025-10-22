@@ -385,4 +385,18 @@ export class ExpensesService {
         return 0;
     }
   }
+
+  async deleteExpense(id: string, payload: PayloadForUser): Promise<number> {
+    return await Expense.destroy({
+      where:
+        payload.type === "Administrador"
+          ? {
+              id,
+            }
+          : {
+              id,
+              userId: payload.ci,
+            },
+    });
+  }
 }
