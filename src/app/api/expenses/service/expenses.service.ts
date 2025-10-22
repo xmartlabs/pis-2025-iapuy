@@ -335,6 +335,10 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
+
+    if (intervention && request.km)
+      request.amount *= gastosService.getCostoKilometros();
+
     const expense = await Expense.create(
       {
         userId: request.userId,

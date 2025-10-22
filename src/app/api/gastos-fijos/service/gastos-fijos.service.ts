@@ -1,12 +1,14 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path, { dirname } from "node:path";
-import UpdateGastosDTO from "../dtos/update-gastos.dto";
+import type UpdateGastosDTO from "../dtos/update-gastos.dto";
 
 class GastosFijosService {
   private static banios: number;
   private static desparasitacionesInterna: number;
   private static desparasitacionesExterna: number;
   private static vacunas: number;
+  private static kilometros: number;
+  private static honorario: number;
   private static initialized = false;
 
   private static readonly filePath = path.join(
@@ -20,25 +22,29 @@ class GastosFijosService {
 
     try {
       const data = await readFile(this.filePath, "utf-8");
-      const costos = JSON.parse(data);
+      const costos = JSON.parse(data) as {
+        banios: number;
+        desparasitacionesExterna: number;
+        desparasitacionesInterna: number;
+        vacunas: number;
+        kilometros: number;
+        honorario: number;
+      };
 
       this.banios = costos.banios ?? 250;
       this.desparasitacionesInterna = costos.desparasitacionesInterna ?? 250;
       this.desparasitacionesExterna = costos.desparasitacionesExterna ?? 250;
-
       this.vacunas = costos.vacunas ?? 250;
-
-      console.log("[GastosFijosService] Loaded costos from file:", costos);
+      this.kilometros = costos.kilometros ?? 50;
+      this.honorario = costos.honorario ?? 400;
     } catch {
-      console.warn(
-        "[GastosFijosService] costos.json not found. Creating with defaults."
-      );
-
       const defaultCostos = {
         banios: 250,
         desparasitacionesInterna: 250,
         desparasitacionesExterna: 250,
         vacunas: 250,
+        kilometros: 0,
+        honorario: 0,
       };
 
       await mkdir(dirname(this.filePath), { recursive: true });
@@ -53,6 +59,8 @@ class GastosFijosService {
       this.desparasitacionesInterna = 250;
       this.desparasitacionesExterna = 250;
       this.vacunas = 250;
+      this.kilometros = 50;
+      this.honorario = 400;
     }
 
     this.initialized = true;
@@ -74,22 +82,34 @@ class GastosFijosService {
     return GastosFijosService.vacunas;
   }
 
+  getCostoKilometros(): number {
+    return GastosFijosService.kilometros;
+  }
+
+  getHonorario(): number {
+    return GastosFijosService.honorario;
+  }
+
   getCostos(): {
     banios: number;
     desparasitacionesExterna: number;
     desparasitacionesInterna: number;
     vacunas: number;
+    kilometros: number;
+    honorario: number;
   } {
     return {
       banios: GastosFijosService.banios,
       desparasitacionesExterna: GastosFijosService.desparasitacionesExterna,
       desparasitacionesInterna: GastosFijosService.desparasitacionesInterna,
       vacunas: GastosFijosService.vacunas,
+      kilometros: GastosFijosService.kilometros,
+      honorario: GastosFijosService.honorario,
     };
   }
 
   async setCostos(costos: UpdateGastosDTO) {
-    const persist = {
+    const newCostos = {
       banios: costos.banios ?? GastosFijosService.banios,
       desparasitacionesInterna:
         costos.desparasitacionesInterna ??
@@ -98,21 +118,24 @@ class GastosFijosService {
         costos.desparasitacionesExterna ??
         GastosFijosService.desparasitacionesExterna,
       vacunas: costos.vacunas ?? GastosFijosService.vacunas,
+      kilometros: costos.kilometros ?? GastosFijosService.kilometros,
+      honorario: costos.honorario ?? GastosFijosService.honorario,
     };
+
+    GastosFijosService.banios = newCostos.banios;
+    GastosFijosService.desparasitacionesInterna =
+      newCostos.desparasitacionesInterna;
+    GastosFijosService.desparasitacionesExterna =
+      newCostos.desparasitacionesExterna;
+    GastosFijosService.vacunas = newCostos.vacunas;
+    GastosFijosService.kilometros = newCostos.kilometros;
+    GastosFijosService.honorario = newCostos.honorario;
+
     await writeFile(
       GastosFijosService.filePath,
-      JSON.stringify(persist, null, 2),
+      JSON.stringify(newCostos, null, 2),
       "utf-8"
     );
-
-    if (costos.banios) GastosFijosService.banios = costos.banios;
-    if (costos.desparasitacionesInterna)
-      GastosFijosService.desparasitacionesInterna =
-        costos.desparasitacionesInterna;
-    if (costos.desparasitacionesExterna)
-      GastosFijosService.desparasitacionesExterna =
-        costos.desparasitacionesExterna;
-    if (costos.vacunas) GastosFijosService.vacunas = costos.vacunas;
   }
 }
 

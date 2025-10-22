@@ -17,4 +17,12 @@ export default class UpdateGastosDTO {
   @IsOptional()
   @IsNumber()
   vacunas?: number;
+
+  @IsOptional()
+  @IsNumber()
+  kilometros?: number;
+
+  @IsOptional()
+  @IsNumber()
+  honorario?: number;
 }
