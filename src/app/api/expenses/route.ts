@@ -5,6 +5,7 @@ import { extractPagination } from "@/lib/pagination/extraction";
 import type { PayloadForUser } from "../perros/detalles/route";
 import jwt from "jsonwebtoken";
 import type { Expense } from "@/app/models/expense.entity";
+import { Expense as ExpenseModel } from "@/app/models/expense.entity";
 
 const expensesController = new ExpensesController();
 await initDatabase();
@@ -78,6 +79,42 @@ export async function PUT(request: NextRequest) {
         { error: "Missing id parameter" },
         { status: 400 }
       );
+    }
+
+    // If the expense is a sanidad-type (Baño, Vacunacion, Desparasitacion..)
+    // then delegate the update to the service that edits the sanidad entity.
+    try {
+      const sanidadTypes = new Set([
+        "Baño",
+        "Vacunacion",
+        "Desparasitacion Interna",
+        "Desparasitacion Externa",
+      ]);
+      const expenseRecord = await ExpenseModel.findByPk(id).catch(() => null);
+      const currentType = expenseRecord?.type;
+      if (typeof currentType === "string" && sanidadTypes.has(currentType)) {
+        const obj =
+          raw && typeof raw === "object" && raw !== null
+            ? (raw as Record<string, unknown>)
+            : {};
+        const payload =
+          "expense" in obj && obj.expense && typeof obj.expense === "object"
+            ? (obj.expense as Record<string, unknown>)
+            : obj;
+        const updated = await expensesController.updateSanidadForExpense(
+          id,
+          payload
+        );
+        if (!updated) {
+          return NextResponse.json(
+            { error: "Sanidad entity not found" },
+            { status: 404 }
+          );
+        }
+        return new NextResponse(null, { status: 204 });
+      }
+    } catch {
+      // ignore and continue to normal expense update flow
     }
 
     const allowed = [

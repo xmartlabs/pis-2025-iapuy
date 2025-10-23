@@ -515,6 +515,149 @@ export class ExpensesService {
     return updated;
   }
 
+  async updateSanidadForExpense(
+    expenseId: string,
+    payload: Record<string, unknown>
+  ): Promise<Vacuna | Banio | Desparasitacion | null> {
+    const expense = await Expense.findByPk(expenseId).catch(() => null);
+    if (!expense) return null;
+
+    const type = expense.type as string | undefined;
+    const sanidadId = expense.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (!isSanidadType) return null;
+
+    const sanitizeUpdateObj = (obj: Record<string, unknown>) => {
+      const forbidden = new Set([
+        "id",
+        "registroSanidadId",
+        "createdAt",
+        "updatedAt",
+      ]);
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(obj)) {
+        if (forbidden.has(k)) continue;
+        out[k] = obj[k];
+      }
+      return out;
+    };
+
+    if (sanidadId) {
+      const vacuna = await Vacuna.findByPk(sanidadId).catch(() => null);
+      if (vacuna) {
+        const upd = sanitizeUpdateObj(payload);
+        await vacuna.update(upd).catch(() => null);
+        return vacuna;
+      }
+
+      const banio = await Banio.findByPk(sanidadId).catch(() => null);
+      if (banio) {
+        const upd = sanitizeUpdateObj(payload);
+        await banio.update(upd).catch(() => null);
+        return banio;
+      }
+
+      const des = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+      if (des) {
+        const upd = sanitizeUpdateObj(payload);
+        await des.update(upd).catch(() => null);
+        return des;
+      }
+    }
+
+    try {
+      const fecha =
+        expense.dateSanity instanceof Date
+          ? expense.dateSanity
+          : new Date(String(expense.dateSanity));
+      if (!Number.isNaN(fecha.getTime()) && expense.userId) {
+        const start = new Date(fecha);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(fecha);
+        end.setHours(23, 59, 59, 999);
+
+        const registros = (await RegistroSanidad.findAll({
+          include: [
+            {
+              model: Perro,
+              as: "Perro",
+              where: { duenioId: expense.userId },
+              required: true,
+            },
+          ],
+        }).catch(() => [])) as RegistroSanidad[];
+
+        const tasks = registros.map((reg) =>
+          (async () => {
+            try {
+              const regId = reg.id;
+              const [vacuna, banio, des] = await Promise.all([
+                Vacuna.findOne({
+                  where: {
+                    registroSanidadId: regId,
+                    fecha: { [Op.between]: [start, end] },
+                  },
+                }).catch(() => null),
+                Banio.findOne({
+                  where: {
+                    registroSanidadId: regId,
+                    fecha: { [Op.between]: [start, end] },
+                  },
+                }).catch(() => null),
+                Desparasitacion.findOne({
+                  where: {
+                    registroSanidadId: regId,
+                    fecha: { [Op.between]: [start, end] },
+                  },
+                }).catch(() => null),
+              ]);
+
+              if (vacuna) return { reg, kind: "vacuna", data: vacuna } as const;
+              if (banio) return { reg, kind: "banio", data: banio } as const;
+              if (des)
+                return { reg, kind: "desparasitacion", data: des } as const;
+              return null;
+            } catch {
+              return null;
+            }
+          })()
+        );
+
+        const results = await Promise.all(tasks);
+        const first = results.find((x) => x !== null);
+        if (first) {
+          const r = first as NonNullable<typeof first>;
+          const upd = sanitizeUpdateObj(payload);
+          if (r.kind === "vacuna") {
+            const entity = r.data;
+            await entity.update(upd).catch(() => null);
+            return entity;
+          }
+          if (r.kind === "banio") {
+            const entity = r.data;
+            await entity.update(upd).catch(() => null);
+            return entity;
+          }
+          if (r.kind === "desparasitacion") {
+            const entity = r.data;
+            await entity.update(upd).catch(() => null);
+            return entity;
+          }
+        }
+      }
+    } catch {
+      // ignore fallback errors
+    }
+
+    return null;
+  }
+
   getFixedCost(sanidadtype: string): number {
     switch (sanidadtype) {
       case "Baño":

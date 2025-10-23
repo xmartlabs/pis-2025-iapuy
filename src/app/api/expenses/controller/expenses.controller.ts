@@ -49,4 +49,8 @@ export class ExpensesController {
   getExpenseDetails(id: string) {
     return this.expensesService.getExpenseDetails(id);
   }
+
+  updateSanidadForExpense(expenseId: string, payload: Record<string, unknown>) {
+    return this.expensesService.updateSanidadForExpense(expenseId, payload);
+  }
 }
