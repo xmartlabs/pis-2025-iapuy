@@ -15,6 +15,20 @@ export interface PayloadForUser extends jwt.JwtPayload {
   name: string;
   type: string;
 }
+
+type PerroAttrs = { nombre: string };
+
+type UserSanitized = {
+  ci: string;
+  nombre: string;
+  celular: string | null;
+  banco: string | null;
+  cuentaBancaria: string | null;
+  esAdmin: boolean;
+  isActivated: boolean;
+  perros: PerroAttrs[];
+};
+
 function normalizePerros(input: unknown): string[] {
   if (Array.isArray(input)) return input.map(String);
 
@@ -58,8 +72,8 @@ export class UserService {
     return getPaginationResultFromModel(pagination, result);
   }
 
-  async findOne(ci: string): Promise<User | null> {
-    return await User.findByPk(ci, {
+  async findOne(ci: string): Promise<UserSanitized | null> {
+    const userInstance = await User.findByPk(ci, {
       attributes: [
         "ci",
         "nombre",
@@ -67,6 +81,7 @@ export class UserService {
         "banco",
         "cuentaBancaria",
         "esAdmin",
+        "password",
       ],
       include: [
         {
@@ -76,7 +91,26 @@ export class UserService {
         },
       ],
     });
+
+    if (!userInstance) return null;
+
+    const plain = userInstance.toJSON<User>();
+    const { password, perros = [], ...rest } = plain;
+
+    const sanitized: UserSanitized = {
+      ci: rest.ci,
+      nombre: rest.nombre,
+      celular: rest.celular ?? null,
+      banco: rest.banco ?? null,
+      cuentaBancaria: rest.cuentaBancaria ?? null,
+      esAdmin: Boolean(rest.esAdmin),
+      isActivated: Boolean(password && password !== ""),
+      perros: perros.map((p) => ({ nombre: p.nombre })),
+    };
+
+    return sanitized;
   }
+
   async findDogIdsByUser(duenioId: string): Promise<Perro[]> {
     const Perros = await Perro.findAll({
       where: { duenioId },
