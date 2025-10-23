@@ -8,6 +8,10 @@ import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
 import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
+import sequelize from "@/lib/database";
+import { Banio } from "@/app/models/banio.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
+import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 
 const monthNames = [
   "Ene",
@@ -389,5 +393,65 @@ export class ExpensesService {
       default:
         return 0;
     }
+  }
+
+  async deleteExpense(id: string, payload: PayloadForUser): Promise<number> {
+    const expense = await Expense.findOne({
+      where:
+        payload.type === "Administrador"
+          ? {
+              id,
+            }
+          : {
+              id,
+              userId: payload.ci,
+            },
+    });
+
+    if (!expense) return 0;
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      let promiseDestroySanity = Promise.resolve(0);
+
+      if (expense.sanidadId) {
+        switch (expense.type) {
+          case "Baño":
+            promiseDestroySanity = Banio.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+
+          case "Vacunacion":
+            promiseDestroySanity = Vacuna.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+
+          case "Desparasitacion Interna":
+          case "Desparasitacion Externa":
+            promiseDestroySanity = Desparasitacion.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+        }
+      }
+
+      await Promise.all([
+        expense.destroy({ transaction }),
+        promiseDestroySanity,
+      ]);
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+
+    return 1;
   }
 }
