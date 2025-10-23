@@ -88,9 +88,12 @@ export function ResetForm(props: Readonly<ResetFormProps>) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md">
-      <div className="grid w-full items-center gap-1.5">
-        <Label htmlFor="password">Nueva contraseña</Label>
+    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md gap-[32px]">
+      <div>
+        <Label className="font-sans font-normal text-base leading-5 tracking-normal align-middle text-[#1B2F13]">Si te arrepentiste, no pasa nada, solo cerrá la ventana</Label>
+      </div>
+      <div className="grid w-full items-center gap-[8px]">
+        <Label htmlFor="password">Contraseña</Label>
         <Input
           id="password"
           type="password"
@@ -100,11 +103,15 @@ export function ResetForm(props: Readonly<ResetFormProps>) {
           }}
           placeholder="••••••••"
           required
-          className="w-full"
+          className="w-full h-[40px] rounded-md border border-[#D4D4D4] 
+             opacity-100 px-3 py-2.5 text-base font-sans box-border"
         />
       </div>
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" 
+              className="w-full h-[40px] min-w-[80px] rounded-md flex items-center justify-center gap-1 
+                          opacity-100 px-3 py-2 bg-[#5B9B40] text-white"
+              disabled={isLoading}>
         {isLoading ? "Cambiando..." : "Confirmar"}
       </Button>
     </form>

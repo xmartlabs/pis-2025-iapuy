@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Label } from "@/components/ui/label";
 
 const FormSchema = z.object({
   password: z.string()
@@ -90,7 +91,7 @@ export default function Home() {
     >
       {!dialogOpen && (
         <main
-          className="max-w-[564px] max-h-[572px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
+          className="max-w-[564px] max-h-[622px] !py-6 bg-white rounded-[8px] border-2 border-[#D4D4D4] 
           justify-between opacity-100 shadow-[0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]"
         >
           <div
@@ -111,6 +112,7 @@ export default function Home() {
                 }}
                 className="w-[436px] flex flex-col gap-6"
               >
+                <Label className="font-sans font-normal text-base leading-5 tracking-normal align-middle text-[#1B2F13]">Si te arrepentiste, no pasa nada, solo cerrá la ventana</Label>
                 <FormField
                   control={form.control}
                   name="password"
@@ -140,7 +142,7 @@ export default function Home() {
                                     : "bg-[#5B9B40] hover:bg-[#4F8736] transition-colors"
                                 }`}
                   >
-                    Continuar
+                    Confirmar
                   </Button>
                   {reponseError && (
                     <div

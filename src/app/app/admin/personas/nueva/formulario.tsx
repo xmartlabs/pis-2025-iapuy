@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, CheckCircle, Copy, Link } from "lucide-react";
+import { Copy } from "lucide-react";
 
 const formSchema = z
   .object({
@@ -92,7 +92,78 @@ function errorToString(err: unknown): string {
     return String(err);
   }
 }
+interface MagicLinkProps{
+  showMagicModal:boolean,
+  magicLink:string | null,
+  setShowMagicModal:React.Dispatch<React.SetStateAction<boolean>>,
+}
+const MagicLink = ({showMagicModal,magicLink,setShowMagicModal}:MagicLinkProps)=>{
+  const router = useRouter();
+  const copyToClipboard = (text: string) => {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      toast("Link copiado al portapapeles");
+    })
+    .catch((err) => {
+      toast("No se pudo copiar el link", { description: errorToString(err) });
+    });
+  };
+  return(
+    <Dialog
+      open={showMagicModal}
+      onOpenChange={(val) => {
+        setShowMagicModal(val);
+        if (!val) {
+          router.push("/app/admin/personas/listado");
+        }
+      }}
+    >
+      <DialogContent className="font-sans w-[423px] h-[296px] gap-6 p-6 opacity-100">
+        <DialogHeader>
+          <DialogTitle className="font-semibold text-lg leading-[100%] tracking-[-0.025em]">
+            Persona creada
+          </DialogTitle>
+          <DialogDescription className="font-normal text-sm leading-5 tracking-normal text-black">
+            <span>
+            Para que Daniela pueda terminar el registro, enviale este link y decile que cree una contraseña ahí
+            </span>
+            <br/>
+            <br/>
+            <span className="break-all underline">
+              {magicLink ?? "No hay link disponible"}
+            </span>
+          </DialogDescription>
+        </DialogHeader>
 
+        <DialogFooter className="flex flex-row !justify-between">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowMagicModal(false);
+              router.push("/app/admin/personas/listado");
+            }}
+            className="w-[131px] h-[40px] min-w-[80px] rounded-md flex items-center justify-center gap-1 
+             border border-[#BDD7B3] text-[#5B9B40] opacity-100 px-3 py-2 bg-white"
+          >
+            Volver al listado
+          </Button>
+          {magicLink && (
+            <Button
+              onClick={() => {
+                copyToClipboard(magicLink);
+              }}
+              className="w-[121px] h-[36px] min-w-[80px] bg-[#5B9B40] text-[#EFF5EC] rounded-md flex items-center justify-center gap-1 opacity-100 px-3 py-2"
+            >
+              <Copy />
+              Copiar link
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 export default function Formulario() {
   const router = useRouter();
 
@@ -351,16 +422,7 @@ export default function Formulario() {
       });
     }
   };
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        toast("Link copiado al portapapeles");
-      })
-      .catch((err) => {
-        toast("No se pudo copiar el link", { description: errorToString(err) });
-      });
-  };
+
   return (
     <>
       <Form {...form}>
@@ -584,90 +646,7 @@ export default function Formulario() {
           ownerDisabled={true}
         />
       </Form>
-      {/* Magic link modal */}
-      <Dialog
-        open={showMagicModal}
-        onOpenChange={(val) => {
-          setShowMagicModal(val);
-          if (!val) {
-            router.push("/app/admin/personas/listado");
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Link className="h-5 w-5" />
-              Magic link generado
-            </DialogTitle>
-            <DialogDescription>
-              A continuación se muestra el magic link generado para el usuario.
-              Podés copiarlo y compartirlo para que el usuario pueda configurar
-              una contraseña propia y logearse.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4 space-y-3">
-            <div className="text-sm font-medium text-gray-700">
-              Enlace mágico:
-            </div>
-            <div className="relative">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 pr-10 max-h-32 overflow-y-auto">
-                <code className="text-sm text-gray-800 break-all font-mono">
-                  {magicLink ?? "No hay link disponible"}
-                </code>
-              </div>
-              {magicLink && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="absolute right-2 top-2 h-7 w-7 p-0"
-                  onClick={() => {
-                    copyToClipboard(magicLink);
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                  <span className="sr-only">Copiar link</span>
-                </Button>
-              )}
-            </div>
-
-            {magicLink && (
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>
-                  Click en el icono de copiar para compartir el enlace
-                </span>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowMagicModal(false);
-                router.push("/app/admin/personas/listado");
-              }}
-              className="order-2 sm:order-1"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver al listado
-            </Button>
-            {magicLink && (
-              <Button
-                onClick={() => {
-                  copyToClipboard(magicLink);
-                }}
-                className="order-1 sm:order-2"
-              >
-                <Copy className="mr-2 h-4 w-4" />
-                Copiar link al portapapeles
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <MagicLink showMagicModal={showMagicModal} magicLink={magicLink} setShowMagicModal={setShowMagicModal}></MagicLink>      
     </>
   );
 }

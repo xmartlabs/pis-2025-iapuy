@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default function ResetPasswordPage({ searchParams }: PageProps) {
-  const { token, ci, nombre } = searchParams;
+  const { token, ci} = searchParams;
 
   if (!token || !ci) {
     return (
@@ -42,14 +42,20 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
         backgroundPosition: "0 0",
       }}
     >
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
-        <div className="flex justify-center mb-8">
-          <Image src="/logo.png" alt="Logo" width={120} height={120} />
+      <div className="w-[564px] h-[622px] rounded-lg flex flex-col justify-between opacity-100
+                      border border-[#D4D4D4] bg-white text-left text-base
+                      [box-shadow:0px_4px_6px_-4px_#0000001A,0px_10px_15px_-3px_#0000001A]">
+
+        <div className="w-[436px] h-[502px] flex flex-col gap-[32px] opacity-100 m-[64px]">
+          <div className="">
+            <Image src="/logo.png" alt="Logo" width={150} height={150} />
+          </div>
+          <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle
+                         text-[#1B2F13]">
+            Generar contraseña
+          </h1>
+          <ResetForm ci={ci} token={token} />
         </div>
-        <h1 className="text-3xl font-bold text-green-800 text-center mb-6">
-          Cambiar contraseña para {nombre}
-        </h1>
-        <ResetForm ci={ci} token={token} />
       </div>
     </div>
   );
