@@ -408,8 +408,7 @@ export class ExpensesService {
     const transaction = await sequelize.transaction();
 
     try {
-      // eslint-disable-next-line init-declarations
-      let promiseDestroySanity;
+      let promiseDestroySanity = Promise.resolve(0);
 
       if (expense.sanidadId) {
         switch (expense.type) {
