@@ -41,4 +41,8 @@ export class ExpensesController {
   async updateExpense(id: string, data: Partial<Expense>) {
     return await this.expensesService.update(id, data);
   }
+
+  async delete(id: string, payload: PayloadForUser): Promise<number> {
+    return await this.expensesService.deleteExpense(id, payload);
+  }
 }
