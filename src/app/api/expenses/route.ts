@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.json(res);
   } catch (error) {
-    console.log(error);
     const message = getErrorMessage(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -64,11 +63,15 @@ export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const raw = (await request.json()) as unknown;
-    const data =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (
-        raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
-      ) as Partial<Expense>;
+    let data = {} as Partial<Expense>;
+    if (raw && typeof raw === "object" && raw !== null) {
+      const obj = raw as Record<string, unknown>;
+      if ("expense" in obj && obj.expense && typeof obj.expense === "object") {
+        data = obj.expense as Partial<Expense>;
+      } else {
+        data = obj as Partial<Expense>;
+      }
+    }
     const id = searchParams.get("id");
     if (!id) {
       return NextResponse.json(

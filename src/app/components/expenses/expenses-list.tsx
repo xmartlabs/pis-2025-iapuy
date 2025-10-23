@@ -32,6 +32,8 @@ import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
 import MenuPortal from "./list/menu-portal";
+import SeeOrEditCost from "./list/edit-health";
+import EditCostNotSanity from "./list/edit-cost";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -70,6 +72,10 @@ export default function ExpensesList() {
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
     null
   );
+  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
+  const [selectedCostId, setSelectedCostId] = useState<string>("");
+  const [openNotSanityEditor, setOpenNotSanityEditor] =
+    useState<boolean>(false);
   const anchorRef = useRef<HTMLElement | null>(null);
   const [menuExpenseId, setMenuExpenseId] = useState<string | null>(null);
 
@@ -584,7 +590,22 @@ export default function ExpensesList() {
                               <div className="flex flex-col">
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                  onClick={() => {}}
+                                  onClick={() => {
+                                    // Decide which editor to open depending on expense type
+                                    const sanidadTypes = new Set([
+                                      "Baño",
+                                      "Vacunacion",
+                                      "Desparasitacion Interna",
+                                      "Desparasitacion Externa",
+                                    ]);
+                                    setSelectedCostId(exp.id);
+                                    if (sanidadTypes.has(exp.type)) {
+                                      setOpenEditDialog(true);
+                                    } else {
+                                      setOpenNotSanityEditor(true);
+                                    }
+                                    setOpenMenu(false);
+                                  }}
                                 >
                                   Ver o Editar
                                 </button>
@@ -633,6 +654,20 @@ export default function ExpensesList() {
           setPage={setPage}
         />
       )}
+
+      <SeeOrEditCost
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+        costId={selectedCostId}
+      />
+      <EditCostNotSanity
+        open={openNotSanityEditor}
+        onOpenChange={setOpenNotSanityEditor}
+        costID={selectedCostId}
+        onEdited={() => {
+          setReload((r) => !r);
+        }}
+      />
     </div>
   );
 }

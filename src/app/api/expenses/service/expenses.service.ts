@@ -1,6 +1,11 @@
 import { Expense } from "@/app/models/expense.entity";
 import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
+import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
+import { Banio } from "@/app/models/banio.entity";
+import { Desparasitacion } from "@/app/models/desparasitacion.entity";
+import { Perro } from "@/app/models/perro.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
@@ -51,6 +56,145 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 export class ExpensesService {
+  async getExpenseDetails(id: string) {
+    const payload: Record<string, unknown> = {};
+
+    const exp = await Expense.findByPk(id, {
+      include: [
+        { model: User, as: "User", attributes: ["ci", "nombre"] },
+        {
+          model: Intervention,
+          as: "Intervencion",
+          attributes: ["id", "timeStamp"],
+          required: false,
+        },
+      ],
+    });
+
+    if (!exp) return null;
+
+    payload.expense = exp;
+
+    const type = exp.type as string | undefined;
+    const sanidadId = exp.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (isSanidadType && sanidadId) {
+      const vacuna = await Vacuna.findByPk(sanidadId).catch(() => null);
+      if (vacuna) {
+        const registro = await RegistroSanidad.findByPk(
+          vacuna.registroSanidadId
+        ).catch(() => null);
+        payload.registroSanidad = registro;
+        payload.event = { kind: "vacuna", data: vacuna };
+        return payload;
+      }
+
+      const banio = await Banio.findByPk(sanidadId).catch(() => null);
+      if (banio) {
+        const registro = await RegistroSanidad.findByPk(
+          banio.registroSanidadId
+        ).catch(() => null);
+        payload.registroSanidad = registro;
+        payload.event = { kind: "banio", data: banio };
+        return payload;
+      }
+
+      const des = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+      if (des) {
+        const registro = await RegistroSanidad.findByPk(
+          des.registroSanidadId
+        ).catch(() => null);
+        payload.registroSanidad = registro;
+        payload.event = { kind: "desparasitacion", data: des };
+        return payload;
+      }
+    }
+
+    // Fallback lookup when sanidadId is not set but type indicates sanidad
+    if (isSanidadType && !sanidadId) {
+      try {
+        const fecha =
+          exp.dateSanity instanceof Date
+            ? exp.dateSanity
+            : new Date(String(exp.dateSanity));
+        if (!Number.isNaN(fecha.getTime()) && exp.userId) {
+          const start = new Date(fecha);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(fecha);
+          end.setHours(23, 59, 59, 999);
+
+          const registros = (await RegistroSanidad.findAll({
+            include: [
+              {
+                model: Perro,
+                as: "Perro",
+                where: { duenioId: exp.userId },
+                required: true,
+              },
+            ],
+          }).catch(() => [])) as RegistroSanidad[];
+
+          const tasks = registros.map((reg) =>
+            (async () => {
+              try {
+                const regId = reg.id;
+                const [vacuna, banio, des] = await Promise.all([
+                  Vacuna.findOne({
+                    where: {
+                      registroSanidadId: regId,
+                      fecha: { [Op.between]: [start, end] },
+                    },
+                  }).catch(() => null),
+                  Banio.findOne({
+                    where: {
+                      registroSanidadId: regId,
+                      fecha: { [Op.between]: [start, end] },
+                    },
+                  }).catch(() => null),
+                  Desparasitacion.findOne({
+                    where: {
+                      registroSanidadId: regId,
+                      fecha: { [Op.between]: [start, end] },
+                    },
+                  }).catch(() => null),
+                ]);
+
+                if (vacuna)
+                  return { reg, kind: "vacuna", data: vacuna } as const;
+                if (banio) return { reg, kind: "banio", data: banio } as const;
+                if (des)
+                  return { reg, kind: "desparasitacion", data: des } as const;
+                return null;
+              } catch {
+                return null;
+              }
+            })()
+          );
+
+          const results = await Promise.all(tasks);
+          for (const r of results) {
+            if (r) {
+              payload.registroSanidad = r.reg;
+              payload.event = { kind: r.kind, data: r.data };
+              payload.fallbackUsed = true;
+              break;
+            }
+          }
+        }
+      } catch {
+        // ignore fallback errors
+      }
+    }
+
+    return payload;
+  }
+
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser,
