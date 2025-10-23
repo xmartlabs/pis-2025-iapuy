@@ -1,14 +1,14 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { GastosFijosController } from "./controller/gastos-fijos.controller";
 import { plainToInstance } from "class-transformer";
-import UpdateGastosDTO from "./dtos/update-gastos.dto";
+import UpdateFixedCostsDTO from "./dtos/fixed-costs.dto";
+import { FixedCostsController } from "./controller/fixed-costs.controller";
 
-const gastosFijosController = new GastosFijosController();
+const fixedCostsController = new FixedCostsController();
 
 export function GET() {
   try {
-    return NextResponse.json(gastosFijosController.getCostos());
+    return NextResponse.json(fixedCostsController.getCostos());
   } catch (error) {
     return NextResponse.json(
       error instanceof Error ? error.message : "Internal server error",
@@ -19,10 +19,10 @@ export function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const costos = plainToInstance(UpdateGastosDTO, await request.json(), {
+    const costos = plainToInstance(UpdateFixedCostsDTO, await request.json(), {
       enableImplicitConversion: true,
     });
-    await gastosFijosController.loadCostos(costos);
+    await fixedCostsController.loadCostos(costos);
     return NextResponse.json(null, { status: 201 });
   } catch (error) {
     return NextResponse.json(

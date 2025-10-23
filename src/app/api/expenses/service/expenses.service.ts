@@ -7,7 +7,7 @@ import { Op, Sequelize, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
-import { gastosService } from "../../gastos-fijos/service/gastos-fijos.service";
+import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
 
 const monthNames = [
   "Ene",
@@ -337,7 +337,7 @@ export class ExpensesService {
     }
 
     if (intervention && request.km)
-      request.amount *= gastosService.getCostoKilometros();
+      request.amount *= fixedCostsService.getCostoKilometros();
 
     const expense = await Expense.create(
       {
@@ -379,13 +379,13 @@ export class ExpensesService {
   getFixedCost(sanidadtype: string): number {
     switch (sanidadtype) {
       case "Baño":
-        return gastosService.getCostoBanio();
+        return fixedCostsService.getCostoBanio();
       case "Vacunacion":
-        return gastosService.getCostoVacunas();
+        return fixedCostsService.getCostoVacunas();
       case "Desparasitacion Interna":
-        return gastosService.getCostoDesparasitacionInterna();
+        return fixedCostsService.getCostoDesparasitacionInterna();
       case "Desparasitacion Externa":
-        return gastosService.getCostoDesparasitacionExterna();
+        return fixedCostsService.getCostoDesparasitacionExterna();
       default:
         return 0;
     }

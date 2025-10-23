@@ -1,8 +1,8 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path, { dirname } from "node:path";
-import type UpdateGastosDTO from "../dtos/update-gastos.dto";
+import type UpdateFixedCostsDTO from "../dtos/fixed-costs.dto";
 
-class GastosFijosService {
+class FixedCostsService {
   private static banios: number;
   private static desparasitacionesInterna: number;
   private static desparasitacionesExterna: number;
@@ -67,27 +67,27 @@ class GastosFijosService {
   }
 
   getCostoBanio(): number {
-    return GastosFijosService.banios;
+    return FixedCostsService.banios;
   }
 
   getCostoDesparasitacionInterna(): number {
-    return GastosFijosService.desparasitacionesInterna;
+    return FixedCostsService.desparasitacionesInterna;
   }
 
   getCostoDesparasitacionExterna(): number {
-    return GastosFijosService.desparasitacionesExterna;
+    return FixedCostsService.desparasitacionesExterna;
   }
 
   getCostoVacunas(): number {
-    return GastosFijosService.vacunas;
+    return FixedCostsService.vacunas;
   }
 
   getCostoKilometros(): number {
-    return GastosFijosService.kilometros;
+    return FixedCostsService.kilometros;
   }
 
   getHonorario(): number {
-    return GastosFijosService.honorario;
+    return FixedCostsService.honorario;
   }
 
   getCostos(): {
@@ -99,45 +99,45 @@ class GastosFijosService {
     honorario: number;
   } {
     return {
-      banios: GastosFijosService.banios,
-      desparasitacionesExterna: GastosFijosService.desparasitacionesExterna,
-      desparasitacionesInterna: GastosFijosService.desparasitacionesInterna,
-      vacunas: GastosFijosService.vacunas,
-      kilometros: GastosFijosService.kilometros,
-      honorario: GastosFijosService.honorario,
+      banios: FixedCostsService.banios,
+      desparasitacionesExterna: FixedCostsService.desparasitacionesExterna,
+      desparasitacionesInterna: FixedCostsService.desparasitacionesInterna,
+      vacunas: FixedCostsService.vacunas,
+      kilometros: FixedCostsService.kilometros,
+      honorario: FixedCostsService.honorario,
     };
   }
 
-  async setCostos(costos: UpdateGastosDTO) {
+  async setCostos(costos: UpdateFixedCostsDTO) {
     const newCostos = {
-      banios: costos.banios ?? GastosFijosService.banios,
+      banios: costos.banios ?? FixedCostsService.banios,
       desparasitacionesInterna:
         costos.desparasitacionesInterna ??
-        GastosFijosService.desparasitacionesInterna,
+        FixedCostsService.desparasitacionesInterna,
       desparasitacionesExterna:
         costos.desparasitacionesExterna ??
-        GastosFijosService.desparasitacionesExterna,
-      vacunas: costos.vacunas ?? GastosFijosService.vacunas,
-      kilometros: costos.kilometros ?? GastosFijosService.kilometros,
-      honorario: costos.honorario ?? GastosFijosService.honorario,
+        FixedCostsService.desparasitacionesExterna,
+      vacunas: costos.vacunas ?? FixedCostsService.vacunas,
+      kilometros: costos.kilometros ?? FixedCostsService.kilometros,
+      honorario: costos.honorario ?? FixedCostsService.honorario,
     };
 
-    GastosFijosService.banios = newCostos.banios;
-    GastosFijosService.desparasitacionesInterna =
+    FixedCostsService.banios = newCostos.banios;
+    FixedCostsService.desparasitacionesInterna =
       newCostos.desparasitacionesInterna;
-    GastosFijosService.desparasitacionesExterna =
+    FixedCostsService.desparasitacionesExterna =
       newCostos.desparasitacionesExterna;
-    GastosFijosService.vacunas = newCostos.vacunas;
-    GastosFijosService.kilometros = newCostos.kilometros;
-    GastosFijosService.honorario = newCostos.honorario;
+    FixedCostsService.vacunas = newCostos.vacunas;
+    FixedCostsService.kilometros = newCostos.kilometros;
+    FixedCostsService.honorario = newCostos.honorario;
 
     await writeFile(
-      GastosFijosService.filePath,
+      FixedCostsService.filePath,
       JSON.stringify(newCostos, null, 2),
       "utf-8"
     );
   }
 }
 
-await GastosFijosService.init();
-export const gastosService = new GastosFijosService();
+await FixedCostsService.init();
+export const fixedCostsService = new FixedCostsService();
