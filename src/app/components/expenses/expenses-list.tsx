@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+import { UserType } from "@/app/page";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -406,6 +407,7 @@ export default function ExpensesList() {
     setSelectedStatuses(statusesSelected);
     setSelectedPeople(peopleSelected);
   };
+  const userType: UserType | undefined = context?.userType ?? undefined;
 
   return (
     <div className="max-w-[95%] p-8">
@@ -467,9 +469,11 @@ export default function ExpensesList() {
                 <TableHead className="w-[200px] pl-3 text-left">
                   Monto
                 </TableHead>
+                {(userType===UserType.Administrator && 
                 <TableHead className="w-[200px] pl-3 text-left">
                   Persona
-                </TableHead>
+                </TableHead>)}
+                
                 <TableHead className="w-[150px] pl-3 text-left">
                   Estado
                 </TableHead>
@@ -490,9 +494,10 @@ export default function ExpensesList() {
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[110px]" />
                     </TableCell>
+                    {(userType===UserType.Administrator && 
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[120px]" />
-                    </TableCell>
+                    </TableCell>)}
                     <TableCell className="px-6 py-4">
                       <Skeleton className="h-4 w-[80px]" />
                     </TableCell>
@@ -521,10 +526,10 @@ export default function ExpensesList() {
                     <TableCell className="p-3">{exp.type}</TableCell>
 
                     <TableCell className="p-3">${exp.amount}</TableCell>
-
-                    <TableCell className="p-3">
-                      {exp.user?.nombre ?? exp.userId}
-                    </TableCell>
+                      {(userType===UserType.Administrator && 
+                        <TableCell className="p-3">
+                          {exp.user?.nombre ?? exp.userId}
+                        </TableCell>)}
 
                     <TableCell className="p-3">
                       <div
