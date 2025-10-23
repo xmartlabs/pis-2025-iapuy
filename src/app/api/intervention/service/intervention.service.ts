@@ -20,6 +20,7 @@ import { Perro } from "@/app/models/perro.entity";
 import { Patologia } from "@/app/models/patologia.entity";
 import { User } from "@/app/models/user.entity";
 import { Acompania } from "@/app/models/acompania.entity";
+import { Expense } from "@/app/models/expense.entity";
 
 const monthMap: Record<string, number> = {
   ene: 0,
@@ -52,6 +53,43 @@ const monthMap: Record<string, number> = {
 type InterventionWithInstitution = Intervention & {
   institutionName: string | null;
 };
+
+type Experience = 'buena' | 'mala' | 'regular';
+
+interface PatientPlain {
+  id: string;
+  nombre: string;
+  edad: number;
+  patologia_id: string;
+  experiencia: Experience;
+}
+
+interface ExpensePlain {
+  id: string;
+  userId : string;
+  amount: string;
+  type: string;
+}
+
+interface PerroPlain {
+  id: string;
+  nombre: string;
+  DogExperiences?: { experiencia: Experience }[];
+}
+
+interface UsrPerroPlain {
+  Perro: PerroPlain;
+}
+
+interface InterventionPlain {
+  id: string;
+  fotosUrls: string[];
+  driveLink: string | null;
+  Patients: PatientPlain[];
+  UsrPerroIntervention: UsrPerroPlain[];
+  Expenses : ExpensePlain[];
+}
+
 
 export class InterventionService {
   async findAll(
@@ -638,4 +676,76 @@ export class InterventionService {
     });
     return intervention;
   }
+
+  async getEvaluateInformation(id: string) {
+    const intervention = await Intervention.findOne({
+      where: { id },
+      attributes: ["id", "fotosUrls", "driveLink"],
+      include: [
+        {
+          model: UsrPerro,
+          as: "UsrPerroIntervention",
+          include: [
+            {
+              model: Perro,
+              as: "Perro",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: PerroExperiencia,
+                  as: "DogExperiences",
+                  attributes: ["experiencia"],
+                  where: { intervencion_id: id },
+                  required: false,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: Paciente,
+          as: "Pacientes",
+          attributes: ["id", "nombre", "edad", "patologia_id", "experiencia"],
+          include: [
+            { model: Patologia, as: "Patologia", attributes: ["id", "nombre"] }
+          ]
+        },
+      ],
+    });
+    if (!intervention) return null;
+
+    const expensesQuery = await Expense.findAll({
+      where: { interventionId: id },
+      attributes: ["id", "userId", "amount", "type"],
+      include: [{ model: User, as: "User", attributes: ["ci", "nombre"] }],
+    });
+
+    const plain : InterventionPlain = intervention.toJSON();
+
+    const response = {
+    patients: (plain.Patients || []).map((p) => ({
+      name: p.nombre,
+      age: String(p.edad),
+      pathology_id: p.patologia_id,
+      experience: p.experiencia,
+    })),
+    dogs: (plain.UsrPerroIntervention || []).map((up) => ({
+      id: up.Perro.id,
+      name: up.Perro.nombre,
+      experience: up.Perro.DogExperiences?.[0]?.experiencia ?? null,
+    })),
+    pictures: plain.fotosUrls || [],
+    driveLink: plain.driveLink,
+    expenses : (expensesQuery || []).map((exp) => ({
+      id: exp.id,
+      userId : exp.userId,
+      amount : exp.amount,
+      type: exp.type,
+      userName : exp.User?.nombre
+    })),
+  };
+
+    return response;
+  }
+
 }

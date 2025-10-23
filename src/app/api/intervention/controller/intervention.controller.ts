@@ -140,4 +140,8 @@ export class InterventionController {
   async deleteIntervention(id: string) {
     await this.interventionService.delete(id);
   }
+
+  async getEvaluateInformation(id: string) {
+    return await this.interventionService.getEvaluateInformation(id);
+  }
 }
