@@ -37,7 +37,8 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/api/perros/interventions") ||
         pathname.startsWith("/api/perros/options") ||
         (pathname.startsWith("/api/intervention") && method === "GET") ||
-        (pathname.startsWith("/api/intervention") && method === "PUT")
+        (pathname.startsWith("/api/intervention") && method === "PUT") ||
+        (pathname === "/api/perros" && method === "GET")
       ) {
         return NextResponse.next();
       }

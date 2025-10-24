@@ -9,8 +9,9 @@ export class PerrosController {
     private readonly perrosService: PerrosService = new PerrosService()
   ) {}
 
-  getPerros(pagination: PaginationDto) {
-    return this.perrosService.findAll(pagination);
+  getPerros(pagination: PaginationDto,payload:PayloadForUser) {
+
+    return this.perrosService.findAll(pagination,payload);
   }
 
   async createPerro(request: NextRequest) {

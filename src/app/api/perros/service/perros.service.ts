@@ -14,37 +14,43 @@ import type { PayloadForUser } from "../detalles/route";
 
 export class PerrosService {
   async findAll(
-    pagination: PaginationDto
+    pagination: PaginationDto,
+    payload: PayloadForUser
   ): Promise<PaginationResultDto<Perro>> {
+    const baseWhereQuery = pagination.query
+      ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+      : {};
+
+    const includeUsrPerros = {
+      model: UsrPerro,
+      as: "UsrPerros",
+      attributes: ["id"],
+      required: payload.type === "Colaborador", // INNER JOIN si es colaborador
+      where: payload.type === "Colaborador" ? { userId: payload.ci } : undefined,
+      include: [
+        {
+          attributes: ["id"],
+          model: Intervention,
+          as: "Intervencion",
+          required: true,
+        },
+      ],
+    };
+
     const count = await Perro.count({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
+      where: baseWhereQuery,
+      include: [includeUsrPerros],
     });
 
     const result = await Perro.findAll({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
+      where: baseWhereQuery,
       include: [
         {
           model: User,
           as: "User",
           attributes: ["ci", "nombre"],
         },
-        {
-          model: UsrPerro,
-          as: "UsrPerros",
-          attributes: ["id"],
-          include: [
-            {
-              attributes: ["id"],
-              model: Intervention,
-              as: "Intervencion",
-              required: true,
-            },
-          ],
-        },
+        includeUsrPerros,
         {
           model: RegistroSanidad,
           as: "RegistroSanidad",

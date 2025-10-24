@@ -14,14 +14,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dog, Plus } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
-import { RegistrarPerro } from "./registrar-perro";
+import { RegistrarPerro } from "../../app/admin/perros/registrar-perro";
 import { useRouter } from "next/navigation";
-import type { PerroDTO } from "./DTOS/perro.dto";
+import type { PerroDTO } from "../../app/admin/perros/DTOS/perro.dto";
 import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { Button } from "@/components/ui/button";
-
-export default function ListadoPerrosTable() {
+interface Props{
+  isColab: boolean,
+}
+export default function ListadoPerrosTable({isColab}:Props) {
   const [perros, setPerros] = useState<PerroDTO[]>([]);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
@@ -211,21 +213,23 @@ export default function ListadoPerrosTable() {
               Perros
             </h1>
           </div>
-          <Button
-            className="w-[139px] h-10 min-w-[80px] rounded-md flex 
-                      items-center justify-center gap-1 p-2.5 bg-[#5B9B40]
-                      font-sans font-medium text-sm leading-6 text-[#EFF5EC]"
-            onClick={(e) => {
-              e.preventDefault();
-              setOpen(true);
-            }}
-          >
-            <Plus size={16} />
-            Agregar perro
-          </Button>
+          {!isColab && (
+            <Button
+              className="w-[139px] h-10 min-w-[80px] rounded-md flex 
+                        items-center justify-center gap-1 p-2.5 bg-[#5B9B40]
+                        font-sans font-medium text-sm leading-6 text-[#EFF5EC]"
+              onClick={(e) => {
+                e.preventDefault();
+                setOpen(true);
+              }}
+            >
+              <Plus size={16} />
+              Agregar perro
+            </Button>)}
         </div>
       </div>
       <div>
+        {(!isColab &&  
         <div className="flex justify-start sm:justify-end items-center">
           <CustomSearchBar
             searchInput={searchInput}
@@ -237,7 +241,7 @@ export default function ListadoPerrosTable() {
             open={open}
             setOpen={setOpen}
           />
-        </div>
+        </div>)}
         <div className="mx-auto w-full border border-gray-300 mt-4 rounded-lg">
           <div className="w-full overflow-x-auto">
             <Table className="min-w-full table-fixed border-collapse">
@@ -246,13 +250,14 @@ export default function ListadoPerrosTable() {
                   <TableHead className="w-[240px] px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
                     Nombre
                   </TableHead>
-                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
-                    Dueño
-                  </TableHead>
+                  {(!isColab &&
+                    <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                      Dueño
+                    </TableHead>)}
                   <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
                     Última vacunación
                   </TableHead>
-                  <TableHead className="px-6 py-3 text-center text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
+                  <TableHead className="px-6 py-3 text-left text-sm font-medium text-gray-700 first:rounded-tl-lg last:rounded-tr-lg">
                     Intervenciones este mes
                   </TableHead>
                 </TableRow>
@@ -265,14 +270,15 @@ export default function ListadoPerrosTable() {
                       <TableCell className="px-6 py-4">
                         <Skeleton className="h-4 w-[140px]" />
                       </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[160px]" />
-                      </TableCell>
+                      {(!isColab &&
+                        <TableCell className="px-6 py-4">
+                          <Skeleton className="h-4 w-[160px]" />
+                        </TableCell>)}
                       <TableCell className="px-6 py-4">
                         <Skeleton className="h-4 w-[110px]" />
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <Skeleton className="h-4 w-[48px] ml-auto" />
+                        <Skeleton className="h-4 w-[48px]" />
                       </TableCell>
                     </TableRow>
                   ))
@@ -292,12 +298,12 @@ export default function ListadoPerrosTable() {
                           </span>
                         </div>
                       </TableCell>
-
-                      <TableCell className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          {p.User?.nombre ?? p.duenioId ?? "-"}
-                        </div>
-                      </TableCell>
+                      {(!isColab &&
+                        <TableCell className="px-6 py-4 align-middle">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            {p.User?.nombre ?? p.duenioId ?? "-"}
+                          </div>
+                        </TableCell>)}
 
                       <TableCell className="px-6 py-4 align-middle">
                         <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -310,7 +316,7 @@ export default function ListadoPerrosTable() {
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-6 py-4 text-center align-middle">
+                      <TableCell className="px-6 py-4 text-left align-middle">
                         {Number(p.intervencionCount) || 0}
                       </TableCell>
                     </TableRow>

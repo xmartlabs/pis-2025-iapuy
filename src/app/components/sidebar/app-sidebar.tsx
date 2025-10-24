@@ -32,9 +32,11 @@ export function AppSidebar() {
   const items = [
     {
       title: "Perros",
-      url: "/app/admin/perros/listado",
+      url:  type === UserType.Administrator 
+            ?"/app/admin/perros/listado"
+            :"/app/colaboradores/perros/listado",
       icon: Dog,
-      onlyAdmin: true,
+      onlyAdmin: false,
     },
     {
       title: "Personas",

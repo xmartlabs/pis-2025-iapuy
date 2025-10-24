@@ -1,4 +1,4 @@
-import ListadoPerros from "./listado-perros";
+import ListadoPerros from "../../../components/dogs/listado-perros";
 
 export default function PantallaPerros() {
   return (

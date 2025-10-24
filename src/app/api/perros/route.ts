@@ -3,15 +3,23 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { PerrosController } from "./controller/perros.controller";
 import { extractPagination } from "@/lib/pagination/extraction";
-
+import type { PayloadForUser } from "../perros/detalles/route";
+import jwt from "jsonwebtoken";
 const perrosController = new PerrosController();
 await initDatabase();
 
 export async function GET(request: NextRequest) { 
   try {
+    const authHeader = request.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+    const payload = jwt.decode(accessToken) as PayloadForUser;
     const pagination = await extractPagination(request);
 
-    return NextResponse.json(await perrosController.getPerros(pagination));
+    return NextResponse.json(await perrosController.getPerros(pagination,payload));
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
