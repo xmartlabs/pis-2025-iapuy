@@ -46,9 +46,15 @@ type Props = {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly costId: string;
+  readonly onEdited: () => void;
 };
 
-export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
+export default function SeeOrEditCost({
+  open,
+  onOpenChange,
+  costId,
+  onEdited,
+}: Props) {
   const [tab, setTab] = React.useState<Tab>("vacuna");
   const context = useContext(LoginContext);
   const sanidadContext = useContext(SanidadContext);
@@ -58,9 +64,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
       .string()
       .min(2, { message: "Debes completar la fecha de vacunación" }),
     marcaInVac: z.string(),
-    carnetInVac: z.instanceof(File, {
-      message: "Debes adjuntar el carnet de vacuna",
-    }),
+    carnetInVac: z.instanceof(File).optional(),
   });
 
   const banioSchema = z.object({
@@ -116,7 +120,57 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
     null
   );
   const [selectedPerroId, setSelectedPerroId] = useState<string>("");
-  // loading/error for cost fetch (not shown in UI currently)
+  const [eventoId, setEventoId] = useState<string | undefined>(undefined);
+  const [existingCarnetUrl, setExistingCarnetUrl] = useState<
+    string | undefined
+  >(undefined);
+  const [existingCarnetName, setExistingCarnetName] = useState<
+    string | undefined
+  >(undefined);
+
+  // Create an object URL from raw bytes and try to infer MIME type so the
+  // browser can render the file instead of displaying garbled text.
+  function createObjectUrlFromBytes(byteArray: Uint8Array) {
+    let mime = "application/octet-stream";
+    let ext = "bin";
+    try {
+      if (byteArray.length >= 4) {
+        const b0 = byteArray[0];
+        const b1 = byteArray[1];
+        const b2 = byteArray[2];
+        const b3 = byteArray[3];
+        // PDF: %PDF
+        if (b0 === 0x25 && b1 === 0x50 && b2 === 0x44 && b3 === 0x46) {
+          mime = "application/pdf";
+          ext = "pdf";
+        } else if (b0 === 0xff && b1 === 0xd8 && b2 === 0xff) {
+          // JPEG
+          mime = "image/jpeg";
+          ext = "jpg";
+        } else if (b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47) {
+          // PNG
+          mime = "image/png";
+          ext = "png";
+        } else if (b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38) {
+          // GIF87a/89a
+          mime = "image/gif";
+          ext = "gif";
+        }
+      }
+    } catch {
+      // fallback
+    }
+
+    // convert to a clean ArrayBuffer slice matching the view
+    const ab = byteArray.buffer.slice(
+      byteArray.byteOffset,
+      byteArray.byteOffset + byteArray.byteLength
+    );
+    const abBuf = ab as unknown as ArrayBuffer;
+    const blob = new Blob([abBuf], { type: mime });
+    const url = URL.createObjectURL(blob);
+    return { url, mime, ext };
+  }
 
   useEffect(() => {
     const urlId = searchParams.get("id");
@@ -222,17 +276,12 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
     return d.toISOString().slice(0, 10);
   }
 
-  // Load expense details when editing an existing cost
   useEffect(() => {
-    if (!costId) return;
-    // Only load when dialog is open
-    if (!open) return;
+    if (!costId || !open) return;
 
     let mounted = true;
     const doFetch = async (withRetry = true): Promise<void> => {
       try {
-        // setLoadingCost(true);
-        // setCostError(null);
         const headers: Record<string, string> = {};
         if (context?.tokenJwt)
           headers.Authorization = `Bearer ${context.tokenJwt}`;
@@ -270,7 +319,11 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
         const payload = json as {
           expense?: unknown;
           registroSanidad?: { perroId?: string } | null;
-          event?: { kind?: string; data?: Record<string, unknown> } | null;
+          event?: {
+            id?: string;
+            kind?: string;
+            data?: Record<string, unknown>;
+          } | null;
         };
 
         if (!mounted) return;
@@ -279,7 +332,6 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
           setSelectedPerroId(String(payload.registroSanidad.perroId));
         }
 
-        // decide tab and populate fields
         const event = payload.event;
         const defaults: Partial<FormValues> = {
           fechaInVac: "",
@@ -302,6 +354,65 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
               : undefined;
           defaults.fechaInVac = formatDateForInput(fechaStr);
           defaults.marcaInVac = (data.vac as string) ?? "";
+          // Attempt to extract an existing carnet: prefer explicit base64
+          // helper produced by the server, otherwise fall back to earlier
+          // Buffer-like heuristics.
+          try {
+            const fromServer = (data as Record<string, unknown>)[
+              "carneVacunasBase64"
+            ] as string | undefined;
+            if (typeof fromServer === "string" && fromServer.length > 0) {
+              const base64 = fromServer;
+              const byteChars = atob(base64);
+              const byteNumbers = new Array(byteChars.length);
+              for (let i = 0; i < byteChars.length; i++) {
+                byteNumbers[i] = byteChars.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const { url, ext } = createObjectUrlFromBytes(byteArray);
+              setExistingCarnetUrl(url);
+              setExistingCarnetName(`carnet_vacunas.${ext}`);
+            } else {
+              const maybe = (data as Record<string, unknown>)[
+                "carneVacunas"
+              ] as unknown;
+              if (typeof maybe === "string" && maybe.length > 0) {
+                const base64 = maybe.startsWith("data:")
+                  ? maybe.split(",")[1]
+                  : maybe;
+                const byteChars = atob(base64);
+                const byteNumbers = new Array(byteChars.length);
+                for (let i = 0; i < byteChars.length; i++) {
+                  byteNumbers[i] = byteChars.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const { url, ext } = createObjectUrlFromBytes(byteArray);
+                setExistingCarnetUrl(url);
+                setExistingCarnetName(`carnet_vacunas.${ext}`);
+              } else if (maybe && typeof maybe === "object") {
+                const arr = Array.isArray(maybe)
+                  ? (maybe as unknown[])
+                  : ((maybe as { data?: unknown }).data as unknown[] | null) ??
+                    null;
+                if (Array.isArray(arr) && arr.length > 0) {
+                  const byteArray = new Uint8Array(arr as number[]);
+                  const { url, ext } = createObjectUrlFromBytes(byteArray);
+                  setExistingCarnetUrl(url);
+                  setExistingCarnetName(`carnet_vacunas.${ext}`);
+                } else {
+                  setExistingCarnetUrl(undefined);
+                  setExistingCarnetName(undefined);
+                }
+              } else {
+                setExistingCarnetUrl(undefined);
+                setExistingCarnetName(undefined);
+              }
+            }
+          } catch {
+            // if anything goes wrong, clear existing preview
+            setExistingCarnetUrl(undefined);
+            setExistingCarnetName(undefined);
+          }
         } else if (event?.kind === "banio") {
           setTab("banio");
           const fechaVal = data.fecha;
@@ -328,16 +439,38 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
             tipo === "Externa" ? "Externa" : "Interna";
         }
 
-        // reset form with values (cast because FormValues expects a File for carnetInVac)
+        let resolvedEventId: string | undefined = undefined;
+        if (event && typeof event.id === "string") resolvedEventId = event.id;
+        const eventData: Record<string, unknown> = (event && event.data) || {};
+        if (!resolvedEventId && eventData && typeof eventData === "object") {
+          const getProp = (o: Record<string, unknown>, k: string) => o[k];
+          const possible =
+            getProp(eventData, "id") ??
+            getProp(eventData, "vacunaId") ??
+            getProp(eventData, "banioId") ??
+            getProp(eventData, "desparasitacionId");
+          if (typeof possible === "string" || typeof possible === "number")
+            resolvedEventId = String(possible);
+        }
+        if (
+          !resolvedEventId &&
+          payload.expense &&
+          typeof payload.expense === "object"
+        ) {
+          const exp = payload.expense as Record<string, unknown>;
+          const sanId = exp.sanidadId ?? exp.sanidad_id;
+          if (typeof sanId === "string" || typeof sanId === "number")
+            resolvedEventId = String(sanId);
+        }
+        setEventoId(resolvedEventId);
+
         form.reset(defaults as unknown as FormValues);
 
-        // Also set values explicitly to ensure controls update even if they mount/unmount
         try {
           if (defaults.fechaInVac !== undefined)
             form.setValue("fechaInVac", defaults.fechaInVac || "");
           if (defaults.marcaInVac !== undefined)
             form.setValue("marcaInVac", defaults.marcaInVac || "");
-          // carnetInVac left undefined intentionally
           if (defaults.fechaInBanio !== undefined)
             form.setValue("fechaInBanio", defaults.fechaInBanio || "");
           if (defaults.desparasitacionTipo !== undefined) {
@@ -354,15 +487,12 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
         } catch {
           // ignore setValue errors in case control not registered yet
         }
+        // cleanup: revoke previous objectURLs when component unmounts or new file loaded
+        // handled by effect below
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (mounted) {
-          // keep simple: show toast for errors
           toast.error(msg);
-        }
-      } finally {
-        if (mounted) {
-          // setLoadingCost(false);
         }
       }
     };
@@ -425,8 +555,17 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
         formData.append("tipoDesparasitacion", d.desparasitacionTipo);
       }
 
+      // Ensure we have an eventoId to update the correct sanidad event
+      if (!eventoId) {
+        toast.error(
+          "No se pudo determinar el id del evento de sanidad. No se puede editar."
+        );
+        return;
+      }
+      formData.append("eventoId", eventoId);
+
       const res = await fetch("/api/registros-sanidad", {
-        method: "POST",
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${context?.tokenJwt}`,
         },
@@ -458,6 +597,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
             color: "#121F0D",
           },
         });
+        onEdited();
       } else {
         toast.error(`No se pudo guardar los datos de Sanidad.`, {
           duration: 5000,
@@ -486,9 +626,8 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
         <DialogContent className="!w-[422px] max-h-[90vh] !h-auto overflow-visible flex flex-col !pb-0">
           <DialogHeader className="!w-full  !items-center !m-0 shrink-0">
             <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
-              Registrar Sanidad
+              Editar Registro de Sanidad
             </DialogTitle>
-            {/* If there's no `id` in the URL, render a select to pick a perro */}
             {!searchParams.get("id") && (
               <div className="mt-3">
                 {loadingPerroOptions ? (
@@ -500,7 +639,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                     Error cargando perros: {perroOptionsError}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 w-full">
                     <label
                       htmlFor="perroSelect"
                       className="text-sm font-medium"
@@ -558,6 +697,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                     <TabsList className="!w-[266px] bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between !gap-0">
                       <TabsTrigger
                         value="vacuna"
+                        disabled={tab !== "vacuna"}
                         className="flex-1 !gap-0 !w-[72px] !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
                                     data-[state=active]:bg-white data-[state=active]:text-black 
                                     data-[state=inactive]:text-[#5B9B40]
@@ -568,6 +708,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                       </TabsTrigger>
                       <TabsTrigger
                         value="banio"
+                        disabled={tab !== "banio"}
                         className="flex-1 !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
                                   data-[state=active]:bg-white data-[state=active]:text-black 
                                   data-[state=inactive]:text-[#5B9B40]
@@ -578,6 +719,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                       </TabsTrigger>
                       <TabsTrigger
                         value="desparasitacion"
+                        disabled={tab !== "desparasitacion"}
                         className="flex-1 !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
                                   data-[state=active]:bg-white data-[state=active]:text-black 
                                   data-[state=inactive]:text-[#5B9B40]
@@ -630,6 +772,7 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                             render={({ field }) => {
                               const filename =
                                 (field.value as File | null)?.name ??
+                                existingCarnetName ??
                                 "Nada cargado todavía";
 
                               return (
@@ -661,6 +804,22 @@ export default function SeeOrEditCost({ open, onOpenChange, costId }: Props) {
                                       >
                                         {filename}
                                       </div>
+                                      {existingCarnetUrl &&
+                                        !(field.value as File | null) && (
+                                          <div className="pr-3">
+                                            <Button
+                                              variant="ghost"
+                                              onClick={() => {
+                                                window.open(
+                                                  existingCarnetUrl,
+                                                  "_blank"
+                                                );
+                                              }}
+                                            >
+                                              Ver carnet
+                                            </Button>
+                                          </div>
+                                        )}
                                     </div>
                                   </FormControl>
                                   <FormMessage />

@@ -10,7 +10,7 @@ import sequelize from "@/lib/database";
 import { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import type { PayloadForUser } from "../../perros/detalles/route";
 import { Perro } from "@/app/models/perro.entity";
-import type { FindOptions } from "sequelize";
+import type { FindOptions, Transaction } from "sequelize";
 import { User } from "@/app/models/user.entity";
 import { ExpensesService } from "../../expenses/service/expenses.service";
 import type { CreateExpenseDto } from "../../expenses/dtos/create-expense.dto";
@@ -165,5 +165,60 @@ export class RegistrosSanidadService {
       }
       return regSanidad;
     });
+  }
+
+  async updateEventoSanidad(
+    tipoSanidad: "banio" | "desparasitacion" | "vacuna",
+    eventoId: string,
+    data: {
+      fecha?: string | Date;
+      medicamento?: string;
+      tipoDesparasitacion?: string;
+      vac?: string;
+      carneVacunas?: Buffer | ArrayBuffer | null;
+    },
+    options?: { transaction?: Transaction }
+  ): Promise<Banio | Desparasitacion | Vacuna | null> {
+    const updatePayload: {
+      fecha?: Date;
+      medicamento?: string;
+      tipoDesparasitacion?: string;
+      vac?: string;
+      carneVacunas?: Buffer;
+    } = {};
+    if (data.fecha) updatePayload.fecha = new Date(data.fecha);
+
+    if (tipoSanidad === "banio") {
+      const banio = await Banio.findByPk(eventoId);
+      if (!banio) return null;
+      await banio.update(updatePayload, { transaction: options?.transaction });
+      return banio;
+    }
+
+    if (tipoSanidad === "desparasitacion") {
+      if (data.medicamento !== undefined)
+        updatePayload.medicamento = data.medicamento;
+      if (data.tipoDesparasitacion !== undefined)
+        updatePayload.tipoDesparasitacion = data.tipoDesparasitacion;
+
+      const despar = await Desparasitacion.findByPk(eventoId);
+      if (!despar) return null;
+      await despar.update(updatePayload, { transaction: options?.transaction });
+      return despar;
+    }
+
+    if (data.vac !== undefined) updatePayload.vac = data.vac;
+    if (data.carneVacunas !== undefined && data.carneVacunas !== null) {
+      if (data.carneVacunas instanceof ArrayBuffer) {
+        updatePayload.carneVacunas = Buffer.from(data.carneVacunas);
+      } else if (Buffer.isBuffer(data.carneVacunas)) {
+        updatePayload.carneVacunas = data.carneVacunas;
+      }
+    }
+
+    const vacuna = await Vacuna.findByPk(eventoId);
+    if (!vacuna) return null;
+    await vacuna.update(updatePayload, { transaction: options?.transaction });
+    return vacuna;
   }
 }

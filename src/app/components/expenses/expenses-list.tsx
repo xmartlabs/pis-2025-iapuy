@@ -659,6 +659,9 @@ export default function ExpensesList() {
         open={openEditDialog}
         onOpenChange={setOpenEditDialog}
         costId={selectedCostId}
+        onEdited={() => {
+          setReload((r) => !r);
+        }}
       />
       <EditCostNotSanity
         open={openNotSanityEditor}
