@@ -31,7 +31,7 @@ function DetallePersonaContent() {
 };
   return (
     <div className="flex flex-col">
-      Detalle Persona CI: {ci}, nombre
+      Detalle Persona CI: {ci}, nombress
       <BotonEliminarUsuario ci={ci} />
     </div>
   );
