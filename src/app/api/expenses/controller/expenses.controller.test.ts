@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { NextRequest } from "next/server";
-import { ExpensesService } from "../service/expenses.service";
 import { ExpensesController } from "./expenses.controller";
+import type { ExpensesService } from "../service/expenses.service";
+import type { PayloadForUser } from "../../users/service/user.service";
 
 // ---- Mocks ----
 vi.mock("../service/expenses.service", () => ({
@@ -34,8 +35,10 @@ describe("ExpensesController", () => {
   beforeEach(() => {
     expensesService = {
       createExpense: vi.fn(),
+      deleteExpense: vi.fn(),
     } as unknown as ExpensesService & {
       createExpense: ReturnType<typeof vi.fn>;
+      deleteExpense: ReturnType<typeof vi.fn>;
     };
     controller = new ExpensesController(expensesService);
     vi.clearAllMocks();
@@ -59,8 +62,37 @@ describe("ExpensesController", () => {
       id: "1",
       ...expenseData,
     });
-    const result = await controller!.createExpense(req as NextRequest);
+    const result = await controller!.createExpense(
+      req as unknown as NextRequest
+    );
     expect(expensesService!.createExpense).toHaveBeenCalledWith(expenseData);
     expect(result).toEqual({ id: "1", ...expenseData });
+  });
+
+  it("delete returns result from service when deleting", async () => {
+    const payload = { type: "Administrador", ci: "12345678" } as PayloadForUser;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const mockDeleteExpense = expensesService!.deleteExpense as ReturnType<typeof vi.fn>;
+    mockDeleteExpense.mockResolvedValue(1);
+
+    const result = await controller!.delete("1", payload);
+
+    expect(mockDeleteExpense).toHaveBeenCalledWith("1", payload);
+    expect(result).toEqual(1);
+  });
+
+  it("delete returns 0 when service returns 0 (not found)", async () => {
+    const payload = { type: "Usuario", ci: "12345678" } as PayloadForUser;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const mockDeleteExpense = expensesService!.deleteExpense as ReturnType<typeof vi.fn>;
+    mockDeleteExpense.mockResolvedValue(0);
+
+    const result = await controller!.delete("nonexistent", payload);
+
+    expect(mockDeleteExpense).toHaveBeenCalledWith(
+      "nonexistent",
+      payload
+    );
+    expect(result).toEqual(0);
   });
 });
