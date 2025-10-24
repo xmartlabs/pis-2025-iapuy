@@ -358,9 +358,7 @@ export default function SeeOrEditCost({
           // helper produced by the server, otherwise fall back to earlier
           // Buffer-like heuristics.
           try {
-            const fromServer = (data as Record<string, unknown>)[
-              "carneVacunasBase64"
-            ] as string | undefined;
+            const fromServer = data.carneVacunasBase64;
             if (typeof fromServer === "string" && fromServer.length > 0) {
               const base64 = fromServer;
               const byteChars = atob(base64);
@@ -373,9 +371,7 @@ export default function SeeOrEditCost({
               setExistingCarnetUrl(url);
               setExistingCarnetName(`carnet_vacunas.${ext}`);
             } else {
-              const maybe = (data as Record<string, unknown>)[
-                "carneVacunas"
-              ] as unknown;
+              const maybe = data.carneVacunas;
               if (typeof maybe === "string" && maybe.length > 0) {
                 const base64 = maybe.startsWith("data:")
                   ? maybe.split(",")[1]
