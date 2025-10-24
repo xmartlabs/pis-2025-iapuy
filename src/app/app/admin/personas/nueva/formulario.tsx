@@ -28,6 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Copy } from "lucide-react";
@@ -96,8 +97,9 @@ interface MagicLinkProps{
   showMagicModal:boolean,
   magicLink:string | null,
   setShowMagicModal:React.Dispatch<React.SetStateAction<boolean>>,
+  peopleName:string,
 }
-const MagicLink = ({showMagicModal,magicLink,setShowMagicModal}:MagicLinkProps)=>{
+const MagicLink = ({showMagicModal,magicLink,setShowMagicModal,peopleName}:MagicLinkProps)=>{
   const router = useRouter();
   const copyToClipboard = (text: string) => {
   navigator.clipboard
@@ -119,6 +121,7 @@ const MagicLink = ({showMagicModal,magicLink,setShowMagicModal}:MagicLinkProps)=
         }
       }}
     >
+      <DialogOverlay className="fixed inset-0 z-50 bg-black/50 h-full" />
       <DialogContent className="font-sans w-[423px] h-[296px] gap-6 p-6 opacity-100">
         <DialogHeader>
           <DialogTitle className="font-semibold text-lg leading-[100%] tracking-[-0.025em]">
@@ -126,7 +129,7 @@ const MagicLink = ({showMagicModal,magicLink,setShowMagicModal}:MagicLinkProps)=
           </DialogTitle>
           <DialogDescription className="font-normal text-sm leading-5 tracking-normal text-black">
             <span>
-            Para que Daniela pueda terminar el registro, enviale este link y decile que cree una contraseña ahí
+            Para que {peopleName} pueda terminar el registro, enviale este link y decile que cree una contraseña ahí
             </span>
             <br/>
             <br/>
@@ -187,7 +190,7 @@ export default function Formulario() {
   const [open, setOpen] = useState(false);
   const [magicLink, setMagicLink] = useState<string | null>(null);
   const [showMagicModal, setShowMagicModal] = useState(false);
-
+  const [peopleName, setPeopleName] = useState<string>("");
   useEffect(() => {
     async function fetchPerrosOptions(): Promise<void> {
       const controller = new AbortController();
@@ -383,6 +386,7 @@ export default function Formulario() {
           .safeParse(raw);
         if (parsed.success && parsed.data.magicLink) {
           setMagicLink(parsed.data.magicLink);
+          setPeopleName(values.nombre.split(" ")[0]);
           setShowMagicModal(true);
         } else {
           throw new Error(
@@ -646,7 +650,7 @@ export default function Formulario() {
           ownerDisabled={true}
         />
       </Form>
-      <MagicLink showMagicModal={showMagicModal} magicLink={magicLink} setShowMagicModal={setShowMagicModal}></MagicLink>      
+      <MagicLink showMagicModal={showMagicModal} magicLink={magicLink} setShowMagicModal={setShowMagicModal} peopleName={peopleName}></MagicLink>      
     </>
   );
 }
