@@ -1,8 +1,9 @@
-'use client'
+"use client";
 
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BotonEliminarUsuario } from "./eliminar-usuario-boton";
+import { MagicLinkDialog } from "./magic-link-dialog";
 
 function DetallePersonaContent() {
   const searchParams = useSearchParams();
@@ -19,7 +20,17 @@ function DetallePersonaContent() {
 export default function DetallePersona() {
   return (
     <Suspense fallback={<div>Cargando persona...</div>}>
+      <MagicLinkDialog
+        registrationCompleted={false}
+        ci={"11111111"}
+        username={"Santiago"}
+      />
       <DetallePersonaContent />
+      <MagicLinkDialog
+        registrationCompleted={true}
+        ci={"11111111"}
+        username={"Santiago"}
+      />
     </Suspense>
   );
 }
