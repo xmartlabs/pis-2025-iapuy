@@ -10,6 +10,8 @@ import TabSelector from "@/app/components/interventions/details/tab-selector";
 import DeleteIntervention from "@/app/components/interventions/details/delete-intervention";
 import DogsNPersons from "@/app/components/interventions/details/tab-dogs-and-persons";
 import InterventionDay from "@/app/components/interventions/details/tab-intervention-day";
+import InterventionBadge from "@/app/components/intervenciones/intervention-status-badge"
+import type { Props } from "@/app/components/intervenciones/intervention-status-badge";
 import type { ApiResponse } from "@/app/components/interventions/details/types";
 
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
@@ -128,6 +130,7 @@ export default function IntervencionPage() {
       </div>
 
       <div className="py-3 flex flex-col gap-4 ">
+        <InterventionBadge statusType={infoIntervention.status as Props["statusType"]}/>
         <Dato
           titulo="TIPO DE INTERVENCIÓN"
           valor={infoIntervention.tipo ? infoIntervention.tipo : ""}
