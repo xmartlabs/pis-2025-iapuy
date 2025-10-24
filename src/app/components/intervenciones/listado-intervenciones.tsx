@@ -21,15 +21,16 @@ import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/interv
 import FilterDropdown from "@/app/components/intervenciones/filter-dropdown";
 import AddIntervencionButton from "./nueva-intervencion-btn";
 import InterventionActionButton from "./intervention-actions";
+import InterventionBadge from "./intervention-status-badge";
 
-const statusToColor: Record<string, string> = {
+/*const statusToColor: Record<string, string> = {
   "Pendiente de asignacion": "#FECACA",
   "Cupo completo": "#FDE68A",
   Realizada: "#BAE6FD",
   Finalizada: "#DEEBD9",
   Suspendida: "#D4D4D4",
   Cerrada: "#F5D0FE",
-};
+};*/
 
 const statuses = [
   "Pendiente de asignacion",
@@ -425,16 +426,7 @@ export default function ListadoIntervenciones({
                       {Number(inter.pairsQuantity) || 0}
                     </TableCell>
                     <TableCell className="p-3">
-                      <div
-                        className="pt-[1px] pr-2.5 pb-[2px] pl-2.5 rounded-[10px] opacity-100 w-min"
-                        style={{
-                          backgroundColor:
-                            statusToColor[inter.status || "Realizada"] ||
-                            "#F2F4F8",
-                        }}
-                      >
-                        {inter.status || ""}
-                      </div>
+                      <InterventionBadge statusType={inter.status}/>
                     </TableCell>
                     {!isColab ? (
                       <TableCell className="w-[40px] mr-0"></TableCell>

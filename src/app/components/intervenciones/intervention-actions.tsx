@@ -9,7 +9,7 @@ const statusMap: Record<
   string,
   [string | null, string | null, boolean, string | null]
 > = {
-  "Pendiente de asignacion": ["pencil", "/app/colaboradores/intervenciones/editar?modo=inscribirse", true, "Inscribir"],
+  "Pendiente de asignación": ["pencil", "/app/colaboradores/intervenciones/editar?modo=inscribirse", true, "Inscribir"],
   // TODO: cambiar link cuando se tenga la pagina de inscripcion
   "Cupo completo": [null, null, false, null],
   Realizada: [
@@ -20,8 +20,6 @@ const statusMap: Record<
   ],
   Finalizada: [null, null, false, null],
   Suspendida: [null, null, false, null],
-  Cerrada: [null, null, false, null],
-  "": [null, null, false, null],
 };
 
 export default function InterventionActionButton({

@@ -9,7 +9,7 @@ export class InterventionDto {
   userId: string;
   Institucions: InstitutionDto;
   pairsQuantity: number;
-  status: string;
+  status: "Pendiente de asignación"|"Cupo completo"|"Realizada"|"Finalizada"|"Suspendida";
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -24,7 +24,7 @@ export class InterventionDto {
     photosUrls: string[],
     userId: string,
     pairsQuantity: number,
-    status: string,
+    status: "Pendiente de asignación"|"Cupo completo"|"Realizada"|"Finalizada"|"Suspendida",
     createdAt?: Date,
     updatedAt?: Date,
     deletedAt?: Date

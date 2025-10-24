@@ -1,4 +1,3 @@
-/* eslint-disable check-file/folder-naming-convention */
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";

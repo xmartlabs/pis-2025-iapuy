@@ -37,7 +37,7 @@ export type ApiResponse = {
   id: string;
   pairsQuantity: number;
   post_evaluacion: string;
-  status: string;
+  status: "Pendiente de asignación"|"Cupo completo"|"Realizada"|"Finalizada"|"Suspendida";
   timeStamp: Date;
   tipo: string;
 };
