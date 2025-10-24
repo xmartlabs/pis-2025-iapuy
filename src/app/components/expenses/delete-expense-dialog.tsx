@@ -1,10 +1,11 @@
-import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
-import { useContext, useState } from "react";
+import { type ListExpenseDto } from "@/app/api/expenses/dtos/list-expense.dto";
+import { useContext, useEffect, useState } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,11 +19,12 @@ export default function DeleteExpenseDialog({
   onSuccess,
 }: {
   open: boolean;
-  exp: ExpenseDto;
+  exp: ListExpenseDto;
   onClose: () => void;
   onSuccess?: () => void;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [dogName, setDogName] = useState("");
   const context = useContext(LoginContext);
 
   async function handleDelete(): Promise<void> {
@@ -108,6 +110,14 @@ export default function DeleteExpenseDialog({
       setIsDeleting(false);
     }
   }
+
+  useEffect(() => {
+    // Use pre-loaded dog name from the expense data
+    if (exp.dogName) {
+      setDogName(exp.dogName);
+    }
+  }, [exp.dogName]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
@@ -122,43 +132,51 @@ export default function DeleteExpenseDialog({
           <DialogTitle className="!font-sans !font-semibold !text-lg !text-black !w-full !text-left">
             Eliminar Gasto
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Confirmación para eliminar el gasto seleccionado
+          </DialogDescription>
         </DialogHeader>
         <div>
           {(exp.type === "Baño" ||
             exp.type === "Vacunacion" ||
-            exp.type === "Desparasitación interna" ||
-            exp.type === "Desparasitación externa") && (
+            exp.type === "Desparasitacion Interna" ||
+            exp.type === "Desparasitacion Externa") && (
             <p className="text-sm text-muted-foreground">
-              Este registro también va a eliminarse del perfil del perro.
+              Este registro también va a eliminarse del perfil del perro{" "}
+              {dogName || "[Cargando nombre...]"}.
             </p>
           )}
           {(exp.type === "Traslados" ||
             exp.type === "Estacionamiento/Taxi") && (
             <p className="text-sm text-muted-foreground">
               El gasto también va a eliminarse de la intervención
-              {`${new Date(exp.fecha).toLocaleDateString("es-UY", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`}
+              {exp.fecha
+                ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`
+                : "sin fecha"}
               .
             </p>
           )}
-          {(exp.type === "Pago a guia" ||
+          {(exp.type === "Pago a guía" ||
             exp.type === "Pago a acompañante") && (
             <p className="text-sm text-muted-foreground">
-              Este [Guía/Acompañante] también va a eliminarse de la intervención
-              {`${new Date(exp.fecha).toLocaleDateString("es-UY", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`}
+              Este [Guía/Acompañante] también va a eliminarse de la intervención{" "}
+              {exp.fecha
+                ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`
+                : "sin fecha"}
               .
             </p>
           )}

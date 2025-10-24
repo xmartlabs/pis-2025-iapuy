@@ -32,4 +32,6 @@ export class RegistroSanidad extends Model {
 
   @DeletedAt
   declare deletedAt: CreationOptional<Date>;
+
+  declare Perro?: Perro;
 }

@@ -236,6 +236,13 @@ const registerExpenseAssociations = () => {
       as: "Intervencion",
     });
   }
+  if (!hasAssociation(Expense, RegistroSanidad)) {
+    Expense.belongsTo(RegistroSanidad, {
+      foreignKey: "sanityRecordId",
+      targetKey: "id",
+      as: "RegistroSanidad",
+    });
+  }
 };
 const registerPatientsAssociations = () => {
   if (!hasAssociation(Paciente, Intervention)) {

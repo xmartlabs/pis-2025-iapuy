@@ -152,6 +152,7 @@ export class RegistrosSanidadService {
         const createExpenseDto: CreateExpenseDto = {
           userId: perro.duenioId,
           interventionId: "",
+          sanityRecordId: regSanidad.id,
           sanidadId: sanidadEventId,
           dateSanity: fechaDate,
           type: expenseType,
@@ -165,5 +166,8 @@ export class RegistrosSanidadService {
       }
       return regSanidad;
     });
+  }
+  async findOne(id: string): Promise<RegistroSanidad | null> {
+    return await RegistroSanidad.findByPk(id);
   }
 }

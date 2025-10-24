@@ -1,6 +1,8 @@
 import { Expense } from "@/app/models/expense.entity";
 import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
+import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
+import { Perro } from "@/app/models/perro.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
@@ -203,6 +205,12 @@ export class ExpensesService {
           attributes: ["id", "timeStamp"],
           required: false,
         },
+        {
+          model: RegistroSanidad,
+          as: "RegistroSanidad",
+          attributes: ["id", "perroId"],
+          required: false,
+        },
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
@@ -210,34 +218,48 @@ export class ExpensesService {
       distinct: true,
     });
 
-    const data: ListExpenseDto[] = result.rows.map((exp) => {
-      let fecha: Date | null = null;
-      if (exp.interventionId) {
-        const intervention = exp.Intervencion;
-        fecha = intervention?.timeStamp ?? null;
-      } else {
-        fecha = exp.dateSanity;
-      }
-
-      let userExpense: { ci: string; nombre: string } | undefined = undefined;
-      if (exp.userId) {
-        const user = exp.User;
-        if (user) {
-          userExpense = { ci: user.ci, nombre: user.nombre };
+    const data: ListExpenseDto[] = await Promise.all(
+      result.rows.map(async (exp) => {
+        let fecha: Date | null = null;
+        if (exp.interventionId) {
+          const intervention = exp.Intervencion;
+          fecha = intervention?.timeStamp ?? null;
+        } else {
+          fecha = exp.dateSanity;
         }
-      }
 
-      return {
-        id: exp.id,
-        userId: exp.userId,
-        concept: exp.concept,
-        type: exp.type,
-        state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
-        amount: exp.amount,
-        fecha,
-        user: userExpense,
-      };
-    });
+        let userExpense: { ci: string; nombre: string } | undefined = undefined;
+        if (exp.userId) {
+          const user = exp.User;
+          if (user) {
+            userExpense = { ci: user.ci, nombre: user.nombre };
+          }
+        }
+
+        let dogName: string | undefined = undefined;
+        if (exp.RegistroSanidad?.perroId) {
+          const dog = await Perro.findByPk(exp.RegistroSanidad.perroId, {
+            attributes: ["nombre"],
+          });
+          dogName = dog?.nombre;
+        }
+
+        return {
+          id: exp.id,
+          userId: exp.userId,
+          interventionId: exp.interventionId,
+          sanityRecordId: exp.sanityRecordId,
+          sanityId: exp.sanidadId,
+          concept: exp.concept,
+          type: exp.type,
+          state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
+          amount: exp.amount,
+          fecha,
+          dogName,
+          user: userExpense,
+        };
+      })
+    );
 
     return {
       data,
@@ -342,6 +364,7 @@ export class ExpensesService {
             ? request.interventionId
             : null,
         sanidadId: request.sanidadId,
+        sanityRecordId: request.sanityRecordId,
         dateSanity: request.dateSanity,
         type: request.type,
         concept: request.concept,

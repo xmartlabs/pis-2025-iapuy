@@ -12,6 +12,7 @@ import {
 } from "sequelize-typescript";
 import { User } from "./user.entity";
 import { Intervention } from "./intervention.entity";
+import { RegistroSanidad } from "./registro-sanidad.entity";
 
 export type ExpenseState = "no pagado" | "pagado";
 
@@ -46,6 +47,12 @@ export class Expense extends Model {
     allowNull: true,
   })
   declare interventionId: string;
+
+  @ForeignKey(() => RegistroSanidad)
+  @Column({
+    allowNull: true,
+  })
+  declare sanityRecordId: string;
 
   @Column({
     type: DataType.STRING,
@@ -90,4 +97,6 @@ export class Expense extends Model {
   declare User?: User;
 
   declare Intervencion?: Intervention;
+
+  declare RegistroSanidad?: RegistroSanidad;
 }
