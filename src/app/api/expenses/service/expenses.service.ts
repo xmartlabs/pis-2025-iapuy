@@ -7,6 +7,7 @@ import { Op, Sequelize, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
+import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
 import sequelize from "@/lib/database";
 import { Banio } from "@/app/models/banio.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
@@ -338,6 +339,10 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
+
+    if (intervention && request.km)
+      request.amount *= fixedCostsService.getCostoKilometros();
+
     const expense = await Expense.create(
       {
         userId: request.userId,
@@ -378,13 +383,13 @@ export class ExpensesService {
   getFixedCost(sanidadtype: string): number {
     switch (sanidadtype) {
       case "Baño":
-        return 50;
+        return fixedCostsService.getCostoBanio();
       case "Vacunacion":
-        return 80;
+        return fixedCostsService.getCostoVacunas();
       case "Desparasitacion Interna":
-        return 30;
+        return fixedCostsService.getCostoDesparasitacionInterna();
       case "Desparasitacion Externa":
-        return 40;
+        return fixedCostsService.getCostoDesparasitacionExterna();
       default:
         return 0;
     }
