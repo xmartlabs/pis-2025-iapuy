@@ -85,7 +85,7 @@ interface InterventionPlain {
   id: string;
   fotosUrls: string[];
   driveLink: string | null;
-  Patients: PatientPlain[];
+  Pacientes: PatientPlain[];
   UsrPerroIntervention: UsrPerroPlain[];
   Expenses : ExpensePlain[];
 }
@@ -723,7 +723,7 @@ export class InterventionService {
     const plain : InterventionPlain = intervention.toJSON();
 
     const response = {
-    patients: (plain.Patients || []).map((p) => ({
+    patients: (plain.Pacientes || []).map((p) => ({
       name: p.nombre,
       age: String(p.edad),
       pathology_id: p.patologia_id,
