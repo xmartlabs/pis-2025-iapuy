@@ -18,7 +18,7 @@ export interface PayloadForUser extends jwt.JwtPayload {
 
 type PerroAttrs = { nombre: string };
 
-type UserSanitized = {
+export type UserSanitized = {
   ci: string;
   nombre: string;
   celular: string | null;
