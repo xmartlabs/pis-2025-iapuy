@@ -158,6 +158,7 @@ export class RegistrosSanidadService {
           concept: "",
           state: "Pendiente de pago",
           amount: expensesService.getFixedCost(expenseType),
+          km: false,
         };
         await expensesService.createExpense(createExpenseDto, {
           transaction: t,

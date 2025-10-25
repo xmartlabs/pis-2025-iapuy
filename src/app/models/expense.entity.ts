@@ -52,7 +52,7 @@ export class Expense extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  declare sanidadId: string;
+  declare sanidadId: string | null;
 
   @Column({
     type: DataType.ENUM(...EXPENSE_TYPES),
