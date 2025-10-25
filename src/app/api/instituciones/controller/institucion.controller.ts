@@ -32,12 +32,8 @@ export class InstitucionesController {
     await this.institutionsService.delete(id);
   }
 
-  async getInterventions(
-    id: string,
-    dates: Date[],
-    pagination: PaginationDto
-  ) {
-    return await this.institutionsService.findIntervenciones(
+  async getInterventions(id: string, dates: Date[], pagination: PaginationDto) {
+    return await this.institutionsService.findInterventions(
       id,
       dates,
       pagination

@@ -44,7 +44,7 @@ export class InstitucionesService {
     });
   }
 
-  async findIntervenciones(
+  async findInterventions(
     id: string,
     dates: Date[],
     pagination: PaginationDto
