@@ -9,7 +9,7 @@ export class InstitucionesController {
     private readonly institutionsService: InstitucionesService = new InstitucionesService()
   ) {}
 
-  async getInstitucion(id: string) {
+  async getInstitution(id: string) {
     return await this.institutionsService.findOne(id);
   }
 
@@ -32,7 +32,7 @@ export class InstitucionesController {
     await this.institutionsService.delete(id);
   }
 
-  async getIntervenciones(
+  async getInterventions(
     id: string,
     dates: Date[],
     pagination: PaginationDto

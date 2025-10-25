@@ -15,7 +15,7 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const institucion = await institutionsController.getInstitucion(id);
+    const institucion = await institutionsController.getInstitution(id);
     return NextResponse.json(institucion, { status: 200 });
   } catch (error) {
     return NextResponse.json(

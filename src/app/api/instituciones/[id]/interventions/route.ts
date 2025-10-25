@@ -20,7 +20,7 @@ export async function GET(
   const pagination = await extractPagination(request);
 
   try {
-    const instituciones = await institutionsController.getIntervenciones(
+    const instituciones = await institutionsController.getInterventions(
       id,
       dates,
       pagination
