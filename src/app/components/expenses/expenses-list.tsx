@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+import ConfigureExpensesButton from "./configure-expenses-button";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -426,13 +427,11 @@ export default function ExpensesList() {
               setReload((r) => !r);
             }}
           />
-          <Button
-            className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
-                     opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white
-                     transition duration-300 ease-in-out"
-          >
-            <Settings className="w-[20px] h-[20px]" />
-          </Button>
+          <ConfigureExpensesButton
+            onCreated={() => {
+              setReload((r) => !r);
+            }}
+          />
         </div>
       </div>
 
