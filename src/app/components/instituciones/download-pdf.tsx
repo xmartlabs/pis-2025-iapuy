@@ -152,12 +152,14 @@ export function DownloadButton({ id, dates }: DownloadButtonProps) {
     <Button
       onClick={handleClick}
       disabled={isDownloading}
-      className="rounded-lg border-2 border-[var(--custom-green)] bg-white p-2 hover:bg-[var(--custom-green)] hover:text-white flex items-center gap-2 text-[var(--custom-green)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[var(--custom-green)]"
+      className="w-[158px] h-[40px] min-w-[80px] px-3 py-2 gap-1 
+                  rounded-md border border-[#BDD7B3] 
+                  bg-white flex items-center justify-center text-[#5B9B40]"
     >
       {isDownloading ? (
-        <Loader2 className="h-5 w-5 text-[var(--custom-green)] animate-spin" />
+        <Loader2 className="h-4 w-4 text-[var(--custom-green)] animate-spin" />
       ) : (
-        <Printer className="h-5 w-5 text-[var(--custom-green)]" />
+        <Printer className="h-4 w-4 text-[var(--custom-green)]" />
       )}
       {isDownloading ? "Descargando..." : "Imprimir historial"}
     </Button>

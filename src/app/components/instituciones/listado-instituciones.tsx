@@ -18,7 +18,7 @@ import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
-import { type InstitutionDto } from "./dtos/institution.dto";
+import { type InstitutionDto } from "../../app/admin/instituciones/dtos/institution.dto";
 
 export default function InstitutionList() {
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([]);
