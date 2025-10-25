@@ -22,17 +22,42 @@ function DetallePersonaContent() {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const fetchUser = async (): Promise<UserSanitized | null> => {
+    const fetchUser = async (triedRefresh = false): Promise<UserSanitized | null> => {
         const resp = await fetch(`/api/users/${ci}`, {
           method: "GET",
           headers: baseHeaders,
         });
-        if (!resp.ok) {
-          throw new Error('Error obtaining user');
+
+        if (!resp.ok && !triedRefresh && resp.status === 401) {
+          const resp2 = await fetch(new URL("/api/auth/refresh", location.origin), {
+            method: "POST",
+            headers: { Accept: "application/json" },
+          });
+          if (resp2.ok) {
+            const refreshBody = (await resp2.json().catch(() => null)) as {
+              accessToken?: string;
+            } | null;
+
+            const newToken = refreshBody?.accessToken ?? null;
+            if (newToken && context?.setToken) {
+              context.setToken(newToken);
+              return await fetchUser(true);
+            }
+          }
         }
+        
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
+        }
+
         const respJson = await resp.json() as UserSanitized;
         return respJson;
       };
+
+      
 
     const loadUser = async () => {
       setLoading(true);
@@ -51,7 +76,7 @@ function DetallePersonaContent() {
         throw new Error('Error loading user');
       });
     }
-  }, [ci, context?.tokenJwt]);
+  }, [ci, context, context?.tokenJwt]);
 
   if (loading) {
     return <div>Cargando persona...</div>;
