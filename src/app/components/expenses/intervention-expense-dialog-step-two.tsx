@@ -488,6 +488,7 @@ export default function ExpenseDialogTwo({
             concept: "",
             state: "Pendiente de pago",
             amount: data.amount,
+            km: data.measurementType === "KM"
           }),
         });
 

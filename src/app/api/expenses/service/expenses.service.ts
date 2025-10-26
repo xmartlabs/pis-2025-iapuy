@@ -7,6 +7,11 @@ import { Op, Sequelize, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
+import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
+import sequelize from "@/lib/database";
+import { Banio } from "@/app/models/banio.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
+import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 
 const monthNames = [
   "Ene",
@@ -185,32 +190,44 @@ export class ExpensesService {
       ];
     }
 
-    const result = await Expense.findAndCountAll({
-      where: {
-        ...whereBase,
-        ...(timeStampWhere && {
-          [Op.or]: [
-            { dateSanity: timeStampWhere },
-            { "$Intervencion.timeStamp$": timeStampWhere },
-          ],
-        }),
-      },
-      include: [
-        { model: User, as: "User", attributes: ["ci", "nombre"] },
-        {
-          model: Intervention,
-          as: "Intervencion",
-          attributes: ["id", "timeStamp"],
-          required: false,
+    const [rows, count] = await Promise.all([
+      Expense.findAll({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
         },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-      distinct: true,
-    });
+        include: [
+          { model: User, as: "User", attributes: ["ci", "nombre"] },
+          {
+            model: Intervention,
+            as: "Intervencion",
+            attributes: ["id", "timeStamp"],
+            required: false,
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Expense.count({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
+        },
+      }),
+    ]);
 
-    const data: ListExpenseDto[] = result.rows.map((exp) => {
+    const data: ListExpenseDto[] = rows.map((exp) => {
       let fecha: Date | null = null;
       if (exp.interventionId) {
         const intervention = exp.Intervencion;
@@ -241,9 +258,9 @@ export class ExpensesService {
 
     return {
       data,
-      count: result.count,
-      totalPages: Math.ceil(result.count / pagination.size),
-      totalItems: result.count,
+      count,
+      totalPages: Math.ceil(count / pagination.size),
+      totalItems: count,
       page: pagination.page,
       size: pagination.size,
     };
@@ -334,6 +351,10 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
+
+    if (intervention && request.km)
+      request.amount *= fixedCostsService.getCostoKilometros();
+
     const expense = await Expense.create(
       {
         userId: request.userId,
@@ -374,20 +395,20 @@ export class ExpensesService {
   getFixedCost(sanidadtype: string): number {
     switch (sanidadtype) {
       case "Baño":
-        return 50;
+        return fixedCostsService.getCostoBanio();
       case "Vacunacion":
-        return 80;
+        return fixedCostsService.getCostoVacunas();
       case "Desparasitacion Interna":
-        return 30;
+        return fixedCostsService.getCostoDesparasitacionInterna();
       case "Desparasitacion Externa":
-        return 40;
+        return fixedCostsService.getCostoDesparasitacionExterna();
       default:
         return 0;
     }
   }
 
   async deleteExpense(id: string, payload: PayloadForUser): Promise<number> {
-    return await Expense.destroy({
+    const expense = await Expense.findOne({
       where:
         payload.type === "Administrador"
           ? {
@@ -398,5 +419,51 @@ export class ExpensesService {
               userId: payload.ci,
             },
     });
+
+    if (!expense) return 0;
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      let promiseDestroySanity = Promise.resolve(0);
+
+      if (expense.sanidadId) {
+        switch (expense.type) {
+          case "Baño":
+            promiseDestroySanity = Banio.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+
+          case "Vacunacion":
+            promiseDestroySanity = Vacuna.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+
+          case "Desparasitacion Interna":
+          case "Desparasitacion Externa":
+            promiseDestroySanity = Desparasitacion.destroy({
+              where: { id: expense.sanidadId },
+              transaction,
+            });
+            break;
+        }
+      }
+
+      await Promise.all([
+        expense.destroy({ transaction }),
+        promiseDestroySanity,
+      ]);
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+
+    return 1;
   }
 }

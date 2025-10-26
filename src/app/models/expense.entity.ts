@@ -43,6 +43,7 @@ export class Expense extends Model {
 
   @ForeignKey(() => Intervention)
   @Column({
+    type: DataType.UUID,
     allowNull: true,
   })
   declare interventionId: string;
@@ -51,7 +52,7 @@ export class Expense extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  declare sanidadId: string;
+  declare sanidadId: string | null;
 
   @Column({
     type: DataType.ENUM(...EXPENSE_TYPES),
@@ -61,7 +62,9 @@ export class Expense extends Model {
   })
   declare type: ExpenseType;
 
-  @Column
+  @Column({
+    type: DataType.STRING,
+  })
   declare concept: string;
 
   @Column({
@@ -72,10 +75,14 @@ export class Expense extends Model {
   })
   declare state: ExpenseState;
 
-  @Column
+  @Column({
+    type: DataType.FLOAT,
+  })
   declare amount: number;
 
-  @Column
+  @Column({
+    type: DataType.DATE,
+  })
   declare dateSanity: Date;
 
   @CreatedAt
