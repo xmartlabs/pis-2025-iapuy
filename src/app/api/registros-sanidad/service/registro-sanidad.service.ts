@@ -158,6 +158,7 @@ export class RegistrosSanidadService {
           concept: "",
           state: "Pendiente de pago",
           amount: expensesService.getFixedCost(expenseType),
+          km: false,
         };
         await expensesService.createExpense(createExpenseDto, {
           transaction: t,
@@ -165,5 +166,8 @@ export class RegistrosSanidadService {
       }
       return regSanidad;
     });
+  }
+  async findOne(id: string): Promise<RegistroSanidad | null> {
+    return await RegistroSanidad.findByPk(id);
   }
 }

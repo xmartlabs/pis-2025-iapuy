@@ -173,24 +173,35 @@ export class InterventionService {
       ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
       : undefined;
 
-    const result = await Intervention.findAndCountAll({
-      where: Object.assign(
-        {},
-        whereBase,
-        timeStampWhere ? { timeStamp: timeStampWhere } : {}
-      ),
-      include: [
-        {
-          model: Institucion,
-          as: "Institucions",
-          attributes: ["id", "nombre"],
-          where: includeInstitucionWhere,
-        },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-    });
+    const [rows, count] = await Promise.all([
+      Intervention.findAll({
+        where: Object.assign(
+          {},
+          whereBase,
+          timeStampWhere ? { timeStamp: timeStampWhere } : {}
+        ),
+        include: [
+          {
+            model: Institucion,
+            as: "Institucions",
+            attributes: ["id", "nombre"],
+            where: includeInstitucionWhere,
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Intervention.count({
+        where: Object.assign(
+          {},
+          whereBase,
+          timeStampWhere ? { timeStamp: timeStampWhere } : {}
+        ),
+      }),
+    ]);
+
+    const result = { rows, count };
     return getPaginationResultFromModel(pagination, result);
   }
   async findAllSimple(
@@ -366,35 +377,42 @@ export class InterventionService {
       ? { descripcion: { [Op.iLike]: `%${pagination.query}%` } }
       : undefined;
 
-    const result = await Intervention.findAndCountAll({
-      where: interventionWhere,
-      include: [
-        {
-          model: UsrPerro,
-          as: "UsrPerroIntervention",
-          where:
-            payload.type === "Administrador"
-              ? {
-                  perroId: dogId,
-                }
-              : {
-                  perroId: dogId,
-                  userId: payload.ci,
-                },
-          attributes: [],
-          required: true,
-        },
-        {
-          model: Institucion,
-          as: "Institucions",
-          attributes: ["id", "nombre"],
-          where: interventionWhere,
-        },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-    });
+    const [rows, count] = await Promise.all([
+      Intervention.findAll({
+        where: interventionWhere,
+        include: [
+          {
+            model: UsrPerro,
+            as: "UsrPerroIntervention",
+            where:
+              payload.type === "Administrador"
+                ? {
+                    perroId: dogId,
+                  }
+                : {
+                    perroId: dogId,
+                    userId: payload.ci,
+                  },
+            attributes: [],
+            required: true,
+          },
+          {
+            model: Institucion,
+            as: "Institucions",
+            attributes: ["id", "nombre"],
+            where: interventionWhere,
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Intervention.count({
+        where: interventionWhere,
+      }),
+    ]);
+
+    const result = { rows, count };
     return getPaginationResultFromModel(pagination, result);
   }
 

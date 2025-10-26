@@ -3,7 +3,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InterventionService } from "./intervention.service";
 import { Intervention } from "@/app/models/intervention.entity";
-import { Op } from "sequelize";
 
 vi.mock("@/lib/database", () => ({
   sequelize: { define: vi.fn(), sync: vi.fn(), authenticate: vi.fn() },
@@ -24,7 +23,10 @@ vi.mock("@/app/models/intitucion-patalogia.entity", () => ({ InstitucionPatologi
 
 // Mock de Intervention
 vi.mock("@/app/models/intervention.entity", () => ({
-  Intervention: { findAndCountAll: vi.fn() },
+  Intervention: { 
+    findAll: vi.fn(),
+    count: vi.fn(),
+  },
 }));
 
 // Mock de paginación
@@ -45,10 +47,10 @@ describe("IntervencionService", () => {
   });
 
   it("findAll should return paginated intervenciones", async () => {
-    (Intervention.findAndCountAll as any).mockResolvedValue({
-      count: 1,
-      rows: [{ get: () => ({ id: 1, descripcion: "Corte de emergencia", Institucion: { id: 2, nombre: "Inst A" } }) }],
-    });
+    (Intervention.findAll as any).mockResolvedValue([
+      { get: () => ({ id: 1, descripcion: "Corte de emergencia", Institucion: { id: 2, nombre: "Inst A" } }) }
+    ]);
+    (Intervention.count as any).mockResolvedValue(1);
 
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
     const result = await service.findAll(pagination as any, mockPayload);
@@ -58,7 +60,8 @@ describe("IntervencionService", () => {
   });
 
   it("findAll should handle empty results", async () => {
-    (Intervention.findAndCountAll as any).mockResolvedValue({ count: 0, rows: [] });
+    (Intervention.findAll as any).mockResolvedValue([]);
+    (Intervention.count as any).mockResolvedValue(0);
 
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
     const result = await service.findAll(pagination as any, mockPayload);
@@ -68,13 +71,10 @@ describe("IntervencionService", () => {
   });
 
   it("findAll should filter by institucion nombre when query provided", async () => {
-    (Intervention.findAndCountAll as any).mockImplementation((args: any) => {
-      const inst = (args.include || []).find((i: any) => Array.isArray(i.attributes) && i.attributes.includes("nombre"));
-      if (inst?.where?.nombre?.[Op.iLike] === "%Inst A%") {
-        return { count: 1, rows: [{ get: () => ({ id: 1, descripcion: "Corte", Institucion: { id: 2, nombre: "Inst A" } }) }] };
-      }
-      return { count: 0, rows: [] };
-    });
+    (Intervention.findAll as any).mockResolvedValue([
+      { get: () => ({ id: 1, descripcion: "Corte", Institucion: { id: 2, nombre: "Inst A" } }) }
+    ]);
+    (Intervention.count as any).mockResolvedValue(1);
 
     const pagination = { query: "Inst A", size: 10, getOffset: () => 0, getOrder: () => [] };
     const result = await service.findAll(pagination as any, mockPayload);
@@ -84,17 +84,20 @@ describe("IntervencionService", () => {
   });
 
   it("findAll passes order correctly", async () => {
-    const mockFn = vi.fn().mockResolvedValue({ count: 1, rows: [{ get: () => ({ id: 1, descripcion: "Corte" }) }] });
-    (Intervention.findAndCountAll as any) = mockFn;
+    const mockFindAll = vi.fn().mockResolvedValue([{ get: () => ({ id: 1, descripcion: "Corte" }) }]);
+    const mockCount = vi.fn().mockResolvedValue(1);
+    (Intervention.findAll as any) = mockFindAll;
+    (Intervention.count as any) = mockCount;
 
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [["descripcion", "ASC"]] };
     await service.findAll(pagination as any, mockPayload);
 
-    expect(mockFn).toHaveBeenCalledWith(expect.objectContaining({ order: [["descripcion", "ASC"]] }));
+    expect(mockFindAll).toHaveBeenCalledWith(expect.objectContaining({ order: [["descripcion", "ASC"]] }));
   });
 
   it("findAll handles offset beyond total rows", async () => {
-    (Intervention.findAndCountAll as any).mockResolvedValue({ count: 2, rows: [] });
+    (Intervention.findAll as any).mockResolvedValue([]);
+    (Intervention.count as any).mockResolvedValue(2);
 
     const pagination = { query: "", size: 10, getOffset: () => 100, getOrder: () => [] };
     const result = await service.findAll(pagination as any, mockPayload);
@@ -104,27 +107,30 @@ describe("IntervencionService", () => {
   });
 
   it("findAll should pass limit = 0 if pagination size is 0", async () => {
-    const mockFn = vi.fn().mockResolvedValue({ count: 0, rows: [] });
-    (Intervention.findAndCountAll as any) = mockFn;
+    const mockFindAll = vi.fn().mockResolvedValue([]);
+    const mockCount = vi.fn().mockResolvedValue(0);
+    (Intervention.findAll as any) = mockFindAll;
+    (Intervention.count as any) = mockCount;
 
     const pagination = { query: "", size: 0, getOffset: () => 0, getOrder: () => [] };
     await service.findAll(pagination as any, mockPayload);
 
-    expect(mockFn).toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
+    expect(mockFindAll).toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
   });
 
   it("findAll should propagate DB errors", async () => {
-    (Intervention.findAndCountAll as any).mockRejectedValue(new Error("DB error"));
+    (Intervention.findAll as any).mockRejectedValue(new Error("DB error"));
+    (Intervention.count as any).mockResolvedValue(0);
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
 
     await expect(service.findAll(pagination as any, mockPayload)).rejects.toThrow("DB error");
   });
 
   it("findInterventionByDogId should return interventions for a given dogId", async () => {
-    (Intervention.findAndCountAll as any).mockResolvedValue({
-      count: 1,
-      rows: [{ get: () => ({ id: 1, descripcion: "Atención", UsrPerros: [{ perroId: "5" }], Institucion: { id: 2, nombre: "Inst" } }) }],
-    });
+    (Intervention.findAll as any).mockResolvedValue([
+      { get: () => ({ id: 1, descripcion: "Atención", UsrPerros: [{ perroId: "5" }], Institucion: { id: 2, nombre: "Inst" } }) }
+    ]);
+    (Intervention.count as any).mockResolvedValue(1);
 
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
     const result = await service.findInterventionByDogId(pagination as any, "5", mockPayload);
@@ -134,12 +140,10 @@ describe("IntervencionService", () => {
   });
 
   it("findInterventionByDogId should filter by descripcion when query provided", async () => {
-    (Intervention.findAndCountAll as any).mockImplementation((args: any) => {
-      if (args.where?.descripcion?.[Op.iLike] === "%corte%") {
-        return { count: 1, rows: [{ get: () => ({ id: 1, descripcion: "Corte", UsrPerros: [{ perroId: "7" }], Institucion: { id: 2, nombre: "Inst" } }) }] };
-      }
-      return { count: 0, rows: [] };
-    });
+    (Intervention.findAll as any).mockResolvedValue([
+      { get: () => ({ id: 1, descripcion: "Corte", UsrPerros: [{ perroId: "7" }], Institucion: { id: 2, nombre: "Inst" } }) }
+    ]);
+    (Intervention.count as any).mockResolvedValue(1);
 
     const pagination = { query: "corte", size: 10, getOffset: () => 0, getOrder: () => [] };
     const result = await service.findInterventionByDogId(pagination as any, "7", mockPayload);
@@ -149,7 +153,8 @@ describe("IntervencionService", () => {
   });
 
   it("findInterventionByDogId should propagate DB errors", async () => {
-    (Intervention.findAndCountAll as any).mockRejectedValue(new Error("DB error"));
+    (Intervention.findAll as any).mockRejectedValue(new Error("DB error"));
+    (Intervention.count as any).mockResolvedValue(0);
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
 
     await expect(service.findInterventionByDogId(pagination as any, "1", mockPayload)).rejects.toThrow("DB error");

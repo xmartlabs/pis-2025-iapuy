@@ -18,11 +18,11 @@ export class Banio extends Model {
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
   declare id: CreationOptional<string>;
 
-  @Column
+  @Column({ type: DataType.DATE })
   declare fecha: Date;
 
   @ForeignKey(() => RegistroSanidad)
-  @Column
+  @Column({ type: DataType.UUID })
   declare registroSanidadId: string;
 
   @CreatedAt

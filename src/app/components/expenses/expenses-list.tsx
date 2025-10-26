@@ -12,18 +12,26 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Settings, ArrowRight } from "lucide-react";
+import { BadgeDollarSign, Settings, EllipsisVertical } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
-import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
+import { type ListExpenseDto } from "@/app/api/expenses/dtos/list-expense.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+
+import DeleteExpenseDialog from "./delete-expense-dialog";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -42,7 +50,7 @@ function formatMonthYear(ts: string | number | Date) {
 }
 
 export default function ExpensesList() {
-  const [expense, setExpense] = useState<ExpenseDto[]>([]);
+  const [expense, setExpense] = useState<ListExpenseDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [peopleWhoHaveExpent, setPeopleWhoHaveExpent] = useState<pairPerson[]>(
     []
@@ -57,6 +65,10 @@ export default function ExpensesList() {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<ListExpenseDto | null>(
+    null
+  );
 
   const context = useContext(LoginContext);
 
@@ -78,7 +90,7 @@ export default function ExpensesList() {
       query?: string,
       signal?: AbortSignal,
       triedRefresh = false
-    ): Promise<PaginationResultDto<ExpenseDto> | null> => {
+    ): Promise<PaginationResultDto<ListExpenseDto> | null> => {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
       const url = new URL(
@@ -165,10 +177,12 @@ export default function ExpensesList() {
               if (
                 !body2 ||
                 typeof body2 !== "object" ||
-                !Array.isArray((body2 as PaginationResultDto<ExpenseDto>).data)
+                !Array.isArray(
+                  (body2 as PaginationResultDto<ListExpenseDto>).data
+                )
               )
                 throw new Error("Malformed API response");
-              return body2 as PaginationResultDto<ExpenseDto>;
+              return body2 as PaginationResultDto<ListExpenseDto>;
             }
           }
         }
@@ -187,10 +201,10 @@ export default function ExpensesList() {
         if (
           !body ||
           typeof body !== "object" ||
-          !Array.isArray((body as PaginationResultDto<ExpenseDto>).data)
+          !Array.isArray((body as PaginationResultDto<ListExpenseDto>).data)
         )
           throw new Error("Malformed API response");
-        return body as PaginationResultDto<ExpenseDto>;
+        return body as PaginationResultDto<ListExpenseDto>;
       } catch (err) {
         if ((err as DOMException)?.name === "AbortError") {
           return null;
@@ -359,6 +373,7 @@ export default function ExpensesList() {
             try {
               const map = new Map<string, number>();
               res.data.forEach((exp) => {
+                if (!exp.fecha) return;
                 const d = new Date(exp.fecha);
                 if (isNaN(d.getTime())) return;
                 const key = formatMonthYear(d);
@@ -508,14 +523,19 @@ export default function ExpensesList() {
                     className="hover:bg-gray-50 transition-colors duration-150"
                   >
                     <TableCell className="p-3">
-                      {`${new Date(exp.fecha).toLocaleDateString("es-UY", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}`}
+                      {exp.fecha
+                        ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })} ${new Date(exp.fecha).toLocaleTimeString(
+                            "es-UY",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}`
+                        : "Sin fecha"}
                     </TableCell>
 
                     <TableCell className="p-3">{exp.type}</TableCell>
@@ -540,7 +560,42 @@ export default function ExpensesList() {
                     </TableCell>
 
                     <TableCell className="w-[40px] mr-0">
-                      <ArrowRight />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md flex items-center justify-center">
+                            <EllipsisVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {}}>
+                            Ver o editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {}}>
+                            Cambiar a Pagado
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setExpenseToDelete(exp);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            Eliminar gasto
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {expenseToDelete && (
+                        <DeleteExpenseDialog
+                          open={deleteDialogOpen}
+                          exp={expenseToDelete}
+                          onClose={() => {
+                            setDeleteDialogOpen(false);
+                            setExpenseToDelete(null);
+                          }}
+                          onSuccess={() => {
+                            setReload((r) => !r);
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

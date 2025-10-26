@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExpensesService } from "./expenses.service";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
+import type { PayloadForUser } from "../../users/service/user.service";
 
 vi.mock("@/app/models/expense.entity", () => ({
   Expense: {
@@ -26,6 +27,30 @@ vi.mock("@/app/models/user.entity", () => ({
   },
 }));
 
+vi.mock("@/app/models/banio.entity", () => ({
+  Banio: {
+    destroy: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/models/vacuna.entity", () => ({
+  Vacuna: {
+    destroy: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/models/desparasitacion.entity", () => ({
+  Desparasitacion: {
+    destroy: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/database", () => ({
+  default: {
+    transaction: vi.fn(),
+  },
+}));
+
 describe("ExpensesService", () => {
   // eslint-disable-next-line init-declarations
   let service: ExpensesService;
@@ -36,7 +61,9 @@ describe("ExpensesService", () => {
   });
 
   it("correct expense info should create an expense", async () => {
-    const { Expense } = await vi.importMock("@/app/models/expense.entity") as {
+    const { Expense } = (await vi.importMock(
+      "@/app/models/expense.entity"
+    )) as {
       Expense: { create: ReturnType<typeof vi.fn> };
     };
 
@@ -54,18 +81,21 @@ describe("ExpensesService", () => {
 
     const result = await service.createExpense(newExpense);
 
-    expect(createMock).toHaveBeenCalledWith({
-      ...newExpense,
-      state: "no pagado",
-    });
-    expect(result).toEqual({
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...newExpense,
+        state: "no pagado",
+      }),
+      expect.any(Object)
+    );
+    expect(result).toMatchObject({
       ...newExpense,
       state: "no pagado",
     });
   });
 
   it("should throw an error if user does not exist", async () => {
-    const { User } = await vi.importMock("@/app/models/user.entity") as {
+    const { User } = (await vi.importMock("@/app/models/user.entity")) as {
       User: { findOne: ReturnType<typeof vi.fn> };
     };
     User.findOne.mockResolvedValue(null);
@@ -85,10 +115,12 @@ describe("ExpensesService", () => {
   });
 
   it("should throw an error if intervention does not exist", async () => {
-    const { User } = await vi.importMock("@/app/models/user.entity") as {
+    const { User } = (await vi.importMock("@/app/models/user.entity")) as {
       User: { findOne: ReturnType<typeof vi.fn> };
     };
-    const { Intervention } = await vi.importMock("@/app/models/intervention.entity") as {
+    const { Intervention } = (await vi.importMock(
+      "@/app/models/intervention.entity"
+    )) as {
       Intervention: { findOne: ReturnType<typeof vi.fn> };
     };
 
@@ -184,6 +216,112 @@ describe("ExpensesService", () => {
       expect(spy).toHaveBeenCalledWith("1");
       expect(mockUpdate).toHaveBeenCalledWith({ amount: 50 });
       expect(res).toEqual({ id: "1", amount: 50 });
+    });
+  });
+
+  describe("delete flow", () => {
+    it("returns 0 when expense not found", async () => {
+      const { Expense } = (await vi.importMock(
+        "@/app/models/expense.entity"
+      )) as {
+        Expense: { findOne: ReturnType<typeof vi.fn> };
+      };
+
+      vi.spyOn(Expense, "findOne").mockResolvedValue(null);
+
+      const res = await service.deleteExpense("1", {
+        type: "Administrador",
+        ci: "12345678",
+      } as PayloadForUser);
+
+      expect(Expense.findOne).toHaveBeenCalledWith({ where: { id: "1" } });
+      expect(res).toBe(0);
+    });
+
+    it("deletes expense and commits transaction when sanidadId absent", async () => {
+      const { Expense } = (await vi.importMock(
+        "@/app/models/expense.entity"
+      )) as {
+        Expense: { findOne: ReturnType<typeof vi.fn> };
+      };
+
+      const { default: sequelize } = (await vi.importMock(
+        "@/lib/database"
+      )) as { default: { transaction: ReturnType<typeof vi.fn> } };
+
+      const mockDestroy = vi.fn().mockResolvedValue(1);
+      const mockExpense = {
+        destroy: mockDestroy,
+        sanidadId: null,
+        type: "Otro",
+      };
+
+      vi.spyOn(Expense, "findOne").mockResolvedValue(mockExpense);
+
+      const transaction = {
+        commit: vi.fn().mockResolvedValue(undefined),
+        rollback: vi.fn().mockResolvedValue(undefined),
+      };
+
+      sequelize.transaction.mockResolvedValue(transaction);
+
+      const res = await service.deleteExpense("1", {
+        type: "Administrador",
+        ci: "12345678",
+      } as PayloadForUser);
+
+      expect(Expense.findOne).toHaveBeenCalledWith({ where: { id: "1" } });
+      expect(mockDestroy).toHaveBeenCalledWith({ transaction });
+      expect(transaction.commit).toHaveBeenCalled();
+      expect(res).toBe(1);
+    });
+
+    it("destroys related sanidad record for Baño and commits", async () => {
+      const { Expense } = (await vi.importMock(
+        "@/app/models/expense.entity"
+      )) as {
+        Expense: { findOne: ReturnType<typeof vi.fn> };
+      };
+
+      const { Banio } = (await vi.importMock("@/app/models/banio.entity")) as {
+        Banio: { destroy: ReturnType<typeof vi.fn> };
+      };
+
+      const { default: sequelize } = (await vi.importMock(
+        "@/lib/database"
+      )) as { default: { transaction: ReturnType<typeof vi.fn> } };
+
+      const mockDestroyExpense = vi.fn().mockResolvedValue(1);
+      const mockExpense = {
+        destroy: mockDestroyExpense,
+        sanidadId: "s1",
+        type: "Baño",
+      };
+
+      vi.spyOn(Expense, "findOne").mockResolvedValue(mockExpense);
+
+      const transaction = {
+        commit: vi.fn().mockResolvedValue(undefined),
+        rollback: vi.fn().mockResolvedValue(undefined),
+      };
+
+      sequelize.transaction.mockResolvedValue(transaction);
+
+      Banio.destroy.mockResolvedValue(1);
+
+      const res = await service.deleteExpense("1", {
+        type: "Administrador",
+        ci: "12345678",
+      } as PayloadForUser);
+
+      expect(Expense.findOne).toHaveBeenCalledWith({ where: { id: "1" } });
+      expect(Banio.destroy).toHaveBeenCalledWith({
+        where: { id: "s1" },
+        transaction,
+      });
+      expect(mockDestroyExpense).toHaveBeenCalledWith({ transaction });
+      expect(transaction.commit).toHaveBeenCalled();
+      expect(res).toBe(1);
     });
   });
 });

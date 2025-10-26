@@ -1,11 +1,9 @@
 "use strict";
 const { v4: uuidv4 } = require("uuid");
 
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     await queryInterface.bulkInsert("expenses", [
       {
         id: uuidv4(),
@@ -14,11 +12,12 @@ module.exports = {
         concept: "Desparasitacion Interna",
         state: "pagado",
         amount: 350.76,
-        type : "Desparasitacion Interna",
+        type: "Desparasitacion Interna",
+        sanidadId: "d1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        dateSanity: "2025-04-08T09:00:00"
+        dateSanity: "2025-04-08T09:00:00",
       },
       {
         id: uuidv4(),
@@ -26,77 +25,13 @@ module.exports = {
         interventionId: null,
         concept: "Vacunación antirrábica",
         state: "pagado",
-        amount: 2300.00,
+        amount: 2300.0,
         type: "Vacunacion",
+        sanidadId: "a2322222-2222-2222-2222-222222222222",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
         dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.00,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.00,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.00,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.00,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "33333333",
-        interventionId: null,
-        concept: "Desparasitacion Externa",
-        state: "no pagado",
-        amount: 1250.75,
-        type: "Desparasitacion Externa",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-04-18T14:45:00",
       },
       {
         id: uuidv4(),
@@ -104,8 +39,9 @@ module.exports = {
         interventionId: null,
         concept: "Desparasitación externa",
         state: "pagado",
-        amount: 980.50,
+        amount: 980.5,
         type: "Desparasitacion Externa",
+        sanidadId: "d1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -117,8 +53,9 @@ module.exports = {
         interventionId: null,
         concept: "Vacunacion",
         state: "pagado",
-        amount: 3100.00,
+        amount: 3100.0,
         type: "Vacunacion",
+        sanidadId: "a1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -130,8 +67,9 @@ module.exports = {
         interventionId: null,
         concept: "Baño",
         state: "no pagado",
-        amount: 1850.00,
+        amount: 1850.0,
         type: "Baño",
+        sanidadId: "b1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -141,23 +79,11 @@ module.exports = {
         id: uuidv4(),
         userId: "11111111",
         interventionId: null,
-        concept: "Análisis de laboratorio",
-        state: "pagado",
-        amount: 2100.00,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-08-25T08:40:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "11111111",
-        interventionId: null,
         concept: "Baño a perro",
         state: "pagado",
         amount: 1512.56,
         type: "Baño",
+        sanidadId: "b1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -187,7 +113,7 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        dateSanity: null
+        dateSanity: null,
       },
       {
         id: uuidv4(),
@@ -200,13 +126,12 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-        dateSanity: null
+        dateSanity: null,
       },
     ]);
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("expenses", null, {});
   },
 };

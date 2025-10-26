@@ -8,6 +8,11 @@ export class InstitucionesController {
   constructor(
     private readonly institutionsService: InstitucionesService = new InstitucionesService()
   ) {}
+
+  async getInstitution(id: string) {
+    return await this.institutionsService.findOne(id);
+  }
+
   async getInstitutions(pagination: PaginationDto) {
     const institutions = await this.institutionsService.findAll(pagination);
     return institutions;
@@ -25,6 +30,14 @@ export class InstitucionesController {
 
   async deleteInstitution(id: string): Promise<void> {
     await this.institutionsService.delete(id);
+  }
+
+  async getInterventions(id: string, dates: Date[], pagination: PaginationDto) {
+    return await this.institutionsService.findInterventions(
+      id,
+      dates,
+      pagination
+    );
   }
 
   async interventionsPDF(req: NextRequest, id: string) {
