@@ -78,7 +78,8 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
   });
 
   async function submitHandler(
-    data: z.infer<typeof fixedCostsSchema>
+    data: z.infer<typeof fixedCostsSchema>,
+    triedRefresh = false
   ) {
     try {
       const d = data;
@@ -98,6 +99,25 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
         },
         body: JSON.stringify(body),
       });
+
+      if (!res.ok && !triedRefresh && res.status === 401) {
+        const resp2 = await fetch(new URL("/api/auth/refresh", location.origin), {
+          method: "POST",
+          headers: { Accept: "application/json" },
+        });
+
+        if (resp2.ok) {
+          const refreshBody = (await resp2.json().catch(() => null)) as {
+            accessToken?: string;
+          } | null;
+
+          const newToken = refreshBody?.accessToken ?? null;
+          if (newToken && context?.setToken) {
+            context.setToken(newToken);
+            await submitHandler(data, true);
+          }
+        }
+      }
 
       if (res.ok) {
         onOpenChange(false);
@@ -156,7 +176,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                     onSubmit={(e) => {
                     e.preventDefault();
                     form
-                        .handleSubmit(submitHandler)(e)
+                        .handleSubmit((data) => submitHandler(data, false))(e)
                         .catch((err) => {
                         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                         // @ts-ignore
