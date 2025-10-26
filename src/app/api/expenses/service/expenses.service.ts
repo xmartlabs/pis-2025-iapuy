@@ -229,114 +229,164 @@ export class ExpensesService {
       }),
     ]);
 
-    const data: ListExpenseDto[] = await Promise.all(
-      rows.map(async (exp) => {
-        let fecha: Date | null = null;
-        if (exp.interventionId) {
-          const intervention = exp.Intervencion;
-          fecha = intervention?.timeStamp ?? null;
-        } else {
-          fecha = exp.dateSanity;
-        }
+    const sanidadIds = {
+      vacunas: [] as string[],
+      desparasitaciones: [] as string[],
+      banios: [] as string[],
+    };
 
-        let userExpense: { ci: string; nombre: string } | undefined = undefined;
-        if (exp.userId) {
-          const user = exp.User;
-          if (user) {
-            userExpense = { ci: user.ci, nombre: user.nombre };
-          }
+    for (const exp of rows) {
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          sanidadIds.vacunas.push(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          sanidadIds.desparasitaciones.push(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          sanidadIds.banios.push(exp.sanidadId);
         }
+      }
+    }
 
-        let dogName: string | undefined = undefined;
-        if (exp.sanidadId) {
-          try {
-            if (exp.type === "Vacunacion") {
-              const vacuna = await Vacuna.findOne({
-                where: { id: exp.sanidadId },
-                include: {
-                  model: RegistroSanidad,
-                  as: "RegistroSanidad",
-                  include: [
-                    {
-                      model: Perro,
-                      as: "Perro",
-                      attributes: ["nombre"],
-                    },
-                  ],
-                },
-              });
-              const vacunaData = vacuna?.toJSON() as {
-                RegistroSanidad?: {
-                  Perro?: { nombre: string };
-                };
-              };
-              dogName = vacunaData?.RegistroSanidad?.Perro?.nombre;
-            } else if (
-              exp.type === "Desparasitacion Interna" ||
-              exp.type === "Desparasitacion Externa"
-            ) {
-              const desparasitacion = await Desparasitacion.findOne({
-                where: { id: exp.sanidadId },
-                include: {
-                  model: RegistroSanidad,
-                  as: "RegistroSanidad",
-                  include: [
-                    {
-                      model: Perro,
-                      as: "Perro",
-                      attributes: ["nombre"],
-                    },
-                  ],
-                },
-              });
-              const desparasitacionData = desparasitacion?.toJSON() as {
-                RegistroSanidad?: {
-                  Perro?: { nombre: string };
-                };
-              };
-              dogName = desparasitacionData?.RegistroSanidad?.Perro?.nombre;
-            } else if (exp.type === "Baño") {
-              const banio = await Banio.findOne({
-                where: { id: exp.sanidadId },
-                include: {
-                  model: RegistroSanidad,
-                  as: "RegistroSanidad",
-                  include: [
-                    {
-                      model: Perro,
-                      as: "Perro",
-                      attributes: ["nombre"],
-                    },
-                  ],
-                },
-              });
-              const banioData = banio?.toJSON() as {
-                RegistroSanidad?: {
-                  Perro?: { nombre: string };
-                };
-              };
-              dogName = banioData?.RegistroSanidad?.Perro?.nombre;
-            }
-          } catch {
-            dogName = undefined;
-          }
-        }
+    const [vacunasWithDogs, desparasitacionesWithDogs, baniosWithDogs] =
+      await Promise.all([
+        sanidadIds.vacunas.length > 0
+          ? Vacuna.findAll({
+              where: { id: { [Op.in]: sanidadIds.vacunas } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.desparasitaciones.length > 0
+          ? Desparasitacion.findAll({
+              where: { id: { [Op.in]: sanidadIds.desparasitaciones } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.banios.length > 0
+          ? Banio.findAll({
+              where: { id: { [Op.in]: sanidadIds.banios } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+      ]);
 
-        return {
-          id: exp.id,
-          userId: exp.userId,
-          interventionId: exp.interventionId || undefined,
-          sanityId: exp.sanidadId || undefined,
-          concept: exp.concept,
-          type: exp.type,
-          state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
-          amount: exp.amount,
-          fecha,
-          dogName,
-          user: userExpense,
+    const dogNameMaps = {
+      vacunas: new Map<string, string>(),
+      desparasitaciones: new Map<string, string>(),
+      banios: new Map<string, string>(),
+    };
+
+    type ModelWithDogName = {
+      id: string;
+      RegistroSanidad?: {
+        Perro?: {
+          nombre: string;
         };
-      })
-    );
+      };
+    };
+
+    for (const vacuna of vacunasWithDogs) {
+      const typedVacuna = vacuna as unknown as ModelWithDogName;
+      const dogName = typedVacuna?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.vacunas.set(typedVacuna.id, dogName);
+      }
+    }
+
+    for (const desparasitacion of desparasitacionesWithDogs) {
+      const typedDesparasitacion =
+        desparasitacion as unknown as ModelWithDogName;
+      const dogName = typedDesparasitacion?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.desparasitaciones.set(typedDesparasitacion.id, dogName);
+      }
+    }
+
+    for (const banio of baniosWithDogs) {
+      const typedBanio = banio as unknown as ModelWithDogName;
+      const dogName = typedBanio?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.banios.set(typedBanio.id, dogName);
+      }
+    }
+
+    const data: ListExpenseDto[] = rows.map((exp) => {
+      let fecha: Date | null = null;
+      if (exp.interventionId) {
+        const intervention = exp.Intervencion;
+        fecha = intervention?.timeStamp ?? null;
+      } else {
+        fecha = exp.dateSanity;
+      }
+
+      let userExpense: { ci: string; nombre: string } | undefined = undefined;
+      if (exp.userId) {
+        const user = exp.User;
+        if (user) {
+          userExpense = { ci: user.ci, nombre: user.nombre };
+        }
+      }
+
+      let dogName: string | undefined = undefined;
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          dogName = dogNameMaps.vacunas.get(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          dogName = dogNameMaps.desparasitaciones.get(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          dogName = dogNameMaps.banios.get(exp.sanidadId);
+        }
+      }
+
+      return {
+        id: exp.id,
+        userId: exp.userId,
+        interventionId: exp.interventionId || undefined,
+        sanityId: exp.sanidadId || undefined,
+        concept: exp.concept,
+        type: exp.type,
+        state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
+        amount: exp.amount,
+        fecha,
+        dogName,
+        user: userExpense,
+      };
+    });
 
     return {
       data,

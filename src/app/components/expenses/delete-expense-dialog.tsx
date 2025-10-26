@@ -122,8 +122,9 @@ export default function DeleteExpenseDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
+        showCloseButton={false}
         className="
-                        mt-27 !w-[90%] !max-w-[720px] !box-border !px-4 !md:px-6
+                        mt-27 !w-[90%] !max-w-[500px] !box-border !px-4 !md:px-6
                         !h-auto !md:h-[362px] !max-h-[80vh] !overflow-y-auto !overflow-x-hidden
                         !bg-white !border !border-[#D4D4D4] !rounded-md
                         !top-[50%] md:!top-[228px] !left-1/2 !-translate-x-1/2
@@ -147,10 +148,9 @@ export default function DeleteExpenseDialog({
               {dogName || "[Cargando nombre...]"}.
             </p>
           )}
-          {(exp.type === "Traslados" ||
-            exp.type === "Estacionamiento/Taxi") && (
+          {(exp.type === "Traslado" || exp.type === "Estacionamiento/Taxi") && (
             <p className="text-sm text-muted-foreground">
-              El gasto también va a eliminarse de la intervención
+              El gasto también va a eliminarse de la intervención {""}
               {exp.fecha
                 ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
                     day: "2-digit",
@@ -161,7 +161,6 @@ export default function DeleteExpenseDialog({
                     minute: "2-digit",
                   })}`
                 : "sin fecha"}
-              .
             </p>
           )}
           {(exp.type === "Pago a guía" ||
@@ -178,7 +177,6 @@ export default function DeleteExpenseDialog({
                     minute: "2-digit",
                   })}`
                 : "sin fecha"}
-              .
             </p>
           )}
         </div>
@@ -189,8 +187,8 @@ export default function DeleteExpenseDialog({
               variant="outline"
               className="
                                                 w-full md:w-[96px] md:h-[40px] h-10 text-sm px-3 py-2 rounded-md
-                                                border-[#5B9B40] text-[#5B9B40] bg-white
-                                                hover:bg-[#edd4d1] hover:text-[#bd2717] hover:border-[#bd2717] transition-colors
+                                                border-[#dc2626] text-[#dc2626] bg-white
+                                                hover:bg-[#fef2f2] hover:text-[#991b1b] hover:border-[#991b1b] transition-colors
                                             "
             >
               Cancelar
@@ -209,8 +207,8 @@ export default function DeleteExpenseDialog({
                                             w-full md:w-[96px] md:h-[40px] !h-10 
                                             !font-sans !font-medium text-sm !leading-6 
                                             !tracking-normal !px-3 !py-2 !rounded-md !flex 
-                                            !items-center !justify-center !gap-1 !bg-[#5B9B40] 
-                                            !text-white !hover:bg-[#4b8034]
+                                            !items-center !justify-center !gap-1 !bg-[#dc2626] 
+                                            !text-white !hover:bg-[#991b1b]
                                         "
           >
             {isDeleting ? "Eliminando..." : "Confirmar"}
