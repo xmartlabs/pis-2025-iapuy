@@ -190,32 +190,44 @@ export class ExpensesService {
       ];
     }
 
-    const result = await Expense.findAndCountAll({
-      where: {
-        ...whereBase,
-        ...(timeStampWhere && {
-          [Op.or]: [
-            { dateSanity: timeStampWhere },
-            { "$Intervencion.timeStamp$": timeStampWhere },
-          ],
-        }),
-      },
-      include: [
-        { model: User, as: "User", attributes: ["ci", "nombre"] },
-        {
-          model: Intervention,
-          as: "Intervencion",
-          attributes: ["id", "timeStamp"],
-          required: false,
+    const [rows, count] = await Promise.all([
+      Expense.findAll({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
         },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-      distinct: true,
-    });
+        include: [
+          { model: User, as: "User", attributes: ["ci", "nombre"] },
+          {
+            model: Intervention,
+            as: "Intervencion",
+            attributes: ["id", "timeStamp"],
+            required: false,
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Expense.count({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
+        },
+      }),
+    ]);
 
-    const data: ListExpenseDto[] = result.rows.map((exp) => {
+    const data: ListExpenseDto[] = rows.map((exp) => {
       let fecha: Date | null = null;
       if (exp.interventionId) {
         const intervention = exp.Intervencion;
@@ -246,9 +258,9 @@ export class ExpensesService {
 
     return {
       data,
-      count: result.count,
-      totalPages: Math.ceil(result.count / pagination.size),
-      totalItems: result.count,
+      count,
+      totalPages: Math.ceil(count / pagination.size),
+      totalItems: count,
       page: pagination.page,
       size: pagination.size,
     };

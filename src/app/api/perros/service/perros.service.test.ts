@@ -8,7 +8,8 @@ import type { PayloadForUser } from "../detalles/route";
 
 vi.mock("@/app/models/perro.entity", () => ({
   Perro: {
-    findAndCountAll: vi.fn(),
+    findAll: vi.fn(),
+    count: vi.fn(),
     destroy: vi.fn(),
     findByPk: vi.fn(),  
   },
@@ -35,14 +36,10 @@ describe("PerrosService", () => {
 
   // --- Tests findAll ---
   it("findAll should return paginated perros", async () => {
-    vi.spyOn(Perro, "findAndCountAll").mockResolvedValue(
-    {
-      count: 1,
-      rows: [
-        { get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) },
-      ],
-    } as unknown as Awaited<ReturnType<typeof Perro.findAndCountAll>>
-  );
+    vi.spyOn(Perro, "findAll").mockResolvedValue([
+      { get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) },
+    ] as unknown as Awaited<ReturnType<typeof Perro.findAll>>);
+    vi.spyOn(Perro, "count").mockResolvedValue(1);
 
   const pagination: PaginationDto = {
     query: "",
@@ -60,12 +57,8 @@ describe("PerrosService", () => {
 
   it("findAll should handle empty results", async () => {
 
-    vi.spyOn(Perro, "findAndCountAll").mockResolvedValue(
-      {
-        count: 0,
-        rows: [],
-      } as unknown as Awaited<ReturnType<typeof Perro.findAndCountAll>>
-    );
+    vi.spyOn(Perro, "findAll").mockResolvedValue([] as unknown as Awaited<ReturnType<typeof Perro.findAll>>);
+    vi.spyOn(Perro, "count").mockResolvedValue(0);
 
     
     const pagination: PaginationDto = {
@@ -83,12 +76,10 @@ describe("PerrosService", () => {
   });
 
   it("findAll should return paginated perros", async () => {
-    vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-      Promise.resolve({
-        count: 1,
-        rows: [{ get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) }],
-      } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+    vi.spyOn(Perro, "findAll").mockImplementation(() =>
+      Promise.resolve([{ get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) }] as unknown as ReturnType<typeof Perro.findAll>)
     );
+    vi.spyOn(Perro, "count").mockResolvedValue(1);
 
     const pagination: PaginationDto = {
       page: 1,
@@ -105,12 +96,10 @@ describe("PerrosService", () => {
   });
   it("findAll handles offset beyond total rows", async () => {
 
-    vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-      Promise.resolve({
-        count: 2,
-        rows: [],
-      } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+    vi.spyOn(Perro, "findAll").mockImplementation(() =>
+      Promise.resolve([] as unknown as ReturnType<typeof Perro.findAll>)
     );
+    vi.spyOn(Perro, "count").mockResolvedValue(2);
 
     const pagination: PaginationDto = {
       page: 11, 
@@ -128,13 +117,11 @@ describe("PerrosService", () => {
 
   it("findAll passes order correctly", async () => {
     const mockFn = vi
-      .spyOn(Perro, "findAndCountAll")
+      .spyOn(Perro, "findAll")
       .mockImplementation(() =>
-        Promise.resolve({
-          count: 1,
-          rows: [{ get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) }],
-        } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+        Promise.resolve([{ get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) }] as unknown as ReturnType<typeof Perro.findAll>)
       );
+    vi.spyOn(Perro, "count").mockResolvedValue(1);
 
     const pagination: PaginationDto = {
       page: 1,
@@ -150,15 +137,13 @@ describe("PerrosService", () => {
 
   it("findAll handles multiple rows", async () => {
   
-    vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-      Promise.resolve({
-        count: 2,
-        rows: [
-          { get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) },
-          { get: () => ({ id: 2, nombre: "Bobby", UsrPerros: [] }) },
-        ],
-      } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+    vi.spyOn(Perro, "findAll").mockImplementation(() =>
+      Promise.resolve([
+        { get: () => ({ id: 1, nombre: "Firulais", UsrPerros: [] }) },
+        { get: () => ({ id: 2, nombre: "Bobby", UsrPerros: [] }) },
+      ] as unknown as ReturnType<typeof Perro.findAll>)
     );
+    vi.spyOn(Perro, "count").mockResolvedValue(2);
 
     const pagination: PaginationDto = {
       page: 1,
@@ -176,7 +161,7 @@ describe("PerrosService", () => {
 
   it("findAll should propagate DB errors", async () => {
   
-    vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
+    vi.spyOn(Perro, "count").mockImplementation(() =>
       Promise.reject(new Error("DB error"))
     );
 
@@ -192,12 +177,10 @@ describe("PerrosService", () => {
   });
 
   it("findAll should handle undefined query without where", async () => {
-    const mockFn = vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-      Promise.resolve({
-        count: 0,
-        rows: [],
-      } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+    const mockFn = vi.spyOn(Perro, "count").mockImplementation(() =>
+      Promise.resolve(0)
     );
+    vi.spyOn(Perro, "findAll").mockResolvedValue([] as unknown as ReturnType<typeof Perro.findAll>);
 
     const pagination: PaginationDto = {
       page: 1,
@@ -213,12 +196,10 @@ describe("PerrosService", () => {
   });
 
   it("findAll should pass limit = 0 if pagination size is 0", async () => {
-    const mockFn = vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-      Promise.resolve({
-        count: 0,
-        rows: [],
-      } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+    const mockFn = vi.spyOn(Perro, "findAll").mockImplementation(() =>
+      Promise.resolve([] as unknown as ReturnType<typeof Perro.findAll>)
     );
+    vi.spyOn(Perro, "count").mockResolvedValue(0);
 
     const pagination: PaginationDto = {
       page: 1,
@@ -262,20 +243,18 @@ describe("PerrosService", () => {
 
 
 it("findAll should calculate intervencionCount from UsrPerros", async () => {
-  vi.spyOn(Perro, "findAndCountAll").mockImplementation(() =>
-    Promise.resolve({
-      count: 1,
-      rows: [
-        {
-          get: () => ({
-            id: 1,
-            nombre: "Firulais",
-            UsrPerros: [{ id: 10 }, { id: 20 }],
-          }),
-        },
-      ],
-    } as unknown as ReturnType<typeof Perro.findAndCountAll>)
+  vi.spyOn(Perro, "findAll").mockImplementation(() =>
+    Promise.resolve([
+      {
+        get: () => ({
+          id: 1,
+          nombre: "Firulais",
+          UsrPerros: [{ id: 10 }, { id: 20 }],
+        }),
+      },
+    ] as unknown as ReturnType<typeof Perro.findAll>)
   );
+  vi.spyOn(Perro, "count").mockResolvedValue(1);
 
   const pagination: PaginationDto = {
     page: 1,

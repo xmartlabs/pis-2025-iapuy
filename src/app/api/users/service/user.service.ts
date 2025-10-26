@@ -49,27 +49,34 @@ function normalizePerros(input: unknown): string[] {
 
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
-    const result = await User.findAndCountAll({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
-      attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
-      include: [
-        {
-          model: Intervention,
-          as: "Intervenciones",
-        },
-        {
-          model: Perro,
-          as: "perros",
-        },
-      ],
-      limit: pagination.size > 0 ? pagination.size : undefined,
-      offset: pagination.size > 0 ? pagination.getOffset() : undefined,
-      order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
-    });
+    const [rows, count] = await Promise.all([
+      User.findAll({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+        attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
+        include: [
+          {
+            model: Intervention,
+            as: "Intervenciones",
+          },
+          {
+            model: Perro,
+            as: "perros",
+          },
+        ],
+        limit: pagination.size > 0 ? pagination.size : undefined,
+        offset: pagination.size > 0 ? pagination.getOffset() : undefined,
+        order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
+      }),
+      User.count({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+      }),
+    ]);
 
-    return getPaginationResultFromModel(pagination, result);
+    return getPaginationResultFromModel(pagination, { rows, count });
   }
 
   async findOne(ci: string): Promise<UserSanitized | null> {
