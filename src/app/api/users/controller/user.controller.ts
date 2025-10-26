@@ -44,9 +44,9 @@ export class UserController {
 
   async createUser(request: NextRequest) {
     const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
-    if (!usrData.ci || !usrData.password) {
+    if (!usrData.ci) {
       return {
-        error: "Username and password are required",
+        error: "Username is required",
         status: 400,
       };
     }
@@ -66,7 +66,7 @@ export class UserController {
       return { error: "User not found", status: 404 };
     }
 
-    return { data: user };
+    return user;
   }
 
   async deleteUser(ci: string): Promise<boolean> {
