@@ -34,6 +34,7 @@ import AddExpenseButton from "./add-expense-button";
 import MenuPortal from "./list/menu-portal";
 import SeeOrEditCost from "./list/edit-health";
 import EditCostNotSanity from "./list/edit-cost";
+import { toast } from "sonner";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -435,6 +436,50 @@ export default function ExpensesList() {
     setSelectedPeople(peopleSelected);
   };
 
+  const changeToPaid = async (id: string) => {
+    try {
+      const token = context?.tokenJwt;
+      const resp = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ state: "pagado" }),
+      });
+
+      if (resp.ok || resp.status === 204) {
+        toast.success("Gasto marcado como Pagado", {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#DEEBD9",
+            border: "1px solid #BDD7B3",
+            color: "#121F0D",
+          },
+        });
+        setOpenMenu(false);
+        setReload((r) => !r);
+        return;
+      }
+
+      let msg = `Error ${resp.status}`;
+      const body = (await resp.json().catch(() => null)) as unknown;
+      if (body && typeof body === "object") {
+        const b = body as Record<string, unknown>;
+        if ("error" in b && typeof b.error !== "undefined") {
+          msg = String(b.error as unknown);
+        }
+      }
+
+      toast.error(`No se pudo cambiar a Pagado. ${msg}`);
+    } catch {
+      toast.error("No se pudo cambiar el estado del gasto.");
+    }
+  };
+
   return (
     <div className="max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
@@ -618,12 +663,16 @@ export default function ExpensesList() {
                                     Ver o Editar
                                   </button>
                                 )}
-                                <button
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                  onClick={() => {}}
-                                >
-                                  Cambiar a Pagado
-                                </button>
+                                {exp.state !== "Pagado" && (
+                                  <button
+                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                    onClick={() => {
+                                      changeToPaid(exp.id).catch(() => {});
+                                    }}
+                                  >
+                                    Cambiar a Pagado
+                                  </button>
+                                )}
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-100"
                                   onClick={() => {}}
