@@ -236,50 +236,72 @@ export class ExpensesService {
         let dogName: string | undefined = undefined;
         if (exp.sanidadId) {
           try {
-            let registroSanidadId: string | undefined = undefined;
             if (exp.type === "Vacunacion") {
-              const vacuna = await Vacuna.findByPk(exp.sanidadId, {
-                attributes: ["registroSanidadId"],
+              const vacuna = await Vacuna.findOne({
+                where: { id: exp.sanidadId },
+                include: {
+                  model: RegistroSanidad,
+                  as: "RegistroSanidad",
+                  include: [
+                    {
+                      model: Perro,
+                      as: "Perro",
+                      attributes: ["nombre"],
+                    },
+                  ],
+                },
               });
-              if (vacuna) {
-                registroSanidadId = vacuna.registroSanidadId;
-              }
+              const vacunaData = vacuna?.toJSON() as {
+                RegistroSanidad?: {
+                  Perro?: { nombre: string };
+                };
+              };
+              dogName = vacunaData?.RegistroSanidad?.Perro?.nombre;
             } else if (
               exp.type === "Desparasitacion Interna" ||
               exp.type === "Desparasitacion Externa"
             ) {
-              const desparasitacion = await Desparasitacion.findByPk(
-                exp.sanidadId,
-                {
-                  attributes: ["registroSanidadId"],
-                }
-              );
-              if (desparasitacion) {
-                registroSanidadId = desparasitacion.registroSanidadId;
-              }
-            } else if (exp.type === "Baño") {
-              const banio = await Banio.findByPk(exp.sanidadId, {
-                attributes: ["registroSanidadId"],
+              const desparasitacion = await Desparasitacion.findOne({
+                where: { id: exp.sanidadId },
+                include: {
+                  model: RegistroSanidad,
+                  as: "RegistroSanidad",
+                  include: [
+                    {
+                      model: Perro,
+                      as: "Perro",
+                      attributes: ["nombre"],
+                    },
+                  ],
+                },
               });
-              if (banio) {
-                registroSanidadId = banio.registroSanidadId;
-              }
-            }
-
-            if (registroSanidadId) {
-              const sanidadRecord = await RegistroSanidad.findByPk(
-                registroSanidadId,
-                {
-                  attributes: ["perroId"],
-                }
-              );
-
-              if (sanidadRecord?.perroId) {
-                const dog = await Perro.findByPk(sanidadRecord.perroId, {
-                  attributes: ["nombre"],
-                });
-                dogName = dog?.nombre;
-              }
+              const desparasitacionData = desparasitacion?.toJSON() as {
+                RegistroSanidad?: {
+                  Perro?: { nombre: string };
+                };
+              };
+              dogName = desparasitacionData?.RegistroSanidad?.Perro?.nombre;
+            } else if (exp.type === "Baño") {
+              const banio = await Banio.findOne({
+                where: { id: exp.sanidadId },
+                include: {
+                  model: RegistroSanidad,
+                  as: "RegistroSanidad",
+                  include: [
+                    {
+                      model: Perro,
+                      as: "Perro",
+                      attributes: ["nombre"],
+                    },
+                  ],
+                },
+              });
+              const banioData = banio?.toJSON() as {
+                RegistroSanidad?: {
+                  Perro?: { nombre: string };
+                };
+              };
+              dogName = banioData?.RegistroSanidad?.Perro?.nombre;
             }
           } catch {
             dogName = undefined;
