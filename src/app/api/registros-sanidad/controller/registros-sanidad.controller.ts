@@ -74,6 +74,10 @@ export class RegistrosSanidadController {
     const ret = await this.registrosSanidadService.create(body);
     return ret;
   }
+  
+  async findOne(id: string) {
+    return await this.registrosSanidadService.findOne(id);  
+  }
 
   async updateEventoSanidad(request: NextRequest) {
     // Support JSON or multipart/form-data for updates.
