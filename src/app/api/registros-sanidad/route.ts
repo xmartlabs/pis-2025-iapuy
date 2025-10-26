@@ -58,3 +58,33 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    await registrosSanidadController.deleteRegistroSanidad(request);
+    return NextResponse.json(
+      { message: "RegistroSanidad deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("RegistroSanidad not found")
+    ) {
+      return NextResponse.json(
+        { error: "RegistroSanidad not found" },
+        { status: 404 }
+      );
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -10,10 +10,11 @@ import sequelize from "@/lib/database";
 import { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import type { PayloadForUser } from "../../perros/detalles/route";
 import { Perro } from "@/app/models/perro.entity";
-import type { FindOptions } from "sequelize";
+import { type FindOptions } from "sequelize";
 import { User } from "@/app/models/user.entity";
 import { ExpensesService } from "../../expenses/service/expenses.service";
 import type { CreateExpenseDto } from "../../expenses/dtos/create-expense.dto";
+import { Expense } from "@/app/models/expense.entity";
 
 export class RegistrosSanidadService {
   async findAll(
@@ -164,6 +165,172 @@ export class RegistrosSanidadService {
         });
       }
       return regSanidad;
+    });
+  }
+
+  async delete(
+    id: string,
+    activity: string,
+    payload: PayloadForUser
+  ): Promise<boolean> {
+    return await sequelize.transaction(async (t) => {
+      if (payload.type === "Administrador") {
+        let expense = null;
+
+        if (activity === "Baño") {
+          const bath = await Banio.findByPk(id);
+          if (!bath) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type: activity,
+            },
+          });
+          await Banio.destroy({
+            where: { id: bath.id },
+            transaction: t,
+          });
+        } else if (activity === "Vacuna") {
+          const vaccination = await Vacuna.findByPk(id);
+          if (!vaccination) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type: activity,
+            },
+          });
+          await Vacuna.destroy({
+            where: { id: vaccination.id },
+            transaction: t,
+          });
+        } else if (activity === "Desparasitación") {
+          const deworming = await Desparasitacion.findByPk(id);
+          if (!deworming) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+          const type = `Desparasitacion ${deworming.tipoDesparasitacion}`;
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type,
+            },
+          });
+          await Desparasitacion.destroy({
+            where: { id: deworming.id },
+            transaction: t,
+          });
+        }
+
+        if (expense) {
+          if (expense.state === "pagado") {
+            throw new Error(
+              `${activity} cannot be destroyed. There's an expense already paid asociated.`
+            );
+          }
+          await Expense.destroy({
+            where: { id: expense.id },
+            transaction: t,
+          });
+        }
+      } else {
+        const options: FindOptions = {
+          where: { id },
+        };
+        options.include = [
+          {
+            model: RegistroSanidad,
+            as: "RegistroSanidad",
+            required: true,
+            include: [
+              {
+                model: Perro,
+                as: "Perro",
+                required: true,
+                include: [
+                  {
+                    model: User,
+                    as: "User",
+                    where: { ci: payload.ci },
+                    required: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ];
+        let expense = null;
+        if (activity === "Baño") {
+          const bath = await Banio.findOne(options);
+          if (!bath) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type: activity,
+            },
+          });
+          await Banio.destroy({
+            where: { id: bath.id },
+            transaction: t,
+          });
+        } else if (activity === "Vacuna") {
+          const vaccination = await Vacuna.findOne(options);
+          if (!vaccination) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type: activity,
+            },
+          });
+          await Vacuna.destroy({
+            where: { id: vaccination.id },
+            transaction: t,
+          });
+        } else if (activity === "Desparasitación") {
+          const deworming = await Desparasitacion.findOne(options);
+          if (!deworming) {
+            throw new Error(`${activity} not found with id: ${id}`);
+          }
+          const type = `Desparasitacion ${deworming.tipoDesparasitacion}`;
+          expense = await Expense.findOne({
+            attributes: ["id", "state"],
+            where: {
+              sanidadId: id,
+              type,
+            },
+          });
+          await Desparasitacion.destroy({
+            where: { id: deworming.id },
+            transaction: t,
+          });
+        }
+
+        if (expense) {
+          if (expense.state === "pagado") {
+            throw new Error(
+              `${activity} cannot be destroyed. There's an expense already paid asociated.`
+            );
+          }
+          await Expense.destroy({
+            where: { id: expense.id },
+            transaction: t,
+          });
+        }
+      }
+      return true;
     });
   }
 }
