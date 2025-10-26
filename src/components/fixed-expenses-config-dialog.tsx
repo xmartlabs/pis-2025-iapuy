@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
+import { DollarSign } from "lucide-react";
 
 import {
   Dialog,
@@ -33,6 +34,21 @@ type Props = {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 };
+
+function InputWithIcon({ field, id }: { field: any; id: string }) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5">
+        <DollarSign className="w-[16.67px] h-[18px] text-muted-foreground" style={{ color: "#D4D4D4" }} />
+      </span>
+      <Input
+        id={id}
+        {...field}
+        className="pl-9" // gives space for the icon
+      />
+    </div>
+  );
+}
 
 export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props) {
   const context = useContext(LoginContext);
@@ -127,7 +143,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
             <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
                 Configuración de montos fijos
             </DialogTitle>
-            <p className="text-sm mt-1">
+            <p className="text-sm mt-1 text-left">
                 Si se modifican estos valores, los cambios se verán reflejados desde el día de mañana en adelante.
             </p>
             </DialogHeader>
@@ -157,7 +173,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                             <FormItem className="grid gap-2">
                             <FormLabel htmlFor="banios">Baños a perros</FormLabel>
                             <FormControl>
-                                <Input id="banios" {...field} />
+                                <InputWithIcon field={field} id="banios" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -171,7 +187,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                             <FormItem className="grid gap-2">
                             <FormLabel htmlFor="vacunas">Vacunación</FormLabel>
                             <FormControl>
-                                <Input id="vacunas" {...field} />
+                                <InputWithIcon field={field} id="vacunas" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -187,7 +203,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                                 Desparasitación interna
                             </FormLabel>
                             <FormControl>
-                                <Input id="desparasitacionesInterna" {...field} />
+                                <InputWithIcon field={field} id="desparasitacionesInterna" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -203,7 +219,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                                 Desparasitación externa
                             </FormLabel>
                             <FormControl>
-                                <Input id="desparasitacionesExterna" {...field} />
+                                <InputWithIcon field={field} id="desparasitacionesExterna" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -219,7 +235,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                                 Honorario por intervención
                             </FormLabel>
                             <FormControl>
-                                <Input id="honorario" {...field} />
+                                <InputWithIcon field={field} id="honorario" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -233,7 +249,7 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
                             <FormItem className="grid gap-2">
                             <FormLabel htmlFor="kilometros">Monto por km</FormLabel>
                             <FormControl>
-                                <Input id="kilometros" {...field} />
+                                <InputWithIcon field={field} id="kilometros" />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
