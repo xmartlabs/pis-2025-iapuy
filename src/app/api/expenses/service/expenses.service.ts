@@ -236,8 +236,6 @@ export class ExpensesService {
         let dogName: string | undefined = undefined;
         if (exp.sanidadId) {
           try {
-            // The sanidadId could be a vacuna, desparasitacion, or banio ID
-            // We need to find which table contains this ID and get the registroSanidadId
             let registroSanidadId: string | undefined = undefined;
             if (exp.type === "Vacunacion") {
               const vacuna = await Vacuna.findByPk(exp.sanidadId, {
@@ -268,7 +266,6 @@ export class ExpensesService {
               }
             }
 
-            // If we found a registroSanidadId, get the dog name
             if (registroSanidadId) {
               const sanidadRecord = await RegistroSanidad.findByPk(
                 registroSanidadId,
