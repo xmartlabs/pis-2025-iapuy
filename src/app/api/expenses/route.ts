@@ -117,6 +117,12 @@ export async function PUT(request: NextRequest) {
       // ignore and continue to normal expense update flow
     }
 
+    const notEditableTypes = new Set(["Pago a guía", "Pago a acompañante"]);
+    const expenseType = data.type;
+    if (typeof expenseType === "string" && notEditableTypes.has(expenseType)) {
+      return null;
+    }
+
     const allowed = [
       "concept",
       "type",

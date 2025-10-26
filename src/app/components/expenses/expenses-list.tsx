@@ -42,6 +42,13 @@ const statusToColor: Record<string, string> = {
 
 const statuses = ["Pendiente de pago", "Pagado"];
 
+const notEditableTypes = new Set([
+  "Pago Acompañante",
+  "Pago Guía",
+  "Pago a acompañante",
+  "Pago a guía",
+]);
+
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
   const monthShort = d
@@ -588,27 +595,29 @@ export default function ExpensesList() {
                               anchor={anchorRef.current}
                             >
                               <div className="flex flex-col">
-                                <button
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                  onClick={() => {
-                                    // Decide which editor to open depending on expense type
-                                    const sanidadTypes = new Set([
-                                      "Baño",
-                                      "Vacunacion",
-                                      "Desparasitacion Interna",
-                                      "Desparasitacion Externa",
-                                    ]);
-                                    setSelectedCostId(exp.id);
-                                    if (sanidadTypes.has(exp.type)) {
-                                      setOpenEditDialog(true);
-                                    } else {
-                                      setOpenNotSanityEditor(true);
-                                    }
-                                    setOpenMenu(false);
-                                  }}
-                                >
-                                  Ver o Editar
-                                </button>
+                                {!notEditableTypes.has(exp.type) && (
+                                  <button
+                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                    onClick={() => {
+                                      // Decide which editor to open depending on expense type
+                                      const sanidadTypes = new Set([
+                                        "Baño",
+                                        "Vacunacion",
+                                        "Desparasitacion Interna",
+                                        "Desparasitacion Externa",
+                                      ]);
+                                      setSelectedCostId(exp.id);
+                                      if (sanidadTypes.has(exp.type)) {
+                                        setOpenEditDialog(true);
+                                      } else {
+                                        setOpenNotSanityEditor(true);
+                                      }
+                                      setOpenMenu(false);
+                                    }}
+                                  >
+                                    Ver o Editar
+                                  </button>
+                                )}
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-100"
                                   onClick={() => {}}
