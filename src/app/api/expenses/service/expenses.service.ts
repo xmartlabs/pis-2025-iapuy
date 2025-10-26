@@ -5,7 +5,6 @@ import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
 import { Banio } from "@/app/models/banio.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
-import { Perro } from "@/app/models/perro.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
@@ -14,9 +13,6 @@ import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
 import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
 import sequelize from "@/lib/database";
-import { Banio } from "@/app/models/banio.entity";
-import { Vacuna } from "@/app/models/vacuna.entity";
-import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 
 const monthNames = [
   "Ene",

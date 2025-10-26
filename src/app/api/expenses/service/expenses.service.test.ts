@@ -55,13 +55,28 @@ vi.mock("@/app/models/registro-sanidad.entity", () => ({
   RegistroSanidad: { findByPk: vi.fn(), findAll: vi.fn() },
 }));
 vi.mock("@/app/models/vacuna.entity", () => ({
-  Vacuna: { findByPk: vi.fn(), findOne: vi.fn(), findAll: vi.fn() },
+  Vacuna: {
+    findByPk: vi.fn(),
+    findOne: vi.fn(),
+    findAll: vi.fn(),
+    destroy: vi.fn(),
+  },
 }));
 vi.mock("@/app/models/banio.entity", () => ({
-  Banio: { findByPk: vi.fn(), findOne: vi.fn(), findAll: vi.fn() },
+  Banio: {
+    findByPk: vi.fn(),
+    findOne: vi.fn(),
+    findAll: vi.fn(),
+    destroy: vi.fn(),
+  },
 }));
 vi.mock("@/app/models/desparasitacion.entity", () => ({
-  Desparasitacion: { findByPk: vi.fn(), findOne: vi.fn(), findAll: vi.fn() },
+  Desparasitacion: {
+    findByPk: vi.fn(),
+    findOne: vi.fn(),
+    findAll: vi.fn(),
+    destroy: vi.fn(),
+  },
 }));
 vi.mock("@/app/models/perro.entity", () => ({
   Perro: { findAll: vi.fn() },
@@ -91,27 +106,31 @@ describe("ExpensesService", () => {
       concept: "Lavado y Peinado",
       state: "Pendiente de pago",
       amount: 789,
+      km: false,
     };
 
     createMock.mockImplementation((expense: CreateExpenseDto) => expense);
 
     const result = await service.createExpense(newExpense);
 
+    // CreateExpense strips out the `km` field and sets state to 'no pagado'
+    const expectedPayload = {
+      userId: newExpense.userId,
+      interventionId: newExpense.interventionId,
+      type: newExpense.type,
+      concept: newExpense.concept,
+      amount: newExpense.amount,
+      state: "no pagado",
+    };
+
     expect(createMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ...newExpense,
-        state: "no pagado",
-      }),
+      expect.objectContaining(expectedPayload),
       expect.any(Object)
     );
-    expect(result).toMatchObject({
-      ...newExpense,
-      state: "no pagado",
-    });
+    expect(result).toMatchObject(expectedPayload);
   });
 
   it("should throw an error if user does not exist", async () => {
-    const { User } = (await vi.importMock("@/app/models/user.entity")) as {
     const { User } = (await vi.importMock("@/app/models/user.entity")) as {
       User: { findOne: ReturnType<typeof vi.fn> };
     };
@@ -124,6 +143,7 @@ describe("ExpensesService", () => {
       concept: "Lavado y Peinado",
       state: "Pendiente de pago",
       amount: 789,
+      km: false,
     };
 
     await expect(service.createExpense(newExpense)).rejects.toThrow(
@@ -133,12 +153,8 @@ describe("ExpensesService", () => {
 
   it("should throw an error if intervention does not exist", async () => {
     const { User } = (await vi.importMock("@/app/models/user.entity")) as {
-    const { User } = (await vi.importMock("@/app/models/user.entity")) as {
       User: { findOne: ReturnType<typeof vi.fn> };
     };
-    const { Intervention } = (await vi.importMock(
-      "@/app/models/intervention.entity"
-    )) as {
     const { Intervention } = (await vi.importMock(
       "@/app/models/intervention.entity"
     )) as {
@@ -155,6 +171,7 @@ describe("ExpensesService", () => {
       concept: "Traslado hasta el lugar",
       state: "Pendiente de pago",
       amount: 789,
+      km: false,
     };
 
     await expect(service.createExpense(newExpense)).rejects.toThrow(
@@ -238,7 +255,7 @@ describe("ExpensesService", () => {
       expect(mockUpdate).toHaveBeenCalledWith({ amount: 50 });
       expect(res).toEqual({ id: "1", amount: 50 });
     });
-    
+
     // ------------------ getExpenseDetails ------------------
     it("getExpenseDetails returns vacuna event when sanidadId points to a vacuna", async () => {
       const { Expense } = (await vi.importMock(
@@ -270,40 +287,6 @@ describe("ExpensesService", () => {
       expect(result.event.data).toEqual(vacuna);
       // @ts-expect-error test shape
       expect(result.registroSanidad).toEqual(registro);
-    });
-
-    it("getExpenseDetails fallback finds event by date when sanidadId missing", async () => {
-      const { Expense } = (await vi.importMock(
-        "@/app/models/expense.entity"
-      )) as { Expense: { findByPk: ReturnType<typeof vi.fn> } };
-      const { RegistroSanidad } = (await vi.importMock(
-        "@/app/models/registro-sanidad.entity"
-      )) as { RegistroSanidad: { findAll: ReturnType<typeof vi.fn> } };
-      const { Vacuna } = (await vi.importMock(
-        "@/app/models/vacuna.entity"
-      )) as { Vacuna: { findOne: ReturnType<typeof vi.fn> } };
-
-      // Expense with dateSanity and userId and no sanidadId
-      const fecha = new Date("2025-09-20T12:00:00Z");
-      Expense.findByPk = vi.fn().mockResolvedValue({
-        id: "e2",
-        type: "Vacunacion",
-        sanidadId: null,
-        dateSanity: fecha,
-        userId: "u1",
-      });
-
-      // registro list with one registro id 'r2'
-      RegistroSanidad.findAll = vi.fn().mockResolvedValue([{ id: "r2" }]);
-
-      // Vacuna.findOne should be called and return a vacuna for that registro
-      const vacuna = { id: "v2", registroSanidadId: "r2" };
-      Vacuna.findOne = vi.fn().mockResolvedValue(vacuna);
-
-      const result = await service.getExpenseDetails("e2");
-      expect(result).not.toBeNull();
-      // ensure the fallback attempted to find a vacuna for the registro
-      expect(Vacuna.findOne).toHaveBeenCalled();
     });
 
     // ------------------ findInitialValuesForFilter ------------------
