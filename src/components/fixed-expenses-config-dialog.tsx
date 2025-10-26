@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext} from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { LoginContext } from "@/app/context/login-context";
+import type UpdateFixedCostsDTO from "@/app/api/fixed-costs/dtos/fixed-costs.dto";
 
 type Props = {
   readonly open: boolean;
@@ -52,30 +53,88 @@ function InputWithIcon({ field, id }: { field: any; id: string }) {
 
 export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props) {
   const context = useContext(LoginContext);
+  const [initialData, setInitialData] = useState<Partial<UpdateFixedCostsDTO> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  const positiveIntegerString = () => 
+  z.string()
+    .refine((val) => /^\d+$/.test(val), {
+      message: "Debe ser un número entero positivo"
+    })
+    .refine((val) => parseInt(val, 10) >= 0, {
+      message: "Debe ser positivo"
+    });
 
-  const fixedCostsSchema = z.object({
-    banios: z.string(),
-    desparasitacionesExterna: z.string(),
-    desparasitacionesInterna: z.string(),
-    vacunas: z.string(),
-    kilometros: z.string(),
-    honorario: z.string()
-  });
+const fixedCostsSchema = z.object({
+  banios: positiveIntegerString(),
+  desparasitacionesExterna: positiveIntegerString(),
+  desparasitacionesInterna: positiveIntegerString(),
+  vacunas: positiveIntegerString(),
+  kilometros: positiveIntegerString(),
+  honorario: positiveIntegerString()
+});
 
   type FormValues = z.infer<typeof fixedCostsSchema>;
+
+  // Fetch initial data when dialog opens
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchInitialData = async () => {
+      try {
+        setIsLoading(true);
+        const resp = await fetch("/api/fixed-costs", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${context?.tokenJwt}`,
+          },
+        });
+
+        if (!resp.ok) {
+          reportError(`Error fetching fixed costs: ${resp.statusText}`);
+          return;
+        }
+
+        const data = (await resp.json().catch(() => null)) as Partial<UpdateFixedCostsDTO> | null;
+        setInitialData(data);
+      } catch (error) {
+        reportError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialData().catch((error) => {
+    reportError(error);
+    setIsLoading(false);
+  });
+}, [open, context?.tokenJwt]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(fixedCostsSchema) as unknown as Resolver<FormValues>,
     defaultValues: {
-      banios: "",
-      desparasitacionesExterna: "",
-      desparasitacionesInterna: "",
-      vacunas: "",
-      kilometros: "",
-      honorario: "",
+      banios: initialData?.banios?.toString() || "",
+      desparasitacionesExterna: initialData?.desparasitacionesExterna?.toString() || "",
+      desparasitacionesInterna: initialData?.desparasitacionesInterna?.toString() || "",
+      vacunas: initialData?.vacunas?.toString() || "",
+      kilometros: initialData?.kilometros?.toString() || "",
+      honorario: initialData?.honorario?.toString() || "",
     },
   });
+
+  // Reset form when initial data changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        banios: initialData?.banios?.toString() || "",
+        desparasitacionesExterna: initialData?.desparasitacionesExterna?.toString() || "",
+        desparasitacionesInterna: initialData?.desparasitacionesInterna?.toString() || "",
+        vacunas: initialData?.vacunas?.toString() || "",
+        kilometros: initialData?.kilometros?.toString() || "",
+        honorario: initialData?.honorario?.toString() || "",
+      });
+    }
+  }, [initialData, form]);
 
   async function submitHandler(
     data: z.infer<typeof fixedCostsSchema>,
@@ -154,7 +213,25 @@ export default function FixedExpensesConfigDialog({ open, onOpenChange }: Props)
     }
   }
 
+  if (isLoading && open) {
     return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/50" />
+        <DialogContent className="!w-[422px] max-h-[90vh] !h-auto overflow-visible flex flex-col !pb-0">
+          <DialogHeader className="!w-full !items-start !m-0 shrink-0">
+            <DialogTitle className="!font-semibold !text-lg !leading-[100%] !tracking-[-0.025em] !text-left !w-full">
+              Configuración de montos fijos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center py-8">
+            <p>Cargando...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
     <div className="font-sans">
         <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogOverlay className="fixed inset-0 z-50 bg-black/50" />
