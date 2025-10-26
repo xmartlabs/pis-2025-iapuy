@@ -14,9 +14,6 @@ import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
 import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
 import sequelize from "@/lib/database";
-import { Banio } from "@/app/models/banio.entity";
-import { Vacuna } from "@/app/models/vacuna.entity";
-import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 
 const monthNames = [
   "Ene",
@@ -233,7 +230,7 @@ export class ExpensesService {
     ]);
 
     const data: ListExpenseDto[] = await Promise.all(
-      result.rows.map(async (exp) => {
+      rows.map(async (exp) => {
         let fecha: Date | null = null;
         if (exp.interventionId) {
           const intervention = exp.Intervencion;
@@ -328,8 +325,8 @@ export class ExpensesService {
         return {
           id: exp.id,
           userId: exp.userId,
-          interventionId: exp.interventionId,
-          sanityId: exp.sanidadId,
+          interventionId: exp.interventionId || undefined,
+          sanityId: exp.sanidadId || undefined,
           concept: exp.concept,
           type: exp.type,
           state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
