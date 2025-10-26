@@ -167,4 +167,7 @@ export class RegistrosSanidadService {
       return regSanidad;
     });
   }
+  async findOne(id: string): Promise<RegistroSanidad | null> {
+    return await RegistroSanidad.findByPk(id);
+  }
 }
