@@ -27,7 +27,6 @@ import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
-import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type ListExpenseDto } from "@/app/api/expenses/dtos/list-expense.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
@@ -178,7 +177,9 @@ export default function ExpensesList() {
               if (
                 !body2 ||
                 typeof body2 !== "object" ||
-                !Array.isArray((body2 as PaginationResultDto<ExpenseDto>).data)
+                !Array.isArray(
+                  (body2 as PaginationResultDto<ListExpenseDto>).data
+                )
               )
                 throw new Error("Malformed API response");
               return body2 as PaginationResultDto<ListExpenseDto>;
@@ -200,7 +201,7 @@ export default function ExpensesList() {
         if (
           !body ||
           typeof body !== "object" ||
-          !Array.isArray((body as PaginationResultDto<ExpenseDto>).data)
+          !Array.isArray((body as PaginationResultDto<ListExpenseDto>).data)
         )
           throw new Error("Malformed API response");
         return body as PaginationResultDto<ListExpenseDto>;
@@ -522,14 +523,19 @@ export default function ExpensesList() {
                     className="hover:bg-gray-50 transition-colors duration-150"
                   >
                     <TableCell className="p-3">
-                      {exp.fecha ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })} ${new Date(exp.fecha).toLocaleTimeString("es-UY", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}` : "Sin fecha"}
+                      {exp.fecha
+                        ? `${new Date(exp.fecha).toLocaleDateString("es-UY", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })} ${new Date(exp.fecha).toLocaleTimeString(
+                            "es-UY",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}`
+                        : "Sin fecha"}
                     </TableCell>
 
                     <TableCell className="p-3">{exp.type}</TableCell>
