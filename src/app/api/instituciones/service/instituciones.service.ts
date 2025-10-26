@@ -130,29 +130,36 @@ export class InstitucionesService {
   async findAll(
     pagination: PaginationDto
   ): Promise<PaginationResultDto<Institucion>> {
-    const result = await Institucion.findAndCountAll({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
-      include: [
-        {
-          model: Patologia,
-          as: "Patologias",
-          attributes: ["id", "nombre"],
-          through: { attributes: [] },
-        },
-        {
-          model: InstitutionContact,
-          as: "InstitutionContacts",
-          attributes: ["id", "name", "contact"],
-        },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-    });
+    const [rows, count] = await Promise.all([
+      Institucion.findAll({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+        include: [
+          {
+            model: Patologia,
+            as: "Patologias",
+            attributes: ["id", "nombre"],
+            through: { attributes: [] },
+          },
+          {
+            model: InstitutionContact,
+            as: "InstitutionContacts",
+            attributes: ["id", "name", "contact"],
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Institucion.count({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+      }),
+    ]);
 
-    return getPaginationResultFromModel(pagination, result);
+    return getPaginationResultFromModel(pagination, { rows, count });
   }
 
   async create(institutionDTO: CreateInstitutionDTO): Promise<Institucion> {

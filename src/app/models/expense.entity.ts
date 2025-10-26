@@ -62,7 +62,9 @@ export class Expense extends Model {
   })
   declare type: ExpenseType;
 
-  @Column({ type: DataType.STRING })
+  @Column({
+    type: DataType.STRING,
+  })
   declare concept: string;
 
   @Column({
@@ -73,10 +75,14 @@ export class Expense extends Model {
   })
   declare state: ExpenseState;
 
-  @Column({ type: DataType.DOUBLE })
+  @Column({
+    type: DataType.FLOAT,
+  })
   declare amount: number;
 
-  @Column({ type: DataType.DATE })
+  @Column({
+    type: DataType.DATE,
+  })
   declare dateSanity: Date;
 
   @CreatedAt

@@ -5,6 +5,7 @@ import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { Banio } from "@/app/models/banio.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
+import { Perro } from "@/app/models/perro.entity";
 import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { PayloadForUser } from "../../perros/detalles/route";
@@ -39,6 +40,15 @@ vi.mock("../../expenses/service/expenses.service", () => ({
     }
   },
 }));
+vi.mock("@/app/models/perro.entity", () => ({
+  Perro: { findByPk: vi.fn() },
+}));
+vi.mock("@/app/api/expenses/service/expenses.service", () => ({
+  ExpensesService: vi.fn().mockImplementation(() => ({
+    getFixedCost: vi.fn().mockReturnValue(100),
+    createExpense: vi.fn().mockResolvedValue({ id: "expense-1" }),
+  })),
+}));
 vi.mock("@/lib/database", () => ({ default: { transaction: vi.fn() } }));
 vi.mock("@/lib/pagination/transform", () => ({
   getPaginationResultFromModel: vi.fn((pagination, result) => ({
@@ -70,6 +80,7 @@ describe("RegistrosSanidadService", () => {
     RegistroSanidad.findOne = vi.fn().mockResolvedValue(null);
     RegistroSanidad.create = vi.fn().mockResolvedValue({ id: 1 });
     Banio.create = vi.fn().mockResolvedValue({ id: 1 });
+    Perro.findByPk = vi.fn().mockResolvedValue({ id: "1", duenioId: "user-1" });
 
     const dto: Partial<CreateRegistrosSanidadDTO> = {
       perroId: "1",
@@ -86,6 +97,7 @@ describe("RegistrosSanidadService", () => {
     sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
     RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: 2 });
     Vacuna.create = vi.fn().mockResolvedValue({ id: 2 });
+    Perro.findByPk = vi.fn().mockResolvedValue({ id: "2", duenioId: "user-2" });
 
     const dto: Partial<CreateRegistrosSanidadDTO> = {
       perroId: "2",
