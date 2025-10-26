@@ -17,7 +17,8 @@ vi.mock("@/lib/database", () => ({
 
 vi.mock("@/app/models/user.entity", () => ({
   User: {
-    findAndCountAll: vi.fn(),
+    findAll: vi.fn(),
+    count: vi.fn(),
     findByPk: vi.fn(),
     create: vi.fn(),
     destroy: vi.fn(),
@@ -94,11 +95,11 @@ describe("UserService", () => {
 
   it("findAll should return paginated users", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const findAndCountAllMock = User.findAndCountAll as Mock;
-    findAndCountAllMock.mockResolvedValue({
-      rows: [],
-      count: 0,
-    });
+    const findAllMock = User.findAll as Mock;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const countMock = User.count as Mock;
+    findAllMock.mockResolvedValue([]);
+    countMock.mockResolvedValue(0);
 
     const pagination: PaginationDto = {
       query: "",
@@ -110,20 +111,43 @@ describe("UserService", () => {
 
     const result = await service.findAll(pagination);
 
-    expect(findAndCountAllMock).toHaveBeenCalled();
+    expect(findAllMock).toHaveBeenCalled();
+    expect(countMock).toHaveBeenCalled();
     expect(result).toBeDefined();
   });
 
   it("findOne should return a user", async () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const findByPkMock = User.findByPk as Mock;
-    const mockUser = { ci: "12345678", nombre: "Pepe" };
+    const mockUser = { 
+      ci: "12345678", 
+      nombre: "Pepe",
+      toJSON: vi.fn().mockReturnValue({ 
+        ci: "12345678", 
+        nombre: "Pepe", 
+        perros: [],
+        banco: null,
+        celular: null,
+        cuentaBancaria: null,
+        esAdmin: false,
+        isActivated: false,
+      })
+    };
     findByPkMock.mockResolvedValue(mockUser);
 
     const result = await service.findOne("12345678");
 
     expect(findByPkMock).toHaveBeenCalledWith("12345678", expect.any(Object));
-    expect(result).toEqual(mockUser);
+    expect(result).toEqual({ 
+      ci: "12345678", 
+      nombre: "Pepe", 
+      perros: [],
+      banco: null,
+      celular: null,
+      cuentaBancaria: null,
+      esAdmin: false,
+      isActivated: false,
+    });
   });
 
   it("create should create a user", async () => {
@@ -131,8 +155,8 @@ describe("UserService", () => {
     const createMock = User.create as Mock;
     const ci = "12345678";
     const newUser: CreateUserDto = {
-      ci: "12345678",
-      password: "1234",
+      ci,
+      password: "Password123",
       nombre: "Pepe",
       celular: "099999999",
       banco: "Banco X",
