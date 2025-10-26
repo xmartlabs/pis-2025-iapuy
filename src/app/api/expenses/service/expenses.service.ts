@@ -90,110 +90,41 @@ export class ExpensesService {
       type === "Desparasitacion Externa";
 
     if (isSanidadType && sanidadId) {
-      const vacuna = await Vacuna.findByPk(sanidadId).catch(() => null);
-      if (vacuna) {
-        const registro = await RegistroSanidad.findByPk(
-          vacuna.registroSanidadId
-        ).catch(() => null);
-        payload.registroSanidad = registro;
-        payload.event = { kind: "vacuna", data: vacuna };
-        return payload;
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      let kind: "vacuna" | "banio" | "desparasitacion" | undefined = undefined;
+
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          kind = "vacuna";
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          kind = "banio";
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          kind = "desparasitacion";
+          break;
       }
 
-      const banio = await Banio.findByPk(sanidadId).catch(() => null);
-      if (banio) {
-        const registro = await RegistroSanidad.findByPk(
-          banio.registroSanidadId
-        ).catch(() => null);
-        payload.registroSanidad = registro;
-        payload.event = { kind: "banio", data: banio };
-        return payload;
-      }
-
-      const des = await Desparasitacion.findByPk(sanidadId).catch(() => null);
-      if (des) {
-        const registro = await RegistroSanidad.findByPk(
-          des.registroSanidadId
-        ).catch(() => null);
-        payload.registroSanidad = registro;
-        payload.event = { kind: "desparasitacion", data: des };
-        return payload;
-      }
-    }
-
-    // Fallback lookup when sanidadId is not set but type indicates sanidad
-    if (isSanidadType && !sanidadId) {
-      try {
-        const fecha =
-          exp.dateSanity instanceof Date
-            ? exp.dateSanity
-            : new Date(String(exp.dateSanity));
-        if (!Number.isNaN(fecha.getTime()) && exp.userId) {
-          const start = new Date(fecha);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(fecha);
-          end.setHours(23, 59, 59, 999);
-
-          const registros = (await RegistroSanidad.findAll({
-            include: [
-              {
-                model: Perro,
-                as: "Perro",
-                where: { duenioId: exp.userId },
-                required: true,
-              },
-            ],
-          }).catch(() => [])) as RegistroSanidad[];
-
-          const tasks = registros.map((reg) =>
-            (async () => {
-              try {
-                const regId = reg.id;
-                const [vacuna, banio, des] = await Promise.all([
-                  Vacuna.findOne({
-                    where: {
-                      registroSanidadId: regId,
-                      fecha: { [Op.between]: [start, end] },
-                    },
-                  }).catch(() => null),
-                  Banio.findOne({
-                    where: {
-                      registroSanidadId: regId,
-                      fecha: { [Op.between]: [start, end] },
-                    },
-                  }).catch(() => null),
-                  Desparasitacion.findOne({
-                    where: {
-                      registroSanidadId: regId,
-                      fecha: { [Op.between]: [start, end] },
-                    },
-                  }).catch(() => null),
-                ]);
-
-                if (vacuna)
-                  return { reg, kind: "vacuna", data: vacuna } as const;
-                if (banio) return { reg, kind: "banio", data: banio } as const;
-                if (des)
-                  return { reg, kind: "desparasitacion", data: des } as const;
-                return null;
-              } catch {
-                return null;
-              }
-            })()
-          );
-
-          const results = await Promise.all(tasks);
-          for (const r of results) {
-            if (r) {
-              payload.registroSanidad = r.reg;
-              payload.event = { kind: r.kind, data: r.data };
-              payload.fallbackUsed = true;
-              break;
-            }
-          }
+      if (entity) {
+        let registroId: string | undefined = undefined;
+        if (
+          entity &&
+          typeof entity === "object" &&
+          "registroSanidadId" in entity
+        ) {
+          registroId = (entity as { registroSanidadId?: string })
+            .registroSanidadId;
         }
-      } catch {
-        // ignore fallback errors
+        const registro = registroId
+          ? await RegistroSanidad.findByPk(registroId).catch(() => null)
+          : null;
+        payload.registroSanidad = registro;
+        payload.event = { kind, data: entity };
+        return payload;
       }
     }
 
@@ -557,111 +488,25 @@ export class ExpensesService {
       return out;
     };
 
-    if (sanidadId) {
-      const vacuna = await Vacuna.findByPk(sanidadId).catch(() => null);
-      if (vacuna) {
+    if (sanidadId && type) {
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          break;
+      }
+      if (entity) {
         const upd = sanitizeUpdateObj(payload);
-        await vacuna.update(upd).catch(() => null);
-        return vacuna;
+        await entity.update(upd).catch(() => null);
+        return entity;
       }
-
-      const banio = await Banio.findByPk(sanidadId).catch(() => null);
-      if (banio) {
-        const upd = sanitizeUpdateObj(payload);
-        await banio.update(upd).catch(() => null);
-        return banio;
-      }
-
-      const des = await Desparasitacion.findByPk(sanidadId).catch(() => null);
-      if (des) {
-        const upd = sanitizeUpdateObj(payload);
-        await des.update(upd).catch(() => null);
-        return des;
-      }
-    }
-
-    try {
-      const fecha =
-        expense.dateSanity instanceof Date
-          ? expense.dateSanity
-          : new Date(String(expense.dateSanity));
-      if (!Number.isNaN(fecha.getTime()) && expense.userId) {
-        const start = new Date(fecha);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(fecha);
-        end.setHours(23, 59, 59, 999);
-
-        const registros = (await RegistroSanidad.findAll({
-          include: [
-            {
-              model: Perro,
-              as: "Perro",
-              where: { duenioId: expense.userId },
-              required: true,
-            },
-          ],
-        }).catch(() => [])) as RegistroSanidad[];
-
-        const tasks = registros.map((reg) =>
-          (async () => {
-            try {
-              const regId = reg.id;
-              const [vacuna, banio, des] = await Promise.all([
-                Vacuna.findOne({
-                  where: {
-                    registroSanidadId: regId,
-                    fecha: { [Op.between]: [start, end] },
-                  },
-                }).catch(() => null),
-                Banio.findOne({
-                  where: {
-                    registroSanidadId: regId,
-                    fecha: { [Op.between]: [start, end] },
-                  },
-                }).catch(() => null),
-                Desparasitacion.findOne({
-                  where: {
-                    registroSanidadId: regId,
-                    fecha: { [Op.between]: [start, end] },
-                  },
-                }).catch(() => null),
-              ]);
-
-              if (vacuna) return { reg, kind: "vacuna", data: vacuna } as const;
-              if (banio) return { reg, kind: "banio", data: banio } as const;
-              if (des)
-                return { reg, kind: "desparasitacion", data: des } as const;
-              return null;
-            } catch {
-              return null;
-            }
-          })()
-        );
-
-        const results = await Promise.all(tasks);
-        const first = results.find((x) => x !== null);
-        if (first) {
-          const r = first as NonNullable<typeof first>;
-          const upd = sanitizeUpdateObj(payload);
-          if (r.kind === "vacuna") {
-            const entity = r.data;
-            await entity.update(upd).catch(() => null);
-            return entity;
-          }
-          if (r.kind === "banio") {
-            const entity = r.data;
-            await entity.update(upd).catch(() => null);
-            return entity;
-          }
-          if (r.kind === "desparasitacion") {
-            const entity = r.data;
-            await entity.update(upd).catch(() => null);
-            return entity;
-          }
-        }
-      }
-    } catch {
-      // ignore fallback errors
     }
 
     return null;

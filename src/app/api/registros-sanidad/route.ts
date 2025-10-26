@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(regSanidad, { status: 200 });
   } catch (error) {
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(
       { error: "Internal Server Error" },

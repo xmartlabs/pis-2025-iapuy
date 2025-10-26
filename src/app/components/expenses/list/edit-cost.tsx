@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useWatch, useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,73 +61,6 @@ interface ComboboxProps {
 const getPersonId = (p: Person) => ("userCi" in p ? p.userCi : p.userId);
 const getPersonLabel = (p: Person) => ("userName" in p ? p.userName : p.nombre);
 
-type MeasurementProps = {
-  value?: string;
-  onChange?: (val: string) => void;
-  disabled?: boolean;
-};
-
-const MeasurementComboBox = ({
-  value: propValue,
-  onChange,
-  disabled,
-}: MeasurementProps) => {
-  const measurement = [
-    { value: "KM", label: "KM" },
-    { value: "Pesos", label: "Pesos" },
-  ];
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="justify-between"
-          disabled={disabled}
-        >
-          {propValue
-            ? measurement.find((item) => item.value === propValue)?.label
-            : "KM"}
-          <ChevronsUpDown className="opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="p-0 w-full"
-        style={{ width: triggerRef.current?.offsetWidth }}
-      >
-        <Command>
-          <CommandList>
-            <CommandEmpty>No se encontraron opciones</CommandEmpty>
-            <CommandGroup>
-              {measurement.map((item) => (
-                <CommandItem
-                  key={item.value}
-                  value={item.value}
-                  onSelect={(currentValue) => {
-                    onChange?.(currentValue === propValue ? "" : currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  {item.label}
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      propValue === item.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-};
 function PeopleComboBox({ value: propValue, onChange, people }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -204,10 +137,7 @@ export const FormSchema = z.object({
   interventionID: z.string(),
   peopleCI: z.string(),
   type: z.string(),
-  measurementType: z.string(),
-  amount: z
-    .number()
-    .positive({ message: "Debe ingresar una cantidad de KM válida." }),
+  amount: z.number().positive({ message: "Debe ingresar un monto válido." }),
 });
 export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
   ({ InterventionID, onSubmit, hideIntervention, initialData }, ref) => {
@@ -218,7 +148,6 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
         peopleCI: "",
         type: "Traslado",
         amount: 1,
-        measurementType: "KM",
       },
     });
 
@@ -232,8 +161,6 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
         if (initialData.type) vals.type = String(initialData.type);
         if (typeof initialData.amount === "number")
           vals.amount = initialData.amount;
-        if (initialData.measurementType)
-          vals.measurementType = String(initialData.measurementType);
 
         form.reset({ ...form.getValues(), ...vals });
         setTimeout(() => {
@@ -243,24 +170,15 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
           if (vals.type) form.setValue("type", vals.type);
           if (typeof vals.amount === "number")
             form.setValue("amount", vals.amount);
-          if (vals.measurementType)
-            form.setValue("measurementType", vals.measurementType);
         }, 0);
       } catch {
         /* ignore */
       }
     }, [initialData, form]);
 
-    const selectedType = useWatch({ control: form.control, name: "type" });
     const [people, setPeople] = useState<
       { userCi: string; userName: string }[]
     >([]);
-
-    const isTraslado = selectedType === "Traslado";
-    const selectedMeasurementType = useWatch({
-      control: form.control,
-      name: "measurementType",
-    });
 
     const context = useContext(LoginContext);
     const token = context?.tokenJwt;
@@ -430,61 +348,29 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
               <div className="flex-1">
                 <FormField
                   control={form.control}
-                  name="measurementType"
+                  name="amount"
                   render={({ field }) => (
                     <FormItem className="flex flex-col !gap-0 !p-0 !m-0">
-                      <Label className="text-sm font-medium text-gray-700 mb-2">
-                        Medición
+                      <Label
+                        className="text-sm font-medium text-gray-700 mb-2"
+                        htmlFor="amount"
+                      >
+                        Monto
                       </Label>
                       <FormControl>
-                        <MeasurementComboBox
-                          value={isTraslado ? field.value : "Pesos"}
-                          onChange={isTraslado ? field.onChange : () => {}}
-                          disabled={!isTraslado}
+                        <Input
+                          id="amount"
+                          type="number"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e.target.valueAsNumber);
+                          }}
                         />
                       </FormControl>
                       <FormMessage className="mt-1" />
                     </FormItem>
                   )}
                 />
-              </div>
-              <div className="flex-1">
-                {isTraslado ? (
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col !gap-0 !p-0 !m-0">
-                        <Label
-                          className="text-sm font-medium text-gray-700 mb-2"
-                          htmlFor="amount"
-                        >
-                          {selectedMeasurementType === "Pesos"
-                            ? "Monto"
-                            : "Cantidad de KM"}
-                        </Label>
-                        <FormControl>
-                          <Input
-                            id="amount"
-                            type="number"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e.target.valueAsNumber);
-                            }}
-                          />
-                        </FormControl>
-                        {selectedMeasurementType === "KM" && (
-                          <Label className="text-xs text-gray-500 mt-2">
-                            Equivalente en pesos uruguayos
-                          </Label>
-                        )}
-                        <FormMessage className="mt-1" />
-                      </FormItem>
-                    )}
-                  />
-                ) : (
-                  <div></div>
-                )}
               </div>
             </div>
           </form>
@@ -638,34 +524,6 @@ export default function EditCostNotSanity({
           } else if (typeof amountRaw === "string") {
             const parsed = Number(amountRaw.trim());
             if (!Number.isNaN(parsed)) out.amount = parsed;
-          }
-
-          const measVal = pickFirstString(
-            expenseRecord,
-            "measurementType",
-            "measurement",
-            "measurement_type",
-            "medicion",
-            "medida"
-          );
-          if (measVal) {
-            const mlow = String(measVal).toLowerCase();
-            if (mlow === "km" || mlow === "kms" || mlow.includes("km")) {
-              out.measurementType = "KM";
-            } else if (
-              mlow.includes("peso") ||
-              mlow.includes("$") ||
-              mlow.includes("uy") ||
-              mlow.includes("pesos")
-            ) {
-              out.measurementType = "Pesos";
-            } else {
-              // fallback to raw value so the form still receives something sensible
-              out.measurementType = String(measVal);
-            }
-          } else {
-            // default: Traslado -> KM, else Pesos
-            out.measurementType = out.type === "Traslado" ? "KM" : "Pesos";
           }
         }
 
