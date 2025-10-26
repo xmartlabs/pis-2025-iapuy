@@ -2,7 +2,6 @@ export class ExpenseDto {
   id: string;
   userId: string;
   interventionId?: string;
-  sanityRecordId?: string;
   sanityId?: string;
   concept: string;
   type: string;
@@ -27,7 +26,6 @@ export class ExpenseDto {
     updatedAt?: Date,
     deletedAt?: Date,
     interventionId?: string,
-    sanityRecordId?: string,
     sanityId?: string,
     dogName?: string,
     user?: { ci: string; nombre: string }
@@ -35,7 +33,6 @@ export class ExpenseDto {
     this.id = id;
     this.userId = userId;
     this.interventionId = interventionId;
-    this.sanityRecordId = sanityRecordId;
     this.sanityId = sanityId;
     this.fecha = fecha;
     this.concept = concept;

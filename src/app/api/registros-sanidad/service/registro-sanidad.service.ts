@@ -152,7 +152,6 @@ export class RegistrosSanidadService {
         const createExpenseDto: CreateExpenseDto = {
           userId: perro.duenioId,
           interventionId: "",
-          sanityRecordId: regSanidad.id,
           sanidadId: sanidadEventId,
           dateSanity: fechaDate,
           type: expenseType,

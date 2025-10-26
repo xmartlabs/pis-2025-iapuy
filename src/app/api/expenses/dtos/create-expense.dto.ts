@@ -7,8 +7,6 @@ export class CreateExpenseDto {
 
   declare sanidadId?: string;
 
-  declare sanityRecordId?: string;
-
   declare dateSanity?: Date;
 
   declare type: ExpenseType;

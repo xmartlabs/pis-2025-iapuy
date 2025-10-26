@@ -112,11 +112,16 @@ export default function DeleteExpenseDialog({
   }
 
   useEffect(() => {
-    // Use pre-loaded dog name from the expense data
-    if (exp.dogName) {
-      setDogName(exp.dogName);
+    if (open) {
+      // Reset dogName whenever the dialog opens with a new expense
+      console.log(`🐕 Dialog opened for expense ${exp.id}, dogName: "${exp.dogName}"`);
+      setDogName(exp.dogName || "");
+    } else {
+      // Clear dogName when dialog is closed to prevent state persistence
+      console.log(`🐕 Dialog closed, clearing dogName`);
+      setDogName("");
     }
-  }, [exp.dogName]);
+  }, [exp.dogName, exp.id, open]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

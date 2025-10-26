@@ -2,7 +2,6 @@ export interface ListExpenseDto {
   id: string;
   userId: string;
   interventionId?: string;
-  sanityRecordId?: string;
   sanityId?: string;
   concept: string;
   type: string;

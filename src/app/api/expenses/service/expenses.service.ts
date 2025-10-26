@@ -3,6 +3,9 @@ import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { Perro } from "@/app/models/perro.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
+import { Desparasitacion } from "@/app/models/desparasitacion.entity";
+import { Banio } from "@/app/models/banio.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
@@ -205,12 +208,6 @@ export class ExpensesService {
           attributes: ["id", "timeStamp"],
           required: false,
         },
-        {
-          model: RegistroSanidad,
-          as: "RegistroSanidad",
-          attributes: ["id", "perroId"],
-          required: false,
-        },
       ],
       limit: pagination.size,
       offset: pagination.getOffset(),
@@ -237,18 +234,65 @@ export class ExpensesService {
         }
 
         let dogName: string | undefined = undefined;
-        if (exp.RegistroSanidad?.perroId) {
-          const dog = await Perro.findByPk(exp.RegistroSanidad.perroId, {
-            attributes: ["nombre"],
-          });
-          dogName = dog?.nombre;
+        if (exp.sanidadId) {
+          try {
+            // The sanidadId could be a vacuna, desparasitacion, or banio ID
+            // We need to find which table contains this ID and get the registroSanidadId
+            let registroSanidadId: string | undefined = undefined;
+            if (exp.type === "Vacunacion") {
+              const vacuna = await Vacuna.findByPk(exp.sanidadId, {
+                attributes: ["registroSanidadId"],
+              });
+              if (vacuna) {
+                registroSanidadId = vacuna.registroSanidadId;
+              }
+            } else if (
+              exp.type === "Desparasitacion Interna" ||
+              exp.type === "Desparasitacion Externa"
+            ) {
+              const desparasitacion = await Desparasitacion.findByPk(
+                exp.sanidadId,
+                {
+                  attributes: ["registroSanidadId"],
+                }
+              );
+              if (desparasitacion) {
+                registroSanidadId = desparasitacion.registroSanidadId;
+              }
+            } else if (exp.type === "Baño") {
+              const banio = await Banio.findByPk(exp.sanidadId, {
+                attributes: ["registroSanidadId"],
+              });
+              if (banio) {
+                registroSanidadId = banio.registroSanidadId;
+              }
+            }
+
+            // If we found a registroSanidadId, get the dog name
+            if (registroSanidadId) {
+              const sanidadRecord = await RegistroSanidad.findByPk(
+                registroSanidadId,
+                {
+                  attributes: ["perroId"],
+                }
+              );
+
+              if (sanidadRecord?.perroId) {
+                const dog = await Perro.findByPk(sanidadRecord.perroId, {
+                  attributes: ["nombre"],
+                });
+                dogName = dog?.nombre;
+              }
+            }
+          } catch {
+            dogName = undefined;
+          }
         }
 
         return {
           id: exp.id,
           userId: exp.userId,
           interventionId: exp.interventionId,
-          sanityRecordId: exp.sanityRecordId,
           sanityId: exp.sanidadId,
           concept: exp.concept,
           type: exp.type,
@@ -364,7 +408,6 @@ export class ExpensesService {
             ? request.interventionId
             : null,
         sanidadId: request.sanidadId,
-        sanityRecordId: request.sanityRecordId,
         dateSanity: request.dateSanity,
         type: request.type,
         concept: request.concept,
