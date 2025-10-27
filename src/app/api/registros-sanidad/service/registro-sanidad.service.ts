@@ -206,7 +206,7 @@ export class RegistrosSanidadService {
       vac?: string;
       carneVacunas?: Buffer | ArrayBuffer | null;
     },
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction; perroId?: string }
   ): Promise<Banio | Desparasitacion | Vacuna | null> {
     const updatePayload: {
       fecha?: Date;
@@ -219,6 +219,77 @@ export class RegistrosSanidadService {
       updatePayload.fecha =
         parseDateToNoon(data.fecha) ?? new Date(String(data.fecha));
     const doUpdate = async (t?: Transaction) => {
+      if (options?.perroId) {
+        const newPerroId = options.perroId;
+        let currentRegistroId: string | undefined = undefined;
+        if (tipoSanidad === "banio") {
+          const banio = await Banio.findByPk(eventoId, { transaction: t });
+          if (!banio) return null;
+          currentRegistroId = banio.registroSanidadId;
+        } else if (tipoSanidad === "desparasitacion") {
+          const despar = await Desparasitacion.findByPk(eventoId, {
+            transaction: t,
+          });
+          if (!despar) return null;
+          currentRegistroId = despar.registroSanidadId;
+        } else {
+          const vac = await Vacuna.findByPk(eventoId, { transaction: t });
+          if (!vac) return null;
+          currentRegistroId = vac.registroSanidadId;
+        }
+
+        if (currentRegistroId) {
+          const currentRegistro = await RegistroSanidad.findByPk(
+            currentRegistroId,
+            { transaction: t }
+          );
+          const currentPerroId = currentRegistro?.perroId ?? undefined;
+          if (newPerroId && newPerroId !== currentPerroId) {
+            const newRegistro = await RegistroSanidad.findOne({
+              where: { perroId: newPerroId },
+              transaction: t,
+            });
+            if (!newRegistro) {
+              return null;
+            }
+
+            if (tipoSanidad === "banio") {
+              const banio = await Banio.findByPk(eventoId, { transaction: t });
+              if (!banio) return null;
+              await banio.update(
+                { registroSanidadId: newRegistro.id },
+                { transaction: t }
+              );
+            } else if (tipoSanidad === "desparasitacion") {
+              const despar = await Desparasitacion.findByPk(eventoId, {
+                transaction: t,
+              });
+              if (!despar) return null;
+              await despar.update(
+                { registroSanidadId: newRegistro.id },
+                { transaction: t }
+              );
+            } else {
+              const vac = await Vacuna.findByPk(eventoId, { transaction: t });
+              if (!vac) return null;
+              await vac.update(
+                { registroSanidadId: newRegistro.id },
+                { transaction: t }
+              );
+            }
+
+            const newPerro = await Perro.findByPk(newPerroId, {
+              transaction: t,
+            });
+            if (newPerro && newPerro.duenioId) {
+              await Expense.update(
+                { userId: newPerro.duenioId },
+                { where: { sanidadId: eventoId }, transaction: t }
+              );
+            }
+          }
+        }
+      }
       if (tipoSanidad === "banio") {
         const banio = await Banio.findByPk(eventoId);
         if (!banio) return null;

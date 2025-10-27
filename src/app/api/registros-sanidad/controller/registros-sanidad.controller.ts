@@ -74,9 +74,9 @@ export class RegistrosSanidadController {
     const ret = await this.registrosSanidadService.create(body);
     return ret;
   }
-  
+
   async findOne(id: string) {
-    return await this.registrosSanidadService.findOne(id);  
+    return await this.registrosSanidadService.findOne(id);
   }
 
   async updateEventoSanidad(request: NextRequest) {
@@ -94,6 +94,7 @@ export class RegistrosSanidadController {
       carneVacunas?: Buffer | ArrayBuffer | null;
     } = {};
 
+    let perroIdStr: string | undefined = undefined;
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const ts = formData.get("tipoSanidad");
@@ -103,6 +104,8 @@ export class RegistrosSanidadController {
       if (typeof eid === "string") eventoId = eid;
       const fecha = formData.get("fecha");
       if (fecha) data.fecha = fecha as string;
+      const perroId = formData.get("perroId");
+      if (typeof perroId === "string") perroIdStr = perroId;
       const medicamento = formData.get("medicamento");
       if (medicamento) data.medicamento = medicamento as string;
       const tipoDes = formData.get("tipoDesparasitacion");
@@ -134,6 +137,7 @@ export class RegistrosSanidadController {
       if (typeof body.tipoDesparasitacion === "string")
         data.tipoDesparasitacion = body.tipoDesparasitacion;
       if (typeof body.vac === "string") data.vac = body.vac;
+      if (typeof body.perroId === "string") perroIdStr = body.perroId;
 
       // carneVacunas may be provided as base64 string
       if (typeof body.carneVacunas === "string") {
@@ -152,7 +156,8 @@ export class RegistrosSanidadController {
     const updated = await this.registrosSanidadService.updateEventoSanidad(
       tipoSanidad,
       eventoId,
-      data
+      data,
+      { perroId: perroIdStr }
     );
     if (!updated) throw new Error("Evento de sanidad no encontrado");
     return updated;
