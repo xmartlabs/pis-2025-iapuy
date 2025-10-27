@@ -1,5 +1,4 @@
-
-// Lo dejo comentado porque está el bug de cédula repetida
+// Lo dejo comentado hasta que se arregle lo del borrado lógico de usuarios
 
 // import { test, expect } from "@playwright/test";
 
@@ -17,21 +16,21 @@
 //   await page.getByRole("textbox", { name: "Nombre y apellido*" }).click();
 //   await page
 //     .getByRole("textbox", { name: "Nombre y apellido*" })
-//     .fill("Tarifa Melida");
+//     .fill("Nicolas Lopez");
 //   await page.getByRole("radio", { name: "Colaborador" }).click();
 //   await page.getByRole("textbox", { name: "Banco*" }).click();
 //   await page.getByRole("textbox", { name: "Banco*" }).fill("BBVA");
 //   await page.getByRole("textbox", { name: "Número de cuenta*" }).click();
 //   await page
 //     .getByRole("textbox", { name: "Número de cuenta*" })
-//     .fill("UY12343212");
+//     .fill("UY12343255");
 //   await page.getByRole("textbox", { name: "Cédula de identidad*" }).click();
 //   await page
 //     .getByRole("textbox", { name: "Cédula de identidad*" })
-//     .fill("92971471");
+//     .fill("55121281");
 //   await page.getByRole("textbox", { name: "Cédula de identidad*" }).click();
 //   await page.getByRole("textbox", { name: "Celular*" }).click();
-//   await page.getByRole("textbox", { name: "Celular*" }).fill("091891123");
+//   await page.getByRole("textbox", { name: "Celular*" }).fill("055121281");
 
 //   await page.locator('[id^="_r_"][id$="-form-item"]').last().click();
 
@@ -54,7 +53,7 @@
 
 //   await page
 //     .getByRole("textbox", { name: "Cédula de identidad" })
-//     .fill("92971471");
+//     .fill("55121281");
 //   await page.getByRole("textbox", { name: "Contraseña" }).click();
 //   await page.getByRole("textbox", { name: "Contraseña" }).fill("Contrasenia");
 //   await page.getByRole("button", { name: "Iniciar" }).click();
