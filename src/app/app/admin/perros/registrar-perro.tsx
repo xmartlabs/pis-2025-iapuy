@@ -37,7 +37,6 @@ import {
 import { useContext, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { LoginContext } from "@/app/context/login-context";
-import type { PerroDTO } from "./DTOS/perro.dto";
 import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
 
 type UserPair = {
@@ -66,13 +65,9 @@ interface AgregarPerroProps {
   setReload: (product: boolean) => void;
   open: boolean;
   setOpen: (o: boolean) => void;
-  onCreated?: (p: { id: string; nombre: string }) => void;
+  onCreated?: ( dog: CreatePerroDTO ) => void;
   ownerRequired?: boolean;
   creatingOwner?: boolean;
-  dogs: Array<{
-    id: string,
-    perro: CreatePerroDTO,
-  }>;
 }
 
 export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
@@ -88,8 +83,6 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   onCreated,
   // eslint-disable-next-line react/prop-types
   creatingOwner = false,
-  // eslint-disable-next-line react/prop-types
-  dogs,
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
   const context = useContext(LoginContext);
@@ -214,14 +207,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         descripcion: data.descripcion ? data.descripcion : "",
         fortalezas: data.fuertes ? data.fuertes : "",
       } as CreatePerroDTO;
-      // eslint-disable-next-line react/prop-types
-      const did = dogs.length.toString();
-      // eslint-disable-next-line react/prop-types
-      dogs.push({
-        id: did,
-        perro: dog
-      });
-      onCreated?.({ id: did, nombre: dog.nombre });
+      onCreated?.( dog );
       setOpen(false);
       form.reset();
       setDescChars(0);
@@ -274,10 +260,6 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       }
 
       if (res.ok) {
-        const created = (await res.json().catch(() => null)) as PerroDTO;
-        if (created?.id && created?.nombre) {
-          onCreated?.({ id: created.id, nombre: created.nombre });
-        }
 
         setOpen(false);
         form.reset();

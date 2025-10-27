@@ -158,28 +158,32 @@ export class UserService {
 
     const transaction = await sequelize.transaction();
 
-    let perros = normalizePerros(createUserDto.perros);
+    const perros = normalizePerros(createUserDto.perros);
     try {
       const esAdmin = createUserDto.rol === "admin";
       const usr = await User.create(
         { ...createUserDto, esAdmin },
         { transaction }
       );
-      await Promise.all(
-        createUserDto.perrosDto.map(async (dog) => {
-          const p = await Perro.create({ ...dog.perro });
-          perros = perros.map(d =>
-            d === dog.id ? p.id : d
-          );
-        })
+      await Perro.bulkCreate(
+        createUserDto.perrosDto.map((p) => ({
+          ...p.dog,
+          duenioId: usr.ci,
+        })),
+        { transaction }
       );
-      await Promise.all(
-        perros.map(async (perro) => {
-          const p = await Perro.findOne({ where: { id: perro } });
-          if (p) {
-            await p.update({ duenioId: createUserDto.ci }, { transaction });
-          }
-        })
+      
+
+      await Perro.update(
+        { duenioId: usr.ci },
+        {
+          where: {
+            id: {
+              [Op.in]: perros,
+            },
+          },
+          transaction,
+        },
       );
 
       await transaction.commit();
