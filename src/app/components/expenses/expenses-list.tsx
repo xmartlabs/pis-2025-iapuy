@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { type ListExpenseDto } from "@/app/api/expenses/dtos/list-expense.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
+import ConfigureExpensesButton from "./configure-expenses-button";
 import MenuPortal from "./list/menu-portal";
 import SeeOrEditCost from "./list/edit-health";
 import EditCostNotSanity from "./list/edit-cost";
@@ -463,13 +464,11 @@ export default function ExpensesList() {
               setReload((r) => !r);
             }}
           />
-          <Button
-            className="bg-[#DEEBD9] text-[#5B9B40] flex w-10 h-10 border-2 rounded-md gap-2
-                     opacity-100 hover:bg-[#5B9B40] hover:text-white hover:border-white
-                     transition duration-300 ease-in-out"
-          >
-            <Settings className="w-[20px] h-[20px]" />
-          </Button>
+          <ConfigureExpensesButton
+            onCreated={() => {
+              setReload((r) => !r);
+            }}
+          />
         </div>
       </div>
 
