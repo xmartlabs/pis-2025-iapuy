@@ -28,6 +28,14 @@ import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { type ExpenseDto } from "@/app/app/admin/gastos/dtos/expenses.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
@@ -84,6 +92,11 @@ export default function ExpensesList() {
   const [selectedCostId, setSelectedCostId] = useState<string>("");
   const [openNotSanityEditor, setOpenNotSanityEditor] =
     useState<boolean>(false);
+  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+  const [pendingChangeIdToPaid, setPendingChangeIdToPaid] = useState<
+    string | null
+  >(null);
+  const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
   const anchorRef = useRef<HTMLElement | null>(null);
   const [menuExpenseId, setMenuExpenseId] = useState<string | null>(null);
 
@@ -480,6 +493,18 @@ export default function ExpensesList() {
     }
   };
 
+  const handleConfirmChangeToPaid = () => {
+    if (!pendingChangeIdToPaid) return;
+    setConfirmLoading(true);
+    changeToPaid(pendingChangeIdToPaid)
+      .catch(() => {})
+      .finally(() => {
+        setConfirmLoading(false);
+        setOpenConfirm(false);
+        setPendingChangeIdToPaid(null);
+      });
+  };
+
   return (
     <div className="max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
@@ -644,7 +669,6 @@ export default function ExpensesList() {
                                   <button
                                     className="w-full text-left px-3 py-2 hover:bg-gray-100"
                                     onClick={() => {
-                                      // Decide which editor to open depending on expense type
                                       const sanidadTypes = new Set([
                                         "Baño",
                                         "Vacunacion",
@@ -667,7 +691,10 @@ export default function ExpensesList() {
                                   <button
                                     className="w-full text-left px-3 py-2 hover:bg-gray-100"
                                     onClick={() => {
-                                      changeToPaid(exp.id).catch(() => {});
+                                      // Open confirmation dialog before changing state
+                                      setOpenMenu(false);
+                                      setPendingChangeIdToPaid(exp.id);
+                                      setOpenConfirm(true);
                                     }}
                                   >
                                     Cambiar a Pagado
@@ -712,6 +739,41 @@ export default function ExpensesList() {
           setPage={setPage}
         />
       )}
+
+      <Dialog
+        open={openConfirm}
+        onOpenChange={(o) => {
+          setOpenConfirm(o);
+          if (!o) setPendingChangeIdToPaid(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar cambio a Pagado</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres marcar este gasto como Pagado? Esta
+              acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="mr-2 bg-white text-[#5B9B40] border border-[#5B9B40] hover:bg-[#5B9B40] hover:text-white hover:border-white"
+              onClick={() => {
+                setOpenConfirm(false);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="mr-2 bg-[#5B9B40] text-white border border-[#5B9B40] hover:bg-green-700 hover:text-white hover:border-white"
+              onClick={handleConfirmChangeToPaid}
+              disabled={confirmLoading}
+            >
+              {confirmLoading ? "Procesando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <SeeOrEditCost
         open={openEditDialog}
