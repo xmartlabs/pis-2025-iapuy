@@ -2,9 +2,10 @@ import { Expense } from "@/app/models/expense.entity";
 import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
+import { Perro } from "@/app/models/perro.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
-import { Banio } from "@/app/models/banio.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
+import { Banio } from "@/app/models/banio.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
@@ -298,6 +299,119 @@ export class ExpensesService {
       }),
     ]);
 
+    const sanidadIds = {
+      vacunas: [] as string[],
+      desparasitaciones: [] as string[],
+      banios: [] as string[],
+    };
+
+    for (const exp of rows) {
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          sanidadIds.vacunas.push(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          sanidadIds.desparasitaciones.push(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          sanidadIds.banios.push(exp.sanidadId);
+        }
+      }
+    }
+
+    const [vacunasWithDogs, desparasitacionesWithDogs, baniosWithDogs] =
+      await Promise.all([
+        sanidadIds.vacunas.length > 0
+          ? Vacuna.findAll({
+              where: { id: { [Op.in]: sanidadIds.vacunas } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.desparasitaciones.length > 0
+          ? Desparasitacion.findAll({
+              where: { id: { [Op.in]: sanidadIds.desparasitaciones } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.banios.length > 0
+          ? Banio.findAll({
+              where: { id: { [Op.in]: sanidadIds.banios } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+      ]);
+
+    const dogNameMaps = {
+      vacunas: new Map<string, string>(),
+      desparasitaciones: new Map<string, string>(),
+      banios: new Map<string, string>(),
+    };
+
+    type ModelWithDogName = {
+      id: string;
+      RegistroSanidad?: {
+        Perro?: {
+          nombre: string;
+        };
+      };
+    };
+
+    for (const vacuna of vacunasWithDogs) {
+      const typedVacuna = vacuna as unknown as ModelWithDogName;
+      const dogName = typedVacuna?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.vacunas.set(typedVacuna.id, dogName);
+      }
+    }
+
+    for (const desparasitacion of desparasitacionesWithDogs) {
+      const typedDesparasitacion =
+        desparasitacion as unknown as ModelWithDogName;
+      const dogName = typedDesparasitacion?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.desparasitaciones.set(typedDesparasitacion.id, dogName);
+      }
+    }
+
+    for (const banio of baniosWithDogs) {
+      const typedBanio = banio as unknown as ModelWithDogName;
+      const dogName = typedBanio?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.banios.set(typedBanio.id, dogName);
+      }
+    }
+
     const data: ListExpenseDto[] = rows.map((exp) => {
       let fecha: Date | null = null;
       if (exp.interventionId) {
@@ -315,14 +429,31 @@ export class ExpensesService {
         }
       }
 
+      let dogName: string | undefined = undefined;
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          dogName = dogNameMaps.vacunas.get(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          dogName = dogNameMaps.desparasitaciones.get(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          dogName = dogNameMaps.banios.get(exp.sanidadId);
+        }
+      }
+
       return {
         id: exp.id,
         userId: exp.userId,
+        interventionId: exp.interventionId || undefined,
+        sanityId: exp.sanidadId || undefined,
         concept: exp.concept,
         type: exp.type,
         state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
         amount: exp.amount,
         fecha,
+        dogName,
         user: userExpense,
       };
     });

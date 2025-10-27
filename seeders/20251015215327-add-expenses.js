@@ -3,8 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     await queryInterface.bulkInsert("expenses", [
       {
         id: uuidv4(),
@@ -36,82 +35,13 @@ module.exports = {
       },
       {
         id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.0,
-        type: "Vacunacion",
-        sanidadId: "a2322222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.0,
-        type: "Vacunacion",
-        sanidadId: "a2322222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.0,
-        type: "Vacunacion",
-        sanidadId: "a2322222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "22222222",
-        interventionId: null,
-        concept: "Vacunación antirrábica",
-        state: "pagado",
-        amount: 2300.0,
-        type: "Vacunacion",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-03-10T11:15:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "33333333",
-        interventionId: null,
-        concept: "Desparasitacion Externa",
-        state: "no pagado",
-        amount: 1250.75,
-        type: "Desparasitacion Externa",
-        sanidadId: "d2222222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-04-18T14:45:00",
-      },
-      {
-        id: uuidv4(),
         userId: "11111111",
         interventionId: null,
         concept: "Desparasitación externa",
         state: "pagado",
         amount: 980.5,
         type: "Desparasitacion Externa",
-        sanidadId: "d2222222-2222-2222-2222-222222222222",
+        sanidadId: "d1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -125,7 +55,7 @@ module.exports = {
         state: "pagado",
         amount: 3100.0,
         type: "Vacunacion",
-        sanidadId: "a2322222-2222-2222-2222-222222222222",
+        sanidadId: "a1111111-1111-1111-1111-111111111111",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -144,20 +74,6 @@ module.exports = {
         updatedAt: new Date(),
         deletedAt: null,
         dateSanity: "2025-07-12T13:20:00",
-      },
-      {
-        id: uuidv4(),
-        userId: "11111111",
-        interventionId: null,
-        concept: "Análisis de laboratorio",
-        state: "pagado",
-        amount: 2100.0,
-        type: "Vacunacion",
-        sanidadId: "a2322222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        dateSanity: "2025-08-25T08:40:00",
       },
       {
         id: uuidv4(),
@@ -215,8 +131,7 @@ module.exports = {
     ]);
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("expenses", null, {});
   },
 };
