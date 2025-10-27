@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EvaluarIntervencion from "./evaluar";
+import EvaluarIntervencion from "../evaluar-intervencion"
 import HeaderIntervenciones from "./header-intervenciones";
 import { useSearchParams } from "next/navigation";
 import InscribirIntervencion from "./inscripcion";
@@ -39,7 +39,7 @@ export default function PantallaEvaluarIntervencion() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="diainterv">
-            <EvaluarIntervencion id={id} />
+            <EvaluarIntervencion/>
           </TabsContent>
           <TabsContent value="persyperr">
             <InscribirIntervencion intervention={id} />
