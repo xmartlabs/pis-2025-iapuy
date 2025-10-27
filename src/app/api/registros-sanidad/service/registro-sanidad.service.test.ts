@@ -19,16 +19,19 @@ vi.mock("@/app/models/registro-sanidad.entity", () => ({
   },
 }));
 vi.mock("@/app/models/banio.entity", () => ({
-  Banio: { create: vi.fn(), findAll: vi.fn() },
+  Banio: { create: vi.fn(), findAll: vi.fn(), findByPk: vi.fn() },
 }));
 vi.mock("@/app/models/desparasitacion.entity", () => ({
-  Desparasitacion: { create: vi.fn(), findAll: vi.fn() },
+  Desparasitacion: { create: vi.fn(), findAll: vi.fn(), findByPk: vi.fn() },
 }));
 vi.mock("@/app/models/vacuna.entity", () => ({
-  Vacuna: { create: vi.fn(), findAll: vi.fn() },
+  Vacuna: { create: vi.fn(), findAll: vi.fn(), findByPk: vi.fn() },
 }));
 vi.mock("@/app/models/perro.entity", () => ({
   Perro: { findByPk: vi.fn(), findAll: vi.fn(), findAndCountAll: vi.fn() },
+}));
+vi.mock("@/app/models/expense.entity", () => ({
+  Expense: { update: vi.fn() },
 }));
 vi.mock("../../expenses/service/expenses.service", () => ({
   ExpensesService: class {
@@ -39,9 +42,6 @@ vi.mock("../../expenses/service/expenses.service", () => ({
       return Promise.resolve({});
     }
   },
-}));
-vi.mock("@/app/models/perro.entity", () => ({
-  Perro: { findByPk: vi.fn() },
 }));
 vi.mock("@/app/api/expenses/service/expenses.service", () => ({
   ExpensesService: vi.fn().mockImplementation(() => ({
@@ -267,6 +267,10 @@ describe("RegistrosSanidadService", () => {
 
   // ---------------------- updateEventoSanidad ----------------------
   it("should update a vacuna when given ArrayBuffer carneVacunas and vac", async () => {
+    // Reset transaction mock for this test
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+
     // prepare a small ArrayBuffer
     const arr = new Uint8Array([1, 2, 3, 4]);
 
@@ -296,6 +300,10 @@ describe("RegistrosSanidadService", () => {
   });
 
   it("should update a banio with fecha parsed to Date", async () => {
+    // Reset transaction mock for this test
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+
     const updateSpy = vi.fn().mockResolvedValue(true);
     Banio.findByPk = vi.fn().mockResolvedValue({ id: "b1", update: updateSpy });
 
@@ -315,6 +323,10 @@ describe("RegistrosSanidadService", () => {
   });
 
   it("should update desparasitacion with medicamento and tipoDesparasitacion", async () => {
+    // Reset transaction mock for this test
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+
     const updateSpy = vi.fn().mockResolvedValue(true);
     Desparasitacion.findByPk = vi
       .fn()
@@ -340,6 +352,10 @@ describe("RegistrosSanidadService", () => {
   });
 
   it("should return null when vacuna not found", async () => {
+    // Reset transaction mock for this test
+    // eslint-disable-next-line @typescript-eslint/require-await, require-await, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+
     Vacuna.findByPk = vi.fn().mockResolvedValue(null);
     const res = await service.updateEventoSanidad("vacuna", "missing", {});
     expect(res).toBeNull();

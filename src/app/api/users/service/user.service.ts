@@ -165,13 +165,15 @@ export class UserService {
         { ...createUserDto, esAdmin },
         { transaction }
       );
-      await Perro.bulkCreate(
-        createUserDto.perrosDto.map((p) => ({
-          ...p.dog,
-          duenioId: usr.ci,
-        })),
-        { transaction }
-      );
+      if (Array.isArray(createUserDto.perrosDto) && createUserDto.perrosDto.length > 0) {
+        await Perro.bulkCreate(
+          createUserDto.perrosDto.map((p) => ({
+            ...p.dog,
+            duenioId: usr.ci,
+          })),
+          { transaction }
+        );
+      }
       
 
       await Perro.update(

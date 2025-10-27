@@ -1,8 +1,8 @@
 {
-  "banios": 250,
-  "desparasitacionesInterna": 250,
-  "desparasitacionesExterna": 250,
-  "vacunas": 250,
+  "banios": 471,
+  "desparasitacionesInterna": 850,
+  "desparasitacionesExterna": 255,
+  "vacunas": 450,
   "kilometros": 50,
-  "honorario": 400
+  "honorario": 450
 }

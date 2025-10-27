@@ -9,5 +9,5 @@ export class CreateUserDto {
   declare cuentaBancaria: string;
   declare rol: "admin" | "colaborador";
   declare perros: Array<string>;
-  declare perrosDto: Array<{ id: string, dog: CreatePerroDTO}>;
+  declare perrosDto?: Array<{ id: string, dog: CreatePerroDTO}>;
 }
