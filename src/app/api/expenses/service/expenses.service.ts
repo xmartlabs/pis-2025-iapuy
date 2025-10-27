@@ -58,6 +58,76 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 export class ExpensesService {
+  async getExpenseDetails(id: string) {
+    const payload: Record<string, unknown> = {};
+
+    const exp = await Expense.findByPk(id, {
+      include: [
+        { model: User, as: "User", attributes: ["ci", "nombre"] },
+        {
+          model: Intervention,
+          as: "Intervencion",
+          attributes: ["id", "timeStamp"],
+          required: false,
+        },
+      ],
+    });
+
+    if (!exp) return null;
+
+    payload.expense = exp;
+
+    const type = exp.type as string | undefined;
+    const sanidadId = exp.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (isSanidadType && sanidadId) {
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      let kind: "vacuna" | "banio" | "desparasitacion" | undefined = undefined;
+
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          kind = "vacuna";
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          kind = "banio";
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          kind = "desparasitacion";
+          break;
+      }
+
+      if (entity) {
+        let registroId: string | undefined = undefined;
+        if (
+          entity &&
+          typeof entity === "object" &&
+          "registroSanidadId" in entity
+        ) {
+          registroId = (entity as { registroSanidadId?: string })
+            .registroSanidadId;
+        }
+        const registro = registroId
+          ? await RegistroSanidad.findByPk(registroId).catch(() => null)
+          : null;
+        payload.registroSanidad = registro;
+        payload.event = { kind, data: entity };
+        return payload;
+      }
+    }
+
+    return payload;
+  }
+
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser,
@@ -522,6 +592,63 @@ export class ExpensesService {
       toUpdate as unknown as Partial<Expense>
     );
     return updated;
+  }
+
+  async updateSanidadForExpense(
+    expenseId: string,
+    payload: Record<string, unknown>
+  ): Promise<Vacuna | Banio | Desparasitacion | null> {
+    const expense = await Expense.findByPk(expenseId).catch(() => null);
+    if (!expense) return null;
+
+    const type = expense.type as string | undefined;
+    const sanidadId = expense.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (!isSanidadType) return null;
+
+    const sanitizeUpdateObj = (obj: Record<string, unknown>) => {
+      const forbidden = new Set([
+        "id",
+        "registroSanidadId",
+        "createdAt",
+        "updatedAt",
+      ]);
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(obj)) {
+        if (forbidden.has(k)) continue;
+        out[k] = obj[k];
+      }
+      return out;
+    };
+
+    if (sanidadId && type) {
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          break;
+      }
+      if (entity) {
+        const upd = sanitizeUpdateObj(payload);
+        await entity.update(upd).catch(() => null);
+        return entity;
+      }
+    }
+
+    return null;
   }
 
   getFixedCost(sanidadtype: string): number {

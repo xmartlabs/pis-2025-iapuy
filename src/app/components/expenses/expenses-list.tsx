@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import ReactDOM from "react-dom";
 import CustomSearchBar from "@/app/components/search-bar";
 import {
   Table,
@@ -12,25 +19,31 @@ import {
 } from "@/components/ui/table";
 
 import CustomPagination from "@/app/components/pagination";
-import { BadgeDollarSign, Settings, EllipsisVertical } from "lucide-react";
+import { BadgeDollarSign, EllipsisIcon } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import { LoginContext } from "@/app/context/login-context";
 import FilterDropdown, {
   type pairPerson,
 } from "@/app/components/expenses/filter-dropdown";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { type ListExpenseDto } from "@/app/api/expenses/dtos/list-expense.dto";
 import { type FiltersExpenseDto } from "@/app/api/expenses/dtos/initial-filter.dto";
 import AddExpenseButton from "./add-expense-button";
 import ConfigureExpensesButton from "./configure-expenses-button";
+import MenuPortal from "./list/menu-portal";
+import SeeOrEditCost from "./list/edit-health";
+import EditCostNotSanity from "./list/edit-cost";
+import { toast } from "sonner";
 
 import DeleteExpenseDialog from "./delete-expense-dialog";
 
@@ -40,6 +53,13 @@ const statusToColor: Record<string, string> = {
 };
 
 const statuses = ["Pendiente de pago", "Pagado"];
+
+const notEditableTypes = new Set([
+  "Pago Acompañante",
+  "Pago Guía",
+  "Pago a acompañante",
+  "Pago a guía",
+]);
 
 function formatMonthYear(ts: string | number | Date) {
   const d = new Date(ts);
@@ -70,6 +90,22 @@ export default function ExpensesList() {
   const [expenseToDelete, setExpenseToDelete] = useState<ListExpenseDto | null>(
     null
   );
+
+  const [openMenu, setOpenMenu] = useState<boolean>(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
+    null
+  );
+  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
+  const [selectedCostId, setSelectedCostId] = useState<string>("");
+  const [openNotSanityEditor, setOpenNotSanityEditor] =
+    useState<boolean>(false);
+  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+  const [pendingChangeIdToPaid, setPendingChangeIdToPaid] = useState<
+    string | null
+  >(null);
+  const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const [menuExpenseId, setMenuExpenseId] = useState<string | null>(null);
 
   const context = useContext(LoginContext);
 
@@ -423,6 +459,62 @@ export default function ExpensesList() {
     setSelectedPeople(peopleSelected);
   };
 
+  const changeToPaid = async (id: string) => {
+    try {
+      const token = context?.tokenJwt;
+      const resp = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ state: "pagado" }),
+      });
+
+      if (resp.ok || resp.status === 204) {
+        toast.success("Gasto marcado como Pagado", {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#DEEBD9",
+            border: "1px solid #BDD7B3",
+            color: "#121F0D",
+          },
+        });
+        setOpenMenu(false);
+        setReload((r) => !r);
+        return;
+      }
+
+      let msg = `Error ${resp.status}`;
+      const body = (await resp.json().catch(() => null)) as unknown;
+      if (body && typeof body === "object") {
+        const b = body as Record<string, unknown>;
+        if ("error" in b && typeof b.error !== "undefined") {
+          msg = String(b.error as unknown);
+        }
+      }
+
+      toast.error(`No se pudo cambiar a Pagado. ${msg}`);
+    } catch {
+      toast.error("No se pudo cambiar el estado del gasto.");
+    }
+  };
+
+  const handleConfirmChangeToPaid = () => {
+    if (!pendingChangeIdToPaid) return;
+    setConfirmLoading(true);
+    changeToPaid(pendingChangeIdToPaid)
+      .catch(() => {})
+      .finally(() => {
+        setConfirmLoading(false);
+        setOpenConfirm(false);
+        setPendingChangeIdToPaid(null);
+      });
+  };
+
   return (
     <div className="max-w-[95%] p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between mb-3">
@@ -559,29 +651,82 @@ export default function ExpensesList() {
                     </TableCell>
 
                     <TableCell className="w-[40px] mr-0">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md flex items-center justify-center">
-                            <EllipsisVertical className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {}}>
-                            Ver o editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {}}>
-                            Cambiar a Pagado
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setExpenseToDelete(exp);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            Eliminar gasto
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const btn = e.currentTarget as HTMLElement;
+                          anchorRef.current = btn;
+                          const rect = btn.getBoundingClientRect();
+                          setMenuPos({
+                            top: rect.bottom + window.scrollY,
+                            left: rect.right + window.scrollX,
+                          });
+                          setMenuExpenseId(exp.id);
+                          setOpenMenu(true);
+                        }}
+                      >
+                        <EllipsisIcon className="text-[#5B9B40]" />
+                      </button>
+
+                      {openMenu && menuExpenseId === exp.id && menuPos
+                        ? ReactDOM.createPortal(
+                            <MenuPortal
+                              pos={menuPos}
+                              onClose={() => {
+                                setOpenMenu(false);
+                              }}
+                              anchor={anchorRef.current}
+                            >
+                              <div className="flex flex-col">
+                                {!notEditableTypes.has(exp.type) && (
+                                  <button
+                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                    onClick={() => {
+                                      const sanidadTypes = new Set([
+                                        "Baño",
+                                        "Vacunacion",
+                                        "Desparasitacion Interna",
+                                        "Desparasitacion Externa",
+                                      ]);
+                                      setSelectedCostId(exp.id);
+                                      if (sanidadTypes.has(exp.type)) {
+                                        setOpenEditDialog(true);
+                                      } else {
+                                        setOpenNotSanityEditor(true);
+                                      }
+                                      setOpenMenu(false);
+                                    }}
+                                  >
+                                    Ver o Editar
+                                  </button>
+                                )}
+                                {exp.state !== "Pagado" && (
+                                  <button
+                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                    onClick={() => {
+                                      // Open confirmation dialog before changing state
+                                      setOpenMenu(false);
+                                      setPendingChangeIdToPaid(exp.id);
+                                      setOpenConfirm(true);
+                                    }}
+                                  >
+                                    Cambiar a Pagado
+                                  </button>
+                                )}
+                                <button
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                  onClick={() => {
+                                    setExpenseToDelete(exp);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  Eliminar Gasto
+                                </button>
+                              </div>
+                            </MenuPortal>,
+                            document.body
+                          )
+                        : null}
                       {expenseToDelete && (
                         <DeleteExpenseDialog
                           open={deleteDialogOpen}
@@ -623,6 +768,58 @@ export default function ExpensesList() {
           setPage={setPage}
         />
       )}
+
+      <Dialog
+        open={openConfirm}
+        onOpenChange={(o) => {
+          setOpenConfirm(o);
+          if (!o) setPendingChangeIdToPaid(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar cambio a Pagado</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres marcar este gasto como Pagado? Esta
+              acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="mr-2 bg-white text-[#5B9B40] border border-[#5B9B40] hover:bg-[#5B9B40] hover:text-white hover:border-white"
+              onClick={() => {
+                setOpenConfirm(false);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="mr-2 bg-[#5B9B40] text-white border border-[#5B9B40] hover:bg-green-700 hover:text-white hover:border-white"
+              onClick={handleConfirmChangeToPaid}
+              disabled={confirmLoading}
+            >
+              {confirmLoading ? "Procesando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <SeeOrEditCost
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+        costId={selectedCostId}
+        onEdited={() => {
+          setReload((r) => !r);
+        }}
+      />
+      <EditCostNotSanity
+        open={openNotSanityEditor}
+        onOpenChange={setOpenNotSanityEditor}
+        costID={selectedCostId}
+        onEdited={() => {
+          setReload((r) => !r);
+        }}
+      />
     </div>
   );
 }
