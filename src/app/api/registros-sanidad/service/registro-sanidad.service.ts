@@ -2,6 +2,29 @@ import { Banio } from "@/app/models/banio.entity";
 import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
 import { Vacuna } from "@/app/models/vacuna.entity";
+import { Expense } from "@/app/models/expense.entity";
+
+// Helper: parse a date-only string (yyyy-mm-dd) into a Date set at 12:00 local time
+// This avoids timezone shifts that move the date to the previous day when
+// stored/retrieved as an instant (UTC).
+function parseDateToNoon(input?: string | Date): Date | undefined {
+  if (!input) return undefined;
+  if (input instanceof Date) return input;
+  const s = String(input).trim();
+  const isoDateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoDateOnly) {
+    const y = Number(isoDateOnly[1]);
+    const m = Number(isoDateOnly[2]) - 1;
+    const d = Number(isoDateOnly[3]);
+    if (!Number.isNaN(y) && !Number.isNaN(m) && !Number.isNaN(d)) {
+      return new Date(y, m, d, 12, 0, 0, 0);
+    }
+  }
+  // Fallback: try native parse
+  const parsed = new Date(s);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed;
+}
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
@@ -91,7 +114,9 @@ export class RegistrosSanidadService {
           { transaction: t }
         );
 
-      const fechaDate = new Date(createRegistroSanidadDto.fecha);
+      const fechaDate =
+        parseDateToNoon(createRegistroSanidadDto.fecha) ??
+        new Date(String(createRegistroSanidadDto.fecha));
       let sanidadEventId: string = "";
 
       if (createRegistroSanidadDto.tipoSanidad === "banio") {
@@ -190,39 +215,73 @@ export class RegistrosSanidadService {
       vac?: string;
       carneVacunas?: Buffer;
     } = {};
-    if (data.fecha) updatePayload.fecha = new Date(data.fecha);
+    if (data.fecha)
+      updatePayload.fecha =
+        parseDateToNoon(data.fecha) ?? new Date(String(data.fecha));
+    const doUpdate = async (t?: Transaction) => {
+      if (tipoSanidad === "banio") {
+        const banio = await Banio.findByPk(eventoId);
+        if (!banio) return null;
+        await banio.update(updatePayload, { transaction: t });
 
-    if (tipoSanidad === "banio") {
-      const banio = await Banio.findByPk(eventoId);
-      if (!banio) return null;
-      await banio.update(updatePayload, { transaction: options?.transaction });
-      return banio;
-    }
+        if (updatePayload.fecha) {
+          await Expense.update(
+            { dateSanity: updatePayload.fecha },
+            { where: { sanidadId: eventoId }, transaction: t }
+          );
+        }
 
-    if (tipoSanidad === "desparasitacion") {
-      if (data.medicamento !== undefined)
-        updatePayload.medicamento = data.medicamento;
-      if (data.tipoDesparasitacion !== undefined)
-        updatePayload.tipoDesparasitacion = data.tipoDesparasitacion;
-
-      const despar = await Desparasitacion.findByPk(eventoId);
-      if (!despar) return null;
-      await despar.update(updatePayload, { transaction: options?.transaction });
-      return despar;
-    }
-
-    if (data.vac !== undefined) updatePayload.vac = data.vac;
-    if (data.carneVacunas !== undefined && data.carneVacunas !== null) {
-      if (data.carneVacunas instanceof ArrayBuffer) {
-        updatePayload.carneVacunas = Buffer.from(data.carneVacunas);
-      } else if (Buffer.isBuffer(data.carneVacunas)) {
-        updatePayload.carneVacunas = data.carneVacunas;
+        return banio;
       }
+
+      if (tipoSanidad === "desparasitacion") {
+        if (data.medicamento !== undefined)
+          updatePayload.medicamento = data.medicamento;
+        if (data.tipoDesparasitacion !== undefined)
+          updatePayload.tipoDesparasitacion = data.tipoDesparasitacion;
+
+        const despar = await Desparasitacion.findByPk(eventoId);
+        if (!despar) return null;
+        await despar.update(updatePayload, { transaction: t });
+
+        if (updatePayload.fecha) {
+          await Expense.update(
+            { dateSanity: updatePayload.fecha },
+            { where: { sanidadId: eventoId }, transaction: t }
+          );
+        }
+
+        return despar;
+      }
+
+      if (data.vac !== undefined) updatePayload.vac = data.vac;
+      if (data.carneVacunas !== undefined && data.carneVacunas !== null) {
+        if (data.carneVacunas instanceof ArrayBuffer) {
+          updatePayload.carneVacunas = Buffer.from(data.carneVacunas);
+        } else if (Buffer.isBuffer(data.carneVacunas)) {
+          updatePayload.carneVacunas = data.carneVacunas;
+        }
+      }
+
+      const vacuna = await Vacuna.findByPk(eventoId);
+      if (!vacuna) return null;
+      await vacuna.update(updatePayload, { transaction: t });
+
+      if (updatePayload.fecha) {
+        await Expense.update(
+          { dateSanity: updatePayload.fecha },
+          { where: { sanidadId: eventoId }, transaction: t }
+        );
+      }
+
+      return vacuna;
+    };
+
+    // If caller provided a transaction, use it; otherwise create a transaction for atomicity
+    if (options?.transaction) {
+      return await doUpdate(options.transaction);
     }
 
-    const vacuna = await Vacuna.findByPk(eventoId);
-    if (!vacuna) return null;
-    await vacuna.update(updatePayload, { transaction: options?.transaction });
-    return vacuna;
+    return await sequelize.transaction(async (t) => await doUpdate(t));
   }
 }

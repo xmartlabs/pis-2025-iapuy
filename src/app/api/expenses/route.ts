@@ -111,7 +111,6 @@ export async function PUT(request: NextRequest) {
             { status: 404 }
           );
         }
-        return new NextResponse(null, { status: 204 });
       }
     } catch {
       // ignore and continue to normal expense update flow
