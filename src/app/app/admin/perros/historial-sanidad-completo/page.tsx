@@ -186,6 +186,28 @@ export default function HistorialSanidad() {
     [context, page, size]
   );
 
+  async function handleDelete(id: string, activity: string) {
+    try {
+      const res = await fetch(
+        `/api/registros-sanidad?id=${encodeURIComponent(
+          id
+        )}&activity=${encodeURIComponent(activity)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Error deleting registro");
+      }
+
+      alert(`${activity} eliminado correctamente`);
+      // Optionally: refresh list or update local state here
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo eliminar el registro");
+    }
+  }
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
@@ -279,7 +301,22 @@ export default function HistorialSanidad() {
                         >
                           <Pencil />
                         </button>
-                        <button className="shrink-0 p-1 hidden">
+                        <button
+                          onClick={() => {
+                            handleDelete(registro.id, registro.activity);
+                          }}
+                          disabled={registro.hasPaidExpense}
+                          title={
+                            registro.hasPaidExpense
+                              ? "No se puede eliminar porque ya se pagó"
+                              : ""
+                          }
+                          className={`shrink-0 p-1 ${
+                            registro.hasPaidExpense
+                              ? "disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100"
+                              : ""
+                          }`}
+                        >
                           <Trash2 />
                         </button>
                       </div>

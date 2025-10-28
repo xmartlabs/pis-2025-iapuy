@@ -61,18 +61,17 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const activity = request.nextUrl.searchParams.get("activity");
     await registrosSanidadController.deleteRegistroSanidad(request);
     return NextResponse.json(
-      { message: "RegistroSanidad deleted successfully" },
+      { message: `${activity} deleted successfully` },
       { status: 200 }
     );
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("RegistroSanidad not found")
-    ) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      const activity = request.nextUrl.searchParams.get("activity");
       return NextResponse.json(
-        { error: "RegistroSanidad not found" },
+        { error: `${activity} not found.` },
         { status: 404 }
       );
     }

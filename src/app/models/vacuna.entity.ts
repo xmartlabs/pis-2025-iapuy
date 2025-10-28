@@ -11,6 +11,7 @@ import {
 } from "sequelize-typescript";
 import { RegistroSanidad } from "./registro-sanidad.entity";
 import { type CreationOptional } from "sequelize";
+import { Expense } from "./expense.entity";
 
 @Table({ tableName: "vacunas" })
 export class Vacuna extends Model {
@@ -37,6 +38,9 @@ export class Vacuna extends Model {
   @DeletedAt
   declare deletedAt: CreationOptional<Date>;
 
-  @Column(DataType.BLOB('long'))
+  @Column(DataType.BLOB("long"))
   declare carneVacunas: Buffer;
+
+  declare RegistroSanidad?: RegistroSanidad;
+  declare VacunaExpense?: Expense;
 }

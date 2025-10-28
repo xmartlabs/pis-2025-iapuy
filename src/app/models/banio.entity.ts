@@ -11,6 +11,7 @@ import {
 } from "sequelize-typescript";
 import { RegistroSanidad } from "./registro-sanidad.entity";
 import type { CreationOptional } from "sequelize";
+import { Expense } from "./expense.entity";
 
 @Table({ tableName: "banios" })
 export class Banio extends Model {
@@ -33,4 +34,7 @@ export class Banio extends Model {
 
   @DeletedAt
   declare deletedAt: CreationOptional<Date>;
+
+  declare RegistroSanidad?: RegistroSanidad;
+  declare BanioExpense?: Expense;
 }

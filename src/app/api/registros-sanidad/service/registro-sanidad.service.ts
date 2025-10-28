@@ -52,18 +52,62 @@ export class RegistrosSanidadService {
     let vacunas: Vacuna[] = [];
     let desparasitaciones: Desparasitacion[] = [];
     [banios, vacunas, desparasitaciones] = await Promise.all([
-      Banio.findAll({ where: { registroSanidadId: registroPerro.id } }),
-      Vacuna.findAll({ where: { registroSanidadId: registroPerro.id } }),
+      Banio.findAll({
+        where: { registroSanidadId: registroPerro.id },
+        include: [
+          {
+            model: Expense,
+            as: "BanioExpense",
+          },
+        ],
+      }),
+      Vacuna.findAll({
+        where: { registroSanidadId: registroPerro.id },
+        include: [
+          {
+            model: Expense,
+            as: "VacunaExpense",
+          },
+        ],
+      }),
       Desparasitacion.findAll({
         where: { registroSanidadId: registroPerro.id },
+        include: [
+          {
+            model: Expense,
+            as: "DesparasitacionExpense",
+          },
+        ],
       }),
     ]);
 
     const eventos: EventoSanidadDto[] = [
-      ...banios.map((b) => new EventoSanidadDto(b.id, b.fecha, "Baño")),
-      ...vacunas.map((v) => new EventoSanidadDto(v.id, v.fecha, "Vacuna")),
+      ...banios.map(
+        (b) =>
+          new EventoSanidadDto(
+            b.id,
+            b.fecha,
+            "Baño",
+            b.BanioExpense?.state === "pagado"
+          )
+      ),
+      ...vacunas.map(
+        (v) =>
+          new EventoSanidadDto(
+            v.id,
+            v.fecha,
+            "Vacuna",
+            v.VacunaExpense?.state === "pagado"
+          )
+      ),
       ...desparasitaciones.map(
-        (d) => new EventoSanidadDto(d.id, d.fecha, "Desparasitación")
+        (d) =>
+          new EventoSanidadDto(
+            d.id,
+            d.fecha,
+            "Desparasitación",
+            d.DesparasitacionExpense?.state === "pagado"
+          )
       ),
     ];
 
@@ -181,7 +225,7 @@ export class RegistrosSanidadService {
         if (activity === "Baño") {
           const bath = await Banio.findByPk(id);
           if (!bath) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
 
           expense = await Expense.findOne({
@@ -198,13 +242,13 @@ export class RegistrosSanidadService {
         } else if (activity === "Vacuna") {
           const vaccination = await Vacuna.findByPk(id);
           if (!vaccination) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
           expense = await Expense.findOne({
             attributes: ["id", "state"],
             where: {
               sanidadId: id,
-              type: activity,
+              type: "Vacunacion",
             },
           });
           await Vacuna.destroy({
@@ -214,7 +258,7 @@ export class RegistrosSanidadService {
         } else if (activity === "Desparasitación") {
           const deworming = await Desparasitacion.findByPk(id);
           if (!deworming) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
           const type = `Desparasitacion ${deworming.tipoDesparasitacion}`;
           expense = await Expense.findOne({
@@ -228,12 +272,14 @@ export class RegistrosSanidadService {
             where: { id: deworming.id },
             transaction: t,
           });
+        } else {
+          throw new Error(`${activity} is not a valid sanitary event.`);
         }
 
         if (expense) {
           if (expense.state === "pagado") {
             throw new Error(
-              `${activity} cannot be destroyed. There's an expense already paid asociated.`
+              `${activity} cannot be destroyed. There's an expense already paid asociated to it.`
             );
           }
           await Expense.destroy({
@@ -245,6 +291,7 @@ export class RegistrosSanidadService {
         const options: FindOptions = {
           where: { id },
         };
+
         options.include = [
           {
             model: RegistroSanidad,
@@ -271,7 +318,7 @@ export class RegistrosSanidadService {
         if (activity === "Baño") {
           const bath = await Banio.findOne(options);
           if (!bath) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
           expense = await Expense.findOne({
             attributes: ["id", "state"],
@@ -287,13 +334,13 @@ export class RegistrosSanidadService {
         } else if (activity === "Vacuna") {
           const vaccination = await Vacuna.findOne(options);
           if (!vaccination) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
           expense = await Expense.findOne({
             attributes: ["id", "state"],
             where: {
               sanidadId: id,
-              type: activity,
+              type: "Vacunacion",
             },
           });
           await Vacuna.destroy({
@@ -303,7 +350,7 @@ export class RegistrosSanidadService {
         } else if (activity === "Desparasitación") {
           const deworming = await Desparasitacion.findOne(options);
           if (!deworming) {
-            throw new Error(`${activity} not found with id: ${id}`);
+            throw new Error(`${activity} not found with id: ${id}.`);
           }
           const type = `Desparasitacion ${deworming.tipoDesparasitacion}`;
           expense = await Expense.findOne({
@@ -317,6 +364,8 @@ export class RegistrosSanidadService {
             where: { id: deworming.id },
             transaction: t,
           });
+        } else {
+          throw new Error(`${activity} is not a valid sanitary event.`);
         }
 
         if (expense) {

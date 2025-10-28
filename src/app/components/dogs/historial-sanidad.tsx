@@ -177,7 +177,19 @@ export default function HistorialSanidad() {
                         >
                           <Pencil />
                         </button>
-                        <button className="shrink-0 p-1 hidden">
+                        <button
+                          disabled={registro.hasPaidExpense}
+                          title={
+                            registro.hasPaidExpense
+                              ? "No se puede eliminar porque ya se pagó"
+                              : ""
+                          }
+                          className={`shrink-0 p-1 ${
+                            registro.hasPaidExpense
+                              ? "disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100"
+                              : ""
+                          }`}
+                        >
                           <Trash2 />
                         </button>
                       </div>
