@@ -16,4 +16,6 @@ export class CreateExpenseDto {
   declare state: "Pendiente de pago" | "Pagado";
 
   declare amount: number;
+
+  declare km: boolean;
 }

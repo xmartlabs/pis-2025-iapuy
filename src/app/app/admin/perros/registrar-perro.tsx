@@ -37,7 +37,7 @@ import {
 import { useContext, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { LoginContext } from "@/app/context/login-context";
-import type { PerroDTO } from "./DTOS/perro.dto";
+import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
 
 type UserPair = {
   ci: string; //! chequear seguridad (es correcto manipular el id o solo manipular el JWT)
@@ -65,9 +65,9 @@ interface AgregarPerroProps {
   setReload: (product: boolean) => void;
   open: boolean;
   setOpen: (o: boolean) => void;
-  onCreated?: (p: { id: string; nombre: string }) => void;
+  onCreated?: ( dog: CreatePerroDTO ) => void;
   ownerRequired?: boolean;
-  ownerDisabled?: boolean;
+  creatingOwner?: boolean;
 }
 
 export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
@@ -82,9 +82,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   // eslint-disable-next-line react/prop-types
   onCreated,
   // eslint-disable-next-line react/prop-types
-  ownerRequired = true,
-  // eslint-disable-next-line react/prop-types
-  ownerDisabled = false,
+  creatingOwner = false,
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
   const context = useContext(LoginContext);
@@ -166,7 +164,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   });
 
   const createPerroSchema = createPerroBase.superRefine((val, ctx) => {
-    if (ownerRequired && (!val.dueno || val.dueno.trim() === "")) {
+    if (!creatingOwner && (!val.dueno || val.dueno.trim() === "")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["dueno"],
@@ -203,6 +201,19 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
 
   // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: z.infer<typeof createPerroSchema>) {
+    if(creatingOwner){
+      const dog = {
+        nombre: data.nombrePerro,
+        descripcion: data.descripcion ? data.descripcion : "",
+        fortalezas: data.fuertes ? data.fuertes : "",
+      } as CreatePerroDTO;
+      onCreated?.( dog );
+      setOpen(false);
+      form.reset();
+      setDescChars(0);
+      setFuertesChars(0);
+      return;
+    }
     try {
       const dataFormat: dataPerro = {
         nombre: data.nombrePerro,
@@ -249,10 +260,6 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
       }
 
       if (res.ok) {
-        const created = (await res.json().catch(() => null)) as PerroDTO;
-        if (created?.id && created?.nombre) {
-          onCreated?.({ id: created.id, nombre: created.nombre });
-        }
 
         setOpen(false);
         form.reset();
@@ -358,12 +365,12 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
-                              disabled={ownerDisabled}
+                              disabled={creatingOwner}
                             >
                               <SelectTrigger className="!w-full !md:max-w-[320px] !h-10">
                                 <SelectValue
                                   placeholder={
-                                    ownerDisabled ? "No requerido" : undefined
+                                    creatingOwner ? "No requerido" : undefined
                                   }
                                 />
                               </SelectTrigger>
@@ -371,7 +378,7 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
                                 <SelectGroup>
                                   {duenos?.map((user) => (
                                     <SelectItem
-                                      key={user.nombre}
+                                      key={user.ci}
                                       value={user.ci}
                                     >
                                       {user.nombre}

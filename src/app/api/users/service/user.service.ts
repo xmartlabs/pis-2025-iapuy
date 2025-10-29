@@ -15,6 +15,20 @@ export interface PayloadForUser extends jwt.JwtPayload {
   name: string;
   type: string;
 }
+
+type PerroAttrs = { nombre: string };
+
+export type UserSanitized = {
+  ci: string;
+  nombre: string;
+  celular: string | null;
+  banco: string | null;
+  cuentaBancaria: string | null;
+  esAdmin: boolean;
+  isActivated: boolean;
+  perros: PerroAttrs[];
+};
+
 function normalizePerros(input: unknown): string[] {
   if (Array.isArray(input)) return input.map(String);
 
@@ -35,31 +49,38 @@ function normalizePerros(input: unknown): string[] {
 
 export class UserService {
   async findAll(pagination: PaginationDto): Promise<PaginationResultDto<User>> {
-    const result = await User.findAndCountAll({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
-      attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
-      include: [
-        {
-          model: Intervention,
-          as: "Intervenciones",
-        },
-        {
-          model: Perro,
-          as: "perros",
-        },
-      ],
-      limit: pagination.size > 0 ? pagination.size : undefined,
-      offset: pagination.size > 0 ? pagination.getOffset() : undefined,
-      order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
-    });
+    const [rows, count] = await Promise.all([
+      User.findAll({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+        attributes: ["ci", "nombre", "celular", "banco", "cuentaBancaria"],
+        include: [
+          {
+            model: Intervention,
+            as: "Intervenciones",
+          },
+          {
+            model: Perro,
+            as: "perros",
+          },
+        ],
+        limit: pagination.size > 0 ? pagination.size : undefined,
+        offset: pagination.size > 0 ? pagination.getOffset() : undefined,
+        order: [[pagination.orderBy ?? "nombre", pagination.order ?? "ASC"]],
+      }),
+      User.count({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+      }),
+    ]);
 
-    return getPaginationResultFromModel(pagination, result);
+    return getPaginationResultFromModel(pagination, { rows, count });
   }
 
-  async findOne(ci: string): Promise<User | null> {
-    return await User.findByPk(ci, {
+  async findOne(ci: string): Promise<UserSanitized | null> {
+    const userInstance = await User.findByPk(ci, {
       attributes: [
         "ci",
         "nombre",
@@ -67,6 +88,7 @@ export class UserService {
         "banco",
         "cuentaBancaria",
         "esAdmin",
+        "password",
       ],
       include: [
         {
@@ -76,7 +98,26 @@ export class UserService {
         },
       ],
     });
+
+    if (!userInstance) return null;
+
+    const plain = userInstance.toJSON<User>();
+    const { password, perros = [], ...rest } = plain;
+
+    const sanitized: UserSanitized = {
+      ci: rest.ci,
+      nombre: rest.nombre,
+      celular: rest.celular ?? null,
+      banco: rest.banco ?? null,
+      cuentaBancaria: rest.cuentaBancaria ?? null,
+      esAdmin: Boolean(rest.esAdmin),
+      isActivated: Boolean(password && password !== ""),
+      perros: perros.map((p) => ({ nombre: p.nombre })),
+    };
+
+    return sanitized;
   }
+
   async findDogIdsByUser(duenioId: string): Promise<Perro[]> {
     const Perros = await Perro.findAll({
       where: { duenioId },
@@ -124,13 +165,27 @@ export class UserService {
         { ...createUserDto, esAdmin },
         { transaction }
       );
-      await Promise.all(
-        perros.map(async (perro) => {
-          const p = await Perro.findOne({ where: { id: perro } });
-          if (p) {
-            await p.update({ duenioId: createUserDto.ci }, { transaction });
-          }
-        })
+      if (Array.isArray(createUserDto.perrosDto) && createUserDto.perrosDto.length > 0) {
+        await Perro.bulkCreate(
+          createUserDto.perrosDto.map((p) => ({
+            ...p.dog,
+            duenioId: usr.ci,
+          })),
+          { transaction }
+        );
+      }
+      
+
+      await Perro.update(
+        { duenioId: usr.ci },
+        {
+          where: {
+            id: {
+              [Op.in]: perros,
+            },
+          },
+          transaction,
+        },
       );
 
       await transaction.commit();

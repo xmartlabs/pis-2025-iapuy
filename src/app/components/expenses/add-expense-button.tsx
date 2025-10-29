@@ -23,7 +23,7 @@ export default function AddExpenseButton({
 
   useEffect(() => {
     if (onCreated) onCreated();
-  }, [openSanidad]);
+  }, [onCreated, openSanidad]);
 
   return (
     <>

@@ -21,7 +21,7 @@ export class RegistroSanidad extends Model {
   declare id: CreationOptional<string>;
 
   @ForeignKey(() => Perro)
-  @Column
+  @Column({ type: DataType.STRING })
   declare perroId: string;
 
   @CreatedAt
