@@ -2,10 +2,11 @@ import { useContext, useEffect, useState } from "react";
 import CustomBreadCrumb from "../bread-crumb/bread-crumb";
 import { LoginContext } from "@/app/context/login-context";
 import { Button } from "@/components/ui/button";
-import { Funnel, Pencil } from "lucide-react";
+import { Funnel, Trash2 } from "lucide-react";
 import { DownloadButton } from "./download-pdf";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import CustomPagination from "../pagination";
 import DeleteInstitutionButton from "./eliminar-institucion";
 
@@ -48,11 +49,34 @@ const ReferentCard=({Contact}:ReferentCardProps)=>(
         </p>
     </div>
 );
+export interface APIInstitutionIntervention {
+  id: string;
+  timeStamp: string; // ISO string
+  UsrPerroIntervention: {
+    id: string;
+    User: {
+      ci: string;
+      nombre: string;
+    };
+    Perro: {
+      id: string;
+      nombre: string;
+    };
+  }[];
+  Pacientes: {
+    id: string;
+    nombre: string;
+  }[];
+}
 const InterventionGrid=({ id }: { id: string })=>{
     const [page, setPage] = useState<number>(1);
     const [size] = useState<number>(5);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
+    const [error,setError] =useState<string>("");
+    const [data, setData] = useState<APIInstitutionIntervention[]>([]);
+    const context = useContext(LoginContext);
+    const token = context?.tokenJwt ?? undefined;
     const getDate = (): Date[] =>(
         [new Date()] 
         //this will be changed when the UI for date selection is ready on the "detalle institucion" User story,
@@ -83,7 +107,73 @@ const InterventionGrid=({ id }: { id: string })=>{
         }*/
         
     );
+    const handleDelete = async (idI: string) => {
+        try {
+            const response = await fetch(`/api/intervention?id=${idI}`, {
+                method: "DELETE",
+                headers: {
+                    "Accept": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
+            if (!response.ok) {
+                setError("Error eliminando intervención");
+            }else{
+                setData(prev => prev.filter(interv => interv.id !== idI));
+            }
+        } catch (error2) {
+            if (error2 instanceof Error) {
+               setError("Error eliminando intervención");
+            } else {
+                setError("Error desconocido al eliminar intervención");
+            }
+        }
+    };
+    useEffect(() => {
+        setLoading(true);
+        setError("");
+        const fetchData = async () => {
+            try {
+            const params = new URLSearchParams();
+            params.set("page", String(page));
+            params.set("size", String(size));
+            // params.set("dates", "2025-01-01,2025-01-31"); // opcional
+
+            const response = await fetch(
+                `/api/instituciones/${id}/interventions?${params.toString()}`,
+                {
+                headers: {
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const result = (await response.json()) as PaginationResultDto<APIInstitutionIntervention>;
+
+            setData(result.data ?? []);
+            setTotalPages(result.totalPages ?? 1);
+            } catch (err) {
+            if (err instanceof Error) setError(err.message);
+            else setError(String(err));
+            } finally {
+            setLoading(false);
+            }
+        };
+
+        fetchData().catch((err) => {
+            if (err instanceof Error) setError(err.message);
+            else setError(String(err));
+            setLoading(false);
+        });
+    }, [token, id, page, size]);
+    if (loading) return <p>Cargando...</p>;
+    if (error) return <p>Error: {error}</p>;
     const selectedDates = getDate();
     return(
         <div className="flex flex-col gap-[20px]">
@@ -108,77 +198,97 @@ const InterventionGrid=({ id }: { id: string })=>{
                 <Table className="min-w-full table-fixed">
                     <TableHeader>
                         <TableRow className="border-b border-gray-200 -mt-px">
-                            <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
-                            Fecha y hora
+                            <TableHead className="px-6 py-3 text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg">
+                                Fecha y hora
                             </TableHead>
-                            <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
-                            Guías
+                            <TableHead className="px-6 py-3 text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg">
+                                Guías
                             </TableHead>
-                            <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
-                            Perros
+                            <TableHead className="px-6 py-3 text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg">
+                                Perros
                             </TableHead>
-                            <TableHead className="px-6 py-3 text-left text-sm font-medium  first:rounded-tl-lg last:rounded-tr-lg">
-                            Pacientes
+                            <TableHead className="px-6 py-3 text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg">
+                                Pacientes
                             </TableHead>
+                            <TableHead className="px-6 py-3 w-[64px] text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg"/>                        
                         </TableRow>
                     </TableHeader>
+
                     <TableBody className="divide-y divide-gray-100 bg-white">
                         {loading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={i} className="px-6 py-4">
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-4 w-[140px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[160px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[160px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[160px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[64px]" /></TableCell>
+                            </TableRow>
+                        ))
+                        ) : data.length > 0 ? (
+                        data.map((p) => (
+                            <TableRow
+                            key={p.id}
+                            className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                            >
                                 <TableCell className="px-6 py-4">
-                                    <Skeleton className="h-4 w-[140px]" />
-                                </TableCell>
-                                <TableCell className="px-6 py-4">
-                                    <Skeleton className="h-4 w-[160px]" />
-                                </TableCell>
-                                <TableCell className="px-6 py-4">
-                                    <Skeleton className="h-4 w-[160px]" />
-                                </TableCell>
-                                <TableCell className="px-6 py-4">
-                                    <Skeleton className="h-4 w-[160px]" />
-                                </TableCell>
-                                </TableRow>
-                            ))
-                            ) : (
-                            /* 
-                            institutions.map((p) => (
-                                <TableRow
-                                key={p.id}
-                                className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
-                                onClick={() => go(p.id)}
-                                >
-                                <TableCell className="px-6 py-4 align-middle">
-                                    <div className="flex items-center gap-3">
-                                    <span className="text-base md:text-base ml-2">
-                                        {p.nombre}
-                                    </span>
-                                    </div>
+                                    {new Date(p.timeStamp).toLocaleString()}
                                 </TableCell>
 
-                                <TableCell className="px-6 py-4 align-middle">
-                                    <div className="flex items-center gap-2 text-sm">
-                                    {p.InstitutionContacts.map((contact, index) => (
-                                        <span key={contact.id || index}>
-                                        {contact.name} - {contact.contact}
-                                        {index < p.InstitutionContacts.length - 1 && ", "}
+                                {<TableCell className="px-6 py-4">
+                                    {p.UsrPerroIntervention.length > 0
+                                    ? p.UsrPerroIntervention.map((u, i) => (
+                                        <span key={i}>
+                                            {u.User.nombre}
+                                            {i < p.UsrPerroIntervention.length - 1 && ", "}
                                         </span>
-                                    ))}
-                                    </div>
+                                        ))
+                                    : "Sin guías"}
+                                </TableCell>}
+
+                                <TableCell className="px-6 py-4">
+                                    {p.UsrPerroIntervention.length > 0
+                                    ? p.UsrPerroIntervention.map((u, i) => (
+                                        <span key={i}>
+                                            {u.Perro.nombre}
+                                            {i < p.UsrPerroIntervention.length - 1 && ", "}
+                                        </span>
+                                        ))
+                                    : "Sin perros"}
                                 </TableCell>
-                                </TableRow>
-                            ))
-                            */
-                            <TableRow>
-                                <TableCell colSpan={4} className="h-36 px-6 py-8 text-center">
-                                <div className="flex flex-col items-center gap-3">
-                                    <p className="text-sm text-muted-foreground">
-                                    No hay datos disponibles
-                                    </p>
-                                </div>
+
+                                <TableCell className="px-6 py-4">
+                                    {p.Pacientes.length > 0
+                                    ? p.Pacientes.map((pac, i) => (
+                                        <span key={i}>
+                                            {pac.nombre}
+                                            {i < p.Pacientes.length - 1 && ", "}
+                                        </span>
+                                        ))
+                                    : "Sin pacientes"}
+                                </TableCell>
+                                <TableCell className="px-6 py-4">
+                                    <Button
+                                        className=" flex items-center justify-center gap-0
+                                                     p-0 pr-0 pl-0 bg-transparent                        
+                                                    text-[#5B9B40] hover:bg-gray-100 rounded opacity-100"
+                                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                        onClick={() => { handleDelete(p.id); }}
+                                    >
+                                        <Trash2 className="!w-[16px] !h-[16px]" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
-                            )}
+                        ))
+                        ) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-36 px-6 py-8 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                                <p className="text-sm text-muted-foreground">No hay datos disponibles</p>
+                            </div>
+                            </TableCell>
+                        </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>
@@ -194,11 +304,12 @@ const InterventionGrid=({ id }: { id: string })=>{
 };
 
 export default function InstitutionDetail({id}:Props){
-    const context = useContext(LoginContext);
-    const token = context?.tokenJwt ?? undefined;
+    
     const [data, setData] = useState<APIInstitutionResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const context = useContext(LoginContext);
+    const token = context?.tokenJwt ?? undefined;
     useEffect(() => {
         const fetchData = async () => {
 
@@ -244,6 +355,8 @@ export default function InstitutionDetail({id}:Props){
                 <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
                     {data?.nombre ?? ""}
                 </h1>
+                {/*
+                NO ENTRA EN EL SPRINT
                 <div className="flex gap-2">
                     <Button
                         variant="outline"
@@ -254,7 +367,7 @@ export default function InstitutionDetail({id}:Props){
                         <Pencil className="w-4 h-4" />
                         Editar
                     </Button>
-                </div>
+                </div>*/}
             </div>
             <div className="flex flex-col">
                 <p className="font-sans font-normal text-base
