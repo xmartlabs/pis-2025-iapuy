@@ -3,5 +3,5 @@
 import ExpensesList from "../../../../components/expenses/expenses-list";
 
 export default function ExpensesScreen() {
-  return <ExpensesList />;
+  return <ExpensesList isAdmin={true} />;
 }
