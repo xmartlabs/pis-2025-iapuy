@@ -46,7 +46,6 @@ import EditCostNotSanity from "./list/edit-cost";
 import { toast } from "sonner";
 
 import DeleteExpenseDialog from "./delete-expense-dialog";
-//import { UserType } from "@/app/api/auth/service/auth.service";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
