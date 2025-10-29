@@ -287,7 +287,7 @@ export default function ListadoIntervenciones({
             />
           </div>
         ) : (
-          <div className="flex justify-start sm:justify-end items-center">
+          <div className="flex justify-start sm:justify-end items-center gap-4">
             <CustomSearchBar
               searchInput={searchInput}
               setSearchInput={setSearchInput}
@@ -303,7 +303,7 @@ export default function ListadoIntervenciones({
         )}
       </div>
       {!isColab && (
-        <div className="flex justify-start sm:justify-end items-center">
+        <div className="flex justify-start sm:justify-end items-center gap-4">
           <CustomSearchBar
             searchInput={searchInput}
             setSearchInput={setSearchInput}
@@ -426,7 +426,7 @@ export default function ListadoIntervenciones({
                       {Number(inter.pairsQuantity) || 0}
                     </TableCell>
                     <TableCell className="p-3">
-                      <InterventionBadge statusType={inter.status}/>
+                      <InterventionBadge statusType={inter.status} />
                     </TableCell>
                     {!isColab ? (
                       <TableCell className="w-[40px] mr-0"></TableCell>
