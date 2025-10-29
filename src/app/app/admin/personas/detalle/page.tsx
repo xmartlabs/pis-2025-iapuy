@@ -148,7 +148,7 @@ function DetallePersonaContent() {
         </div>
       </div>
 
-      <div className="m-8">
+      <div className="mb-8 mt-8">
         <BotonEliminarUsuario ci={ci} />
       </div>
       {user?.isActivated && (
