@@ -21,33 +21,7 @@ import { Patologia } from "@/app/models/patologia.entity";
 import { User } from "@/app/models/user.entity";
 import { Acompania } from "@/app/models/acompania.entity";
 
-const monthMap: Record<string, number> = {
-  ene: 0,
-  enero: 0,
-  feb: 1,
-  febrero: 1,
-  mar: 2,
-  marzo: 2,
-  abr: 3,
-  abril: 3,
-  may: 4,
-  mayo: 4,
-  jun: 5,
-  junio: 5,
-  jul: 6,
-  julio: 6,
-  ago: 7,
-  agosto: 7,
-  sep: 8,
-  sept: 8,
-  septiembre: 8,
-  oct: 9,
-  octubre: 9,
-  nov: 10,
-  noviembre: 10,
-  dic: 11,
-  diciembre: 11,
-};
+// monthMap removed: filtering now supports explicit startDate/endDate ranges.
 
 type InterventionWithInstitution = Intervention & {
   institutionName: string | null;
@@ -57,7 +31,8 @@ export class InterventionService {
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser,
-    months: string | null,
+    startDate: string | null,
+    endDate: string | null,
     statuses: string | null
   ): Promise<PaginationResultDto<Intervention>> {
     const whereBase: Record<string, unknown> =
@@ -78,94 +53,47 @@ export class InterventionService {
     }
 
     let timeStampWhere: Record<string, unknown> | undefined = undefined;
-    if (months && months.trim()) {
-      const monthsArr = months
-        .split(",")
-        .map((m) => m.trim())
-        .filter(Boolean);
 
-      const ranges: Array<{ start: Date; end: Date }> = [];
-
-      const parseMonthLabel = (
-        label: string
-      ): { start: Date; end: Date } | null => {
-        let normalized = label.replace(/\+/g, " ");
-        try {
-          normalized = decodeURIComponent(normalized);
-        } catch {
-          // ignore
+    // If startDate or endDate provided, use them to build a timestamp range.
+    // Expect ISO date strings (YYYY-MM-DD) or any string parseable by Date.
+    if ((startDate && startDate.trim()) || (endDate && endDate.trim())) {
+      let start: Date | undefined = undefined;
+      let end: Date | undefined = undefined;
+      if (startDate && startDate.trim()) {
+        const s = new Date(startDate);
+        if (!Number.isNaN(s.getTime())) {
+          start = new Date(
+            s.getFullYear(),
+            s.getMonth(),
+            s.getDate(),
+            0,
+            0,
+            0,
+            0
+          );
         }
-        normalized = normalized.replace(".", "").trim();
-
-        const isoMatch = normalized.match(/^(\d{4})-(\d{2})$/);
-        if (isoMatch) {
-          const year = Number(isoMatch[1]);
-          const month = Number(isoMatch[2]) - 1;
-          if (month >= 0 && month <= 11) {
-            const start = new Date(year, month, 1, 0, 0, 0, 0);
-            const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
-            return { start, end };
-          }
+      }
+      if (endDate && endDate.trim()) {
+        const e = new Date(endDate);
+        if (!Number.isNaN(e.getTime())) {
+          end = new Date(
+            e.getFullYear(),
+            e.getMonth(),
+            e.getDate(),
+            23,
+            59,
+            59,
+            999
+          );
         }
-
-        const parts = normalized.split(/\s+/);
-        if (parts.length >= 2) {
-          const yearPart = parts[parts.length - 1];
-          const monthPart = parts.slice(0, parts.length - 1).join(" ");
-          const year = Number(yearPart);
-          if (!Number.isNaN(year) && year > 1900 && year < 3000) {
-            const key = monthPart.toLowerCase();
-            const monthIdx = monthMap[key] ?? monthMap[key.slice(0, 3)];
-            if (typeof monthIdx === "number") {
-              const start = new Date(year, monthIdx, 1, 0, 0, 0, 0);
-              const end = new Date(year, monthIdx + 1, 0, 23, 59, 59, 999);
-              return { start, end };
-            }
-          }
-        }
-
-        return null;
-      };
-
-      for (const m of monthsArr) {
-        const r =
-          parseMonthLabel(m) ??
-          ((): { start: Date; end: Date } | null => {
-            const tryParse = (s: string) => {
-              const parsed = Date.parse(`1 ${s}`);
-              if (!isNaN(parsed)) {
-                const d = new Date(parsed);
-                return {
-                  start: new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0),
-                  end: new Date(
-                    d.getFullYear(),
-                    d.getMonth() + 1,
-                    0,
-                    23,
-                    59,
-                    59,
-                    999
-                  ),
-                };
-              }
-              return null;
-            };
-            return (
-              tryParse(m) ??
-              tryParse(
-                decodeURIComponent(m.replace(/\+/g, " ")).replace(".", "")
-              )
-            );
-          })();
-        if (r) ranges.push(r);
       }
 
-      if (ranges.length === 1) {
-        timeStampWhere = { [Op.between]: [ranges[0].start, ranges[0].end] };
-      } else if (ranges.length > 1) {
-        timeStampWhere = {
-          [Op.or]: ranges.map((r) => ({ [Op.between]: [r.start, r.end] })),
-        };
+      if (start && end) {
+        timeStampWhere = { [Op.between]: [start, end] };
+      } else if (start) {
+        timeStampWhere = { [Op.gte]: start };
+      } else if (end) {
+        timeStampWhere = { [Op.lte]: end };
       }
     }
 

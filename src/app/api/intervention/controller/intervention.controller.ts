@@ -17,13 +17,15 @@ export class InterventionController {
   async getIntervenciones(
     pagination: PaginationDto,
     payload: PayloadForUser,
-    months: string | null,
+    startDate: string | null,
+    endDate: string | null,
     statuses: string | null
   ) {
     return await this.interventionService.findAll(
       pagination,
       payload,
-      months,
+      startDate,
+      endDate,
       statuses
     );
   }

@@ -21,13 +21,15 @@ export async function GET(request: NextRequest) {
 
     const pagination = await extractPagination(request);
 
-    const months = request.nextUrl.searchParams.get("months");
+    const startDate = request.nextUrl.searchParams.get("startDate");
+    const endDate = request.nextUrl.searchParams.get("endDate");
     const statuses = request.nextUrl.searchParams.get("statuses");
 
     const res = await interventionController.getIntervenciones(
       pagination,
       payload,
-      months,
+      startDate,
+      endDate,
       statuses
     );
 

@@ -57,13 +57,18 @@ export default function ListadoIntervenciones({
 }) {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const [selectedStartDate, setSelectedStartDate] = useState<string | null>(
+    null
+  );
+  const [selectedEndDate, setSelectedEndDate] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  // using date range: selectedStartDate / selectedEndDate
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
   const context = useContext(LoginContext);
@@ -99,8 +104,8 @@ export default function ListadoIntervenciones({
       qs.set("page", String(p));
       qs.set("size", String(s));
       if (query?.trim().length) qs.set("query", query.trim());
-      if (selectedMonths && selectedMonths.length)
-        qs.set("months", selectedMonths.join(","));
+      if (selectedStartDate) qs.set("startDate", selectedStartDate);
+      if (selectedEndDate) qs.set("endDate", selectedEndDate);
       if (selectedStatuses && selectedStatuses.length)
         qs.set("statuses", selectedStatuses.join(","));
       const url = `/api/intervention?${qs.toString()}`;
@@ -207,7 +212,7 @@ export default function ListadoIntervenciones({
         clearTimeout(timeout);
       }
     },
-    [context, selectedMonths, selectedStatuses]
+    [context, selectedStartDate, selectedEndDate, selectedStatuses]
   );
 
   useEffect(() => {
@@ -240,6 +245,21 @@ export default function ListadoIntervenciones({
                 .sort((a, b) => b[1] - a[1])
                 .map((e) => e[0]);
               setAvailableMonths(sorted);
+              // compute available years from the fetched interventions
+              try {
+                const yearsSet = new Set<number>();
+                res.data.forEach((it) => {
+                  const d = new Date(it.timeStamp);
+                  if (isNaN(d.getTime())) return;
+                  yearsSet.add(d.getFullYear());
+                });
+                const yearsArr = Array.from(yearsSet)
+                  .sort((a, b) => b - a)
+                  .map((y) => String(y));
+                setAvailableYears(yearsArr);
+              } catch {
+                setAvailableYears([]);
+              }
             } catch {
               setAvailableMonths([]);
             }
@@ -257,10 +277,12 @@ export default function ListadoIntervenciones({
   }, [page, size, search, fetchIntervenciones, availableMonths.length]);
 
   const onFilterSelectionChange = (
-    monthsSelected: string[],
+    startDate: string | null,
+    endDate: string | null,
     statusesSelected: string[]
   ) => {
-    setSelectedMonths(monthsSelected);
+    setSelectedStartDate(startDate);
+    setSelectedEndDate(endDate);
     setSelectedStatuses(statusesSelected);
   };
 
@@ -293,9 +315,9 @@ export default function ListadoIntervenciones({
               setSearchInput={setSearchInput}
             />
             <FilterDropdown
-              months={availableMonths}
               statuses={statuses}
-              initialSelectedMonths={selectedMonths}
+              initialStartDate={selectedStartDate}
+              yearOptions={availableYears}
               initialSelectedStatuses={selectedStatuses}
               onSelectionChangeAction={onFilterSelectionChange}
             />
@@ -309,9 +331,9 @@ export default function ListadoIntervenciones({
             setSearchInput={setSearchInput}
           />
           <FilterDropdown
-            months={availableMonths}
             statuses={statuses}
-            initialSelectedMonths={selectedMonths}
+            initialStartDate={selectedStartDate}
+            yearOptions={availableYears}
             initialSelectedStatuses={selectedStatuses}
             onSelectionChangeAction={onFilterSelectionChange}
           />
