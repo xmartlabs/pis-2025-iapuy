@@ -213,6 +213,7 @@ export class UserService {
   async delete(ci: string): Promise<boolean> {
     const deleted = await User.destroy({
       where: { ci },
+      force: true,
     });
 
     return deleted > 0;
