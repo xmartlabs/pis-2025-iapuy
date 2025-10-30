@@ -342,19 +342,26 @@ export default function PerroSanidadFormDialog({ open, onOpenChange }: Props) {
               {!searchParams.get("id") && (
                 <div className="mt-3 w-full">
                   {loadingPerroOptions ? (
-                    <div className="text-sm text-gray-500">Cargando perros...</div>
+                    <div className="text-sm text-gray-500">
+                      Cargando perros...
+                    </div>
                   ) : perroOptionsError ? (
                     <div className="text-sm text-red-500">
                       Error cargando perros: {perroOptionsError}
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2 w-full mb-6">
-                      <label htmlFor="perroSelect" className="text-sm font-medium">
+                      <label
+                        htmlFor="perroSelect"
+                        className="text-sm font-medium"
+                      >
                         Perro*
                       </label>
                       <Select
                         value={selectedPerroId}
-                        onValueChange={(v) => {setSelectedPerroId(v)}}
+                        onValueChange={(v) => {
+                          setSelectedPerroId(v);
+                        }}
                       >
                         <SelectTrigger id="perroSelect" className="w-full h-10">
                           <SelectValue placeholder="-- Selecciona --" />
@@ -373,12 +380,12 @@ export default function PerroSanidadFormDialog({ open, onOpenChange }: Props) {
                   )}
                 </div>
               )}
-              <div 
+              <div
                 ref={contentRef}
                 className="flex-1 overflow-y-auto"
-                style={{ 
-                  height: maxHeight > 0 ? `${maxHeight}px` : 'auto',
-                  minHeight: '400px' // altura mínima como fallback
+                style={{
+                  height: maxHeight > 0 ? `${maxHeight}px` : "auto",
+                  minHeight: "400px", // altura mínima como fallback
                 }}
               >
                 <form
@@ -402,7 +409,7 @@ export default function PerroSanidadFormDialog({ open, onOpenChange }: Props) {
                       setTab(newTab as Tab);
                     }}
                   >
-                                        <TabsList className="!w-[266px] bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between !gap-0">
+                    <TabsList className="!w-full bg-[#DEEBD9] !rounded-md !p-1 !radius flex items-center justify-between !gap-0">
                       <TabsTrigger
                         value="vacuna"
                         className="flex-1 !gap-0 !w-[72px] !gap-0 !pt-1.5 !pr-3 !pb-1.5 !pl-3
