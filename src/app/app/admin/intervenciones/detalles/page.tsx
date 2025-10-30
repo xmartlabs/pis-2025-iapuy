@@ -122,8 +122,8 @@ export default function IntervencionPage() {
         Accept: "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
-      const resp = await fetch(`/api/intervention/${id}`, {
-        method: "POST",
+      const resp = await fetch(`/api/intervention/${id}/details`, {
+        method: "PUT",
         headers,
       });
       if (resp.ok) {

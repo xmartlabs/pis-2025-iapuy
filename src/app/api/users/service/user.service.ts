@@ -214,6 +214,7 @@ export class UserService {
     const deleted = await User.destroy({
       where: { ci },
       force: true,
+      cascade: true,
     });
 
     return deleted > 0;

@@ -40,19 +40,3 @@ export async function GET(
     );
   }
 }
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const updated = await interventionController.suspendIntervention(id);
-    return NextResponse.json(updated);
-  } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json({ error: String(error) }, { status: 500 });
-  }
-}
