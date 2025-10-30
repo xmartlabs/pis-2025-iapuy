@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowLeft, CheckCircle, Copy, Link } from "lucide-react";
+import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
 
 const formSchema = z
   .object({
@@ -116,9 +117,11 @@ export default function Formulario() {
   const [open, setOpen] = useState(false);
   const [magicLink, setMagicLink] = useState<string | null>(null);
   const [showMagicModal, setShowMagicModal] = useState(false);
+  const [dogs, setDogs] = useState<{id: string, dog: CreatePerroDTO}[]>([]);
 
   useEffect(() => {
     async function fetchPerrosOptions(): Promise<void> {
+      setDogs([]);
       const controller = new AbortController();
       const timeout = setTimeout(() => {
         controller.abort();
@@ -234,7 +237,7 @@ export default function Formulario() {
             "Content-Type": "application/json",
             ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify({ ...values, password: "" }),
+          body: JSON.stringify({ ...values, perrosDto: dogs, password: "" }),
           signal: controller.signal,
         });
 
@@ -337,19 +340,21 @@ export default function Formulario() {
       clearTimeout(timeout);
     }
   };
-  const handlePerroCreated = (p: { id: string; nombre: string }) => {
-    setListaPerros((prev) => {
-      if (prev.some((o) => o.value === p.id)) return prev;
-      return [...prev, { value: p.id, label: p.nombre }];
-    });
+  const handlePerroCreated = ( dog: CreatePerroDTO ) => {
+    let id : string = dogs.length.toString();
+    const ids = new Set(listaPerros.map(p => p.value));
+    while (ids.has(id)) {
+      id = (Number(id) + 1).toString();
+    }
+    setListaPerros((prev) => [...prev, { value: id, label: dog.nombre }]);
+    setDogs((prev) => [...prev, { id, dog }]);
+    toast("Se creo perro con nombre:", {description: dog.nombre});
 
     const current = form.getValues("perros") ?? [];
-    if (!current.includes(p.id)) {
-      form.setValue("perros", [...current, p.id], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
+    form.setValue("perros", [...current, id], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
   const copyToClipboard = (text: string) => {
     navigator.clipboard
@@ -513,7 +518,26 @@ export default function Formulario() {
                           <MultiSelect
                             options={listaPerros}
                             selected={field.value ?? []}
-                            onChange={field.onChange}
+                            onChange={(newSelected) => {
+                              const prevSelected = field.value ?? [];
+
+                              const removed = prevSelected.filter(
+                                (p: string) => !newSelected.includes(p)
+                              );
+
+                              field.onChange(newSelected);
+
+                              removed.forEach((r) => {
+                                if(dogs.some(d => d.id === r)){
+                                  setDogs((prev) => 
+                                    prev.filter((d) => !(d.id === r))
+                                  )
+                                  setListaPerros((prev) => 
+                                    prev.filter((d) => !(d.value === r))
+                                  )
+                                }
+                              })
+                            }}
                             placeholder=""
                             disabled={!!noTiene}
                             createLabel="Agregar perro"
@@ -580,8 +604,7 @@ export default function Formulario() {
           open={open}
           setOpen={setOpen}
           onCreated={handlePerroCreated}
-          ownerRequired={false}
-          ownerDisabled={true}
+          creatingOwner={true}
         />
       </Form>
       {/* Magic link modal */}

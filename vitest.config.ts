@@ -13,7 +13,14 @@ export default defineConfig({
       provider: "v8",              
       reporter: ["text", "lcov"],  
       all: true,                    
-      include: ["src/**/*.ts"],     
+      include: ["src/app/api/**/*.ts"],     
+      exclude: [                           
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "**/*.config.ts",
+        "**/route.ts",
+        "**/*.dto.ts"
+      ],
     },
     watch: true,                    
   },

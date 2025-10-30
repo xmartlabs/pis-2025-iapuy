@@ -45,4 +45,12 @@ export class ExpensesController {
   async delete(id: string, payload: PayloadForUser): Promise<number> {
     return await this.expensesService.deleteExpense(id, payload);
   }
+
+  getExpenseDetails(id: string) {
+    return this.expensesService.getExpenseDetails(id);
+  }
+
+  updateSanidadForExpense(expenseId: string, payload: Record<string, unknown>) {
+    return this.expensesService.updateSanidadForExpense(expenseId, payload);
+  }
 }

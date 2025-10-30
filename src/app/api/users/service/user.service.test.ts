@@ -30,7 +30,10 @@ vi.mock("../../../models/intervencion.entity", () => ({
 }));
 
 vi.mock("@/app/models/perro.entity", () => ({
-  Perro: {},
+  Perro: {
+    bulkCreate: vi.fn(),
+    update: vi.fn(),
+  },
 }));
 
 vi.mock("@/app/models/acompania.entity", () => ({

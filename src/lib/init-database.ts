@@ -173,11 +173,9 @@ const registerRegistroSanidadAssociations = () => {
   if (!hasAssociation(Banio, RegistroSanidad)) {
     Banio.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
-      targetKey: "id",
       as: "RegistroSanidad",
     });
   }
-
   if (!hasAssociation(RegistroSanidad, Vacuna)) {
     RegistroSanidad.hasMany(Vacuna, {
       foreignKey: "registroSanidadId",
@@ -187,7 +185,6 @@ const registerRegistroSanidadAssociations = () => {
   if (!hasAssociation(Vacuna, RegistroSanidad)) {
     Vacuna.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
-      targetKey: "id",
       as: "RegistroSanidad",
     });
   }
@@ -200,7 +197,6 @@ const registerRegistroSanidadAssociations = () => {
   if (!hasAssociation(Desparasitacion, RegistroSanidad)) {
     Desparasitacion.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
-      targetKey: "id",
       as: "RegistroSanidad",
     });
   }

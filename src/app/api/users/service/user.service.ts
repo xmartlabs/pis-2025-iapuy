@@ -165,13 +165,27 @@ export class UserService {
         { ...createUserDto, esAdmin },
         { transaction }
       );
-      await Promise.all(
-        perros.map(async (perro) => {
-          const p = await Perro.findOne({ where: { id: perro } });
-          if (p) {
-            await p.update({ duenioId: createUserDto.ci }, { transaction });
-          }
-        })
+      if (Array.isArray(createUserDto.perrosDto) && createUserDto.perrosDto.length > 0) {
+        await Perro.bulkCreate(
+          createUserDto.perrosDto.map((p) => ({
+            ...p.dog,
+            duenioId: usr.ci,
+          })),
+          { transaction }
+        );
+      }
+      
+
+      await Perro.update(
+        { duenioId: usr.ci },
+        {
+          where: {
+            id: {
+              [Op.in]: perros,
+            },
+          },
+          transaction,
+        },
       );
 
       await transaction.commit();
