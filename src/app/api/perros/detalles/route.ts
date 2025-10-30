@@ -4,7 +4,7 @@ import { PerrosController } from "../controller/perros.controller";
 import { initDatabase } from "@/lib/init-database";
 import jwt from "jsonwebtoken";
 
-// await initDatabase();
+await initDatabase();
 const perrosController = new PerrosController();
 export interface PayloadForUser extends jwt.JwtPayload {
   ci: string;
