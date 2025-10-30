@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import type { JwtPayload } from "jsonwebtoken";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two";
+import { ExpenseForm } from "@/app/components/expenses/list/edit-cost";
 
 type Pathology = {
   id: string;
@@ -97,7 +97,7 @@ export default function EvaluarIntervencion() {
   const [interv, setInterv] = useState<Intervention>();
   const context = useContext(LoginContext);
   const searchParams = useSearchParams();
-  const id = "a6dcb20d-7e94-4b59-bc92-4372d3dc32b5"//searchParams.get("id");
+  const id = searchParams.get("id");
   const formRefs = useRef<(HTMLFormElement | null)[]>([]);
   const [, setExpenses] = useState<z.infer<typeof expensesSchema>[]>([]);
   const expenseSubmittedRef = useRef<boolean[]>([]);
@@ -329,7 +329,7 @@ export default function EvaluarIntervencion() {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch(`/api/intervention/${"a6dcb20d-7e94-4b59-bc92-4372d3dc32b5"}/evaluate`, {
+        const response = await fetch(`/api/intervention/${id}/evaluate`, {
           headers: baseHeaders,
         });
         if (response.status === 401) {
@@ -348,7 +348,7 @@ export default function EvaluarIntervencion() {
             if (newToken) {
               context?.setToken(newToken);
               const retryResp = await fetch(
-                `/api/intervention/${"a6dcb20d-7e94-4b59-bc92-4372d3dc32b5"}/evaluate`,
+                `/api/intervention/${id}/evaluate`,
                 {
                   method: "GET",
                   headers: {
@@ -473,97 +473,96 @@ export default function EvaluarIntervencion() {
   }, [dogs, form]);
 
   //mapeo los nombres que me mandan del back a ingles
-const mapToFormFeeling = (s: 'buena' | 'mala' | 'regular' | null | undefined): ExperienceDog => {
-  if (!s) return "good";
-  if (s === "buena") return "good";
-  if (s === "mala") return "bad";
-  return "regular";
-};
+  const mapToFormFeeling = (s: 'buena' | 'mala' | 'regular' | null | undefined): ExperienceDog => {
+    if (!s) return "good";
+    if (s === "buena") return "good";
+    if (s === "mala") return "bad";
+    return "regular";
+  };
 
 //setear experiencia perros
-useEffect(() => {
-  if (!dogs || dogs.length === 0) return;
-  const edMap: Record<string, 'buena'|'mala'|'regular'|null> = {};
-  (intEd?.dogs ?? []).forEach((d) => {
-    if (d?.id) edMap[String(d.id)] = d.experience ?? null;
-  });
+  useEffect(() => {
+    if (!dogs || dogs.length === 0) return;
+    const edMap: Record<string, 'buena'|'mala'|'regular'|null> = {};
+    (intEd?.dogs ?? []).forEach((d) => {
+      if (d?.id) edMap[String(d.id)] = d.experience ?? null;
+    });
 
-  const mappedDogs = dogs.map((d) => ({
-    dogId: d.id,
-    feelingDog: mapToFormFeeling(edMap[String(d.id)]),
-  }));
-  
-  const current = form.getValues("dogs") ?? [];
-  if (current.length === 0) {
-    form.setValue("dogs", mappedDogs, { shouldValidate: false, shouldDirty: false });
-  } else {
-    form.setValue("dogs", mappedDogs, { shouldValidate: false, shouldDirty: false });
-  }
-}, [dogs, intEd, form])
+    const mappedDogs = dogs.map((d) => ({
+      dogId: d.id,
+      feelingDog: mapToFormFeeling(edMap[String(d.id)]),
+    }));
+    
+    const current = form.getValues("dogs") ?? [];
+    if (current.length === 0) {
+      form.setValue("dogs", mappedDogs, { shouldValidate: false, shouldDirty: false });
+    } else {
+      form.setValue("dogs", mappedDogs, { shouldValidate: false, shouldDirty: false });
+    }
+  }, [dogs, intEd, form])
 
-useEffect(() => {
-  if (!intEd?.patients || intEd.patients.length === 0) return;
+  useEffect(() => {
+    if (!intEd?.patients || intEd.patients.length === 0) return;
 
-  const mappedPatients = intEd.patients.map((p) => ({
-    name: p?.name ?? "",
-    age: p?.age !== null ? Number(p.age) : "",
-    pathology: p?.pathology_id ? String(p.pathology_id) : "",
-    feeling: mapToFormFeeling(p?.experience), // reutiliza tu helper
-  }));
+    const mappedPatients = intEd.patients.map((p) => ({
+      name: p?.name ?? "",
+      age: p?.age !== null ? Number(p.age) : "",
+      pathology: p?.pathology_id ? String(p.pathology_id) : "",
+      feeling: mapToFormFeeling(p?.experience),
+    }));
 
-  // si querés siempre pisar, borrá la comprobación; la dejo como en tu ejemplo
-  const current = form.getValues("patients") ?? [];
-  if (current.length === 0) {
-    form.setValue("patients", mappedPatients, { shouldValidate: false, shouldDirty: false });
-  } else {
-    form.setValue("patients", mappedPatients, { shouldValidate: false, shouldDirty: false });
-  }
-}, [intEd, form]);
+    const current = form.getValues("patients") ?? [];
+    if (current.length === 0) {
+      form.setValue("patients", mappedPatients, { shouldValidate: false, shouldDirty: false });
+    } else {
+      form.setValue("patients", mappedPatients, { shouldValidate: false, shouldDirty: false });
+    }
+  }, [intEd, form]);
 
 
-//!provisorio para mostrar las imagenes
-useEffect(() => {
-  if (intEd?.pictures && Array.isArray(intEd.pictures)) {
-    setExistingPictures(intEd.pictures);
-  }
-}, [intEd]);
+  //!provisorio para mostrar las imagenes
+  useEffect(() => {
+    if (intEd?.pictures && Array.isArray(intEd.pictures)) {
+      setExistingPictures(intEd.pictures);
+    }
+  }, [intEd]);
 
-const handleFilesChange = (filesList: FileList | null) => {
-  if (!filesList) return;
-  const filesArray = Array.from(filesList);
+  const handleFilesChange = (filesList: FileList | null) => {
+    if (!filesList) return;
+    const filesArray = Array.from(filesList);
 
-  const totalNow = existingPictures.length + newFiles.length;
-  const allowed = Math.max(0, 2 - totalNow);
-  const toAdd = filesArray.slice(0, allowed);
+    const totalNow = existingPictures.length + newFiles.length;
+    const allowed = Math.max(0, 2 - totalNow);
+    const toAdd = filesArray.slice(0, allowed);
 
-  if (toAdd.length === 0) {
-    toast.error("No podés subir más fotos (máximo 2).");
-    return;
-  }
+    if (toAdd.length === 0) {
+      toast.error("No podés subir más fotos (máximo 2).");
+      return;
+    }
 
-  setNewFiles((prev) => {
-    const next = [...prev, ...toAdd];
-    return next;
-  });
-};
-
-useEffect(() => {
-  const urls = newFiles.map((f) => URL.createObjectURL(f));
-  setNewPreviews(urls);
-
-  return () => {
-    urls.forEach((u) => { URL.revokeObjectURL(u); });
+    setNewFiles((prev) => {
+      const next = [...prev, ...toAdd];
+      return next;
+    });
   };
-}, [newFiles]);
 
-const removeExistingPicture = (index: number) => {
-  setExistingPictures((prev) => prev.filter((_, i) => i !== index));
-};
+  useEffect(() => {
+    const urls = newFiles.map((f) => URL.createObjectURL(f));
+    setNewPreviews(urls);
 
-const removeNewFile = (index: number) => {
-  setNewFiles((prev) => prev.filter((_, i) => i !== index));
-  setNewPreviews((prev) => prev.filter((_, i) => i !== index));
-};
+    return () => {
+      urls.forEach((u) => { URL.revokeObjectURL(u); });
+    };
+  }, [newFiles]);
+
+  const removeExistingPicture = (index: number) => {
+    setExistingPictures((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewFile = (index: number) => {
+    setNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const router = useRouter();
   
@@ -589,7 +588,7 @@ const removeNewFile = (index: number) => {
   
   // Disable the button and show "Sending..." while waiting for all expense submissions to complete.
   // Uses polling every 50ms until all expectedCount submissions are confirmed or the timeout is reached.
-  // Note: some submissions may take longer than usual.
+  // This is because some submissions may take longer than usual.
   const waitForExpenseSubmissions = (expectedCount: number, timeout = 1200) =>
     new Promise<boolean>((resolve) => {
       const start = Date.now();
@@ -714,6 +713,36 @@ const removeNewFile = (index: number) => {
     (form.getValues("expenses") ?? []).map((_, i) => i)
   );
 
+  useEffect(() => {
+  if (!intEd?.expenses) return;
+
+  // mapear como me lo manda el back a como lo necesita la componente que consumo
+  const mapped = intEd.expenses.map((e) => ({
+    interventionID: id ?? "",           
+    peopleCI: e.userId ?? "",
+    type: e.type ?? "Traslado",
+    amount: e.amount ? Number(e.amount) : 0,
+    // me quedo con el id del gasto por si lo necesitamos despues
+    _backendId: e.id,
+    _userName: e.userName,
+  }));
+
+  form.setValue("expenses", mapped as unknown as FormValues["expenses"], {
+    shouldValidate: false,
+    shouldDirty: false,
+  });
+
+  // keys para render
+  const keys = (intEd.expenses.map((e) => e.id ?? "")).map((k, i) =>
+    k || String(i)
+  );
+  setExpenseCard(keys.map((k) => (isNaN(Number(k)) ? k : Number(k))));
+
+  formRefs.current = new Array(mapped.length).fill(null);
+  expenseSubmittedRef.current = new Array(mapped.length).fill(false);
+
+}, [intEd, id, form]);
+
   const handleConfirm = async () => {
     try {
       setConfirming(true);
@@ -739,7 +768,7 @@ const removeNewFile = (index: number) => {
 
   const addPatCard = () => {
   appendPatient({ name: "", age: "", pathology: "", feeling: "good" });
-  // limpiar errores no suele ser necesario, pero si querés:
+
   const idx = (form.getValues("patients") || []).length;
   form.clearErrors([
     `patients.${idx}.name`,
@@ -753,7 +782,7 @@ const removeNewFile = (index: number) => {
   const current = form.getValues("patients") ?? [];
   if (current.length <= 1) return; // como antes, no borrar si queda 0
   removePatient(index);
-  // clear errors for that index (react-hook-form reindexes fields automatically)
+
   form.clearErrors([
     `patients.${index}.name`,
     `patients.${index}.age`,
@@ -1158,7 +1187,6 @@ const removeNewFile = (index: number) => {
               Solo podés adjuntar dos fotos de máximo 15 MB cada una.
             </p>
 
-            {/* Input de carga */}
             <div>
               <input
                 id="picture"
@@ -1175,10 +1203,10 @@ const removeNewFile = (index: number) => {
               />
             </div>
 
-            {/* Previews */}
+            {/* Previews imagenes */}
             {(existingPictures.length > 0 || newPreviews.length > 0) && (
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-2 gap-4 max-w-[518px]">
-                {/* Fotos existentes (del servidor) */}
+
                 {existingPictures.map((url, i) => (
                   <div
                     key={`existing-${i}`}
@@ -1203,7 +1231,6 @@ const removeNewFile = (index: number) => {
                   </div>
                 ))}
 
-                {/* Nuevos archivos (previews) */}
                 {newPreviews.map((url, i) => (
                   <div
                     key={`new-${i}`}
@@ -1264,49 +1291,60 @@ const removeNewFile = (index: number) => {
         </Alert>
         
         <div className="flex flex-col gap-4 md:flex-row md:flex-wrap py-6">
-          {expenseCards.map((cardId, index) => (
-            <Card 
-              key={cardId}
-              className={cn(
-                    "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
-                    (isAdmin || false)  && "pointer-events-none opacity-50"
-              )}
-            >
-              {expenseCards.length > 1 && (  
-                <Button
-                  type="button"
-                  variant="link"
-                  size="icon"
-                  onClick={() => { removeExpenseCard(cardId); }}
-                  className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
-                >
-                  <X color="#5B9B40" strokeWidth={1} />
-                </Button>
-              )}
-              <CardContent className="px-0 space-y-8 text-[#2D3648]">
-                {interv?.id && (
-                  <ExpenseForm
-                    ref={(el) => { formRefs.current[index] = el; }}
-                    InterventionID={interv.id}
-                    hideIntervention = {true}
-                    onSubmit={(data) => { handleExpenseSubmit(data, index); }}
-                  />
+          {expenseCards.map((cardKey, index) => {
+            const initialData = (form.getValues("expenses") ?? [])[index] ?? undefined;
+            return (
+              <Card
+                key={cardKey}
+                className={cn(
+                  "relative w-full md:w-[510px] rounded-lg p-6 bg-[#FFFFFF] border-[#BDD7B3] shadow-none",
+                  (isAdmin || false) && "pointer-events-none opacity-50"
                 )}
-              </CardContent>
-            </Card>
-          ))}
+              >
+                {expenseCards.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="icon"
+                    onClick={() => {
+                      removeExpenseCard(cardKey);
+                    }}
+                    className="absolute top-0 right-0 w-[40px] h-[40px] bg-white"
+                  >
+                    <X color="#5B9B40" strokeWidth={1} />
+                  </Button>
+                )}
+                <CardContent className="px-0 space-y-8 text-[#2D3648]">
+                  {interv?.id && (
+                    <ExpenseForm
+                      ref={(el) => {
+                        formRefs.current[index] = el;
+                      }}
+                      InterventionID={interv.id}
+                      initialData={initialData ?? undefined}
+                      hideIntervention={true}
+                      onSubmit={(data) => {
+                        handleExpenseSubmit(data, index);
+                      }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+
           <div className="flex flex-row md:flex-col gap-2">
-            <Button 
+            <Button
               type="button"
-              variant="secondary" 
-              size="icon"  
-              onClick = {addExpenseCard} 
-              className= {cn(
-                "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]", 
+              variant="secondary"
+              size="icon"
+              onClick={addExpenseCard}
+              className={cn(
+                "!w-[44px] !h-[44px] rounded-[10px] !p-[12px] border-1 border-[#BDD7B3] bg-[#FFFFFF] flex items-center justify-center gap-[8px]",
                 (isAdmin || false) && "pointer-events-none opacity-50"
               )}
             >
-              <Plus color = "#5B9B40" className="w-[20px] h-[20px]"/>
+              <Plus color="#5B9B40" className="w-[20px] h-[20px]" />
             </Button>
           </div>
         </div>
