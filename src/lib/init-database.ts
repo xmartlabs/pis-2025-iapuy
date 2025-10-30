@@ -169,17 +169,22 @@ const registerRegistroSanidadAssociations = () => {
       foreignKey: "registroSanidadId",
       as: "Banios",
     });
+  }
+  if (!hasAssociation(Banio, RegistroSanidad)) {
     Banio.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
       targetKey: "id",
       as: "RegistroSanidad",
     });
   }
+
   if (!hasAssociation(RegistroSanidad, Vacuna)) {
     RegistroSanidad.hasMany(Vacuna, {
       foreignKey: "registroSanidadId",
       as: "Vacunas",
     });
+  }
+  if (!hasAssociation(Vacuna, RegistroSanidad)) {
     Vacuna.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
       targetKey: "id",
@@ -191,6 +196,8 @@ const registerRegistroSanidadAssociations = () => {
       foreignKey: "registroSanidadId",
       as: "Desparasitaciones",
     });
+  }
+  if (!hasAssociation(Desparasitacion, RegistroSanidad)) {
     Desparasitacion.belongsTo(RegistroSanidad, {
       foreignKey: "registroSanidadId",
       targetKey: "id",
@@ -252,19 +259,19 @@ const registerExpenseAssociations = () => {
     });
   }
 
-  if (!hasAssociation(Expense, Vacuna)) {
+  if (!hasAssociation(Vacuna, Expense)) {
     Vacuna.hasOne(Expense, {
       foreignKey: "sanidadId",
       as: "VacunaExpense",
     });
   }
-  if (!hasAssociation(Expense, Banio)) {
+  if (!hasAssociation(Banio, Expense)) {
     Banio.hasOne(Expense, {
       foreignKey: "sanidadId",
       as: "BanioExpense",
     });
   }
-  if (!hasAssociation(Expense, Desparasitacion)) {
+  if (!hasAssociation(Desparasitacion, Expense)) {
     Desparasitacion.hasOne(Expense, {
       foreignKey: "sanidadId",
       as: "DesparasitacionExpense",

@@ -35,7 +35,7 @@ export default function PantallaPerros() {
           <HistorialIntervenciones />
         </Suspense>
         <Suspense fallback={<div>Cargando historial de sanidad...</div>}>
-          <HistorialSanidad />
+          <HistorialSanidad isColab={true} />
         </Suspense>
         {userType === "Administrador" && (
           <Suspense fallback={<div>Cargando opciones...</div>}>

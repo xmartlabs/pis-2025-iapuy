@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import {
@@ -16,6 +16,7 @@ import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "@/app/components/pagination";
 import CustomBreadCrumb2Links from "@/app/components/bread-crumb/bread-crumb-2links";
+import EliminarEventoSanidad from "@/app/components/dogs/eliminar-evento-sanidad";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
@@ -186,28 +187,6 @@ export default function HistorialSanidad() {
     [context, page, size]
   );
 
-  async function handleDelete(id: string, activity: string) {
-    try {
-      const res = await fetch(
-        `/api/registros-sanidad?id=${encodeURIComponent(
-          id
-        )}&activity=${encodeURIComponent(activity)}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Error deleting registro");
-      }
-
-      alert(`${activity} eliminado correctamente`);
-      // Optionally: refresh list or update local state here
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo eliminar el registro");
-    }
-  }
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";
 
@@ -301,24 +280,11 @@ export default function HistorialSanidad() {
                         >
                           <Pencil />
                         </button>
-                        <button
-                          onClick={() => {
-                            handleDelete(registro.id, registro.activity);
-                          }}
+                        <EliminarEventoSanidad
+                          id={registro.id}
+                          activity={registro.activity}
                           disabled={registro.hasPaidExpense}
-                          title={
-                            registro.hasPaidExpense
-                              ? "No se puede eliminar porque ya se pagó"
-                              : ""
-                          }
-                          className={`shrink-0 p-1 ${
-                            registro.hasPaidExpense
-                              ? "disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100"
-                              : ""
-                          }`}
-                        >
-                          <Trash2 />
-                        </button>
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
