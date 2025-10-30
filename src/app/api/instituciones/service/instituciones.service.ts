@@ -50,32 +50,11 @@ export class InstitucionesService {
     pagination: PaginationDto
   ) {
     const where =
-      dates && dates.length > 0
+      dates && dates.length === 2
         ? {
-            [Op.or]: dates.map((rawDate) => {
-              const date = new Date(rawDate);
-              const year = date.getFullYear();
-              const month = date.getMonth() + 1;
-
-              return {
-                [Op.and]: [
-                  sequelize.where(
-                    sequelize.fn(
-                      "EXTRACT",
-                      sequelize.literal(`YEAR FROM "timeStamp"`)
-                    ),
-                    year
-                  ),
-                  sequelize.where(
-                    sequelize.fn(
-                      "EXTRACT",
-                      sequelize.literal(`MONTH FROM "timeStamp"`)
-                    ),
-                    month
-                  ),
-                ],
-              };
-            }),
+            timeStamp: {
+              [Op.between]: [new Date(dates[0]), new Date(dates[1])],
+            },
           }
         : undefined;
     const [count, interventions] = await Promise.all([

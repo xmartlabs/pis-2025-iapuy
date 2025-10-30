@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import CustomBreadCrumb from "../bread-crumb/bread-crumb";
 import { LoginContext } from "@/app/context/login-context";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import CustomPagination from "../pagination";
 import DeleteInstitutionButton from "./eliminar-institucion";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 interface Props{
     id:string,
 
@@ -49,6 +55,94 @@ const ReferentCard=({Contact}:ReferentCardProps)=>(
         </p>
     </div>
 );
+
+const FilterDropDown = ({
+    selectedMes,
+    selectedAnio,
+    onRangeChange,
+    onMesAnioChange
+}: {
+    selectedMes: string;
+    selectedAnio: string;
+    onRangeChange?: (range: { fechaInicio: Date | null; fechaFin: Date | null }) => void;
+    onMesAnioChange?: (mes: string, anio: string) => void;
+}) => {
+    const handleChange = (nuevoMes: string, nuevoAnio: string) => {
+        onMesAnioChange?.(nuevoMes, nuevoAnio);
+
+        if (nuevoAnio === "Todos") {
+            onRangeChange?.({ fechaInicio: null, fechaFin: null });
+            return;
+        }
+
+        const yearNum = parseInt(nuevoAnio, 10);
+        const monthNum = nuevoMes === "Todos" ? null : parseInt(nuevoMes, 10) - 1;
+
+        if (monthNum === null) {
+            onRangeChange?.({
+                fechaInicio: new Date(yearNum, 0, 1),
+                fechaFin: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+            });
+        } else {
+            const inicio = new Date(yearNum, monthNum, 1);
+            const fin = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+            onRangeChange?.({ fechaInicio: inicio, fechaFin: fin });
+        }
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button className="max-w-[40px] h-[40px] p-3 gap-0 rounded border border-[#BDD7B3] bg-white flex items-center justify-center">
+                    <Funnel className="w-[16px] h-[16px] text-[#5B9B40]" />
+                </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="w-[320px] p-4" align="end" side="bottom">
+                <div className="flex flex-row gap-4">
+                    <div className="flex flex-col flex-1">
+                        <Label className="text-sm font-medium text-gray-700 mb-1">Mes</Label>
+                        <Select
+                            value={selectedMes}
+                            onValueChange={(nuevoMes) => { handleChange(nuevoMes, selectedAnio); }}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Mes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Todos">Todos</SelectItem>
+                                {Array.from({ length: 12 }, (_, i) => (
+                                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                                        {new Date(0, i).toLocaleString("es-ES", { month: "long" })}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-col flex-1">
+                        <Label className="text-sm font-medium text-gray-700 mb-1">Año</Label>
+                        <Select
+                            value={selectedAnio}
+                            onValueChange={(nuevoAnio) => { handleChange(selectedMes, nuevoAnio); }}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Año" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                                <SelectItem value="Todos">Todos</SelectItem>
+                                {Array.from({ length: 2101 - 2000 }, (_, i) => {
+                                    const year = 2000 + i;
+                                    return <SelectItem key={year} value={year.toString()}>{year}</SelectItem>;
+                                })}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
 export interface APIInstitutionIntervention {
   id: string;
   timeStamp: string; // ISO string
@@ -76,36 +170,48 @@ const InterventionGrid=({ id }: { id: string })=>{
     const [error,setError] =useState<string>("");
     const [data, setData] = useState<APIInstitutionIntervention[]>([]);
     const context = useContext(LoginContext);
+    const [selectedMes, setSelectedMes] = useState<string>("Todos");
+    const [selectedAnio, setSelectedAnio] = useState<string>("Todos");
     const token = context?.tokenJwt ?? undefined;
-    const getDate = (): Date[] =>(
-        [new Date()] 
-        //this will be changed when the UI for date selection is ready on the "detalle institucion" User story,
-        //it will be the filter multiselect button instead of a param
-        /*const datesParam = searchParams.get("dates");
-            if (!datesParam || datesParam.trim() === "") {
-                return [];
-            }
-            try {
-                const dateStrings = datesParam.split(",");
-                const dates = dateStrings
-                .map((dateStr) => {
-                const trimmed = dateStr.trim();
-                const date = new Date(trimmed);
-                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-                    //Parse as local date to avoid timezone shifts
-                    const [year, month, day] = trimmed.split("-").map(Number);
-                    return new Date(year, month - 1, day);
-                }
-                return date;
-                })
-                .filter((date) => !isNaN(date.getTime()));
-                return dates;
-            } 
-            catch {
-                return [];
-            }
-        }*/
-        
+    const [selectedRange, setSelectedRange] = useState<{ fechaInicio: Date | null; fechaFin: Date | null }>({
+        fechaInicio: null,
+        fechaFin: null,
+    });
+    const handleMesAnioChange = (mes: string, anio: string) => {
+        setSelectedMes(mes);
+        setSelectedAnio(anio);
+
+        if (anio === "Todos") {
+        setSelectedRange({ fechaInicio: null, fechaFin: null });
+        return;
+        }
+
+        const yearNum = parseInt(anio, 10);
+        const monthNum = mes === "Todos" ? null : parseInt(mes, 10) - 1;
+
+        if (monthNum === null) {
+        setSelectedRange({
+            fechaInicio: new Date(yearNum, 0, 1),
+            fechaFin: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+        });
+        } else {
+        setSelectedRange({
+            fechaInicio: new Date(yearNum, monthNum, 1),
+            fechaFin: new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999),
+        });
+        }
+    };
+    const selectedDates = useMemo(() => {
+        if (selectedRange.fechaInicio && selectedRange.fechaFin) {
+            return [selectedRange.fechaInicio, selectedRange.fechaFin];
+        }
+        return [];
+    }, [selectedRange.fechaInicio, selectedRange.fechaFin]);
+    const handleRangeChange = useCallback(
+        ({ fechaInicio, fechaFin }: { fechaInicio: Date | null; fechaFin: Date | null }) => {
+            setSelectedRange({ fechaInicio, fechaFin });
+        },
+    []
     );
     const handleDelete = async (idI: string) => {
         try {
@@ -138,8 +244,22 @@ const InterventionGrid=({ id }: { id: string })=>{
             const params = new URLSearchParams();
             params.set("page", String(page));
             params.set("size", String(size));
-            // params.set("dates", "2025-01-01,2025-01-31"); // opcional
 
+            if (selectedRange.fechaInicio && selectedRange.fechaFin) {
+                const pad2 = (n: number) => n.toString().padStart(2, "0");
+
+                const formatDate = (d: Date, endOfDay = false) => 
+                    `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T` +
+                    `${pad2(endOfDay ? 23 : d.getHours())}:` +
+                    `${pad2(endOfDay ? 59 : d.getMinutes())}:` +
+                    `${pad2(endOfDay ? 59 : d.getSeconds())}`;
+
+                const fechaInicioStr = formatDate(selectedRange.fechaInicio);
+                const fechaFinStr = formatDate(selectedRange.fechaFin, true);
+
+                params.set("dates", `${fechaInicioStr},${fechaFinStr}`);
+            }
+            
             const response = await fetch(
                 `/api/instituciones/${id}/interventions?${params.toString()}`,
                 {
@@ -150,12 +270,9 @@ const InterventionGrid=({ id }: { id: string })=>{
                 }
             );
 
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
             const result = (await response.json()) as PaginationResultDto<APIInstitutionIntervention>;
-
             setData(result.data ?? []);
             setTotalPages(result.totalPages ?? 1);
             } catch (err) {
@@ -171,10 +288,9 @@ const InterventionGrid=({ id }: { id: string })=>{
             else setError(String(err));
             setLoading(false);
         });
-    }, [token, id, page, size]);
+        }, [token, id, page, size, selectedRange.fechaInicio, selectedRange.fechaFin]);
     if (loading) return <p>Cargando...</p>;
     if (error) return <p>Error: {error}</p>;
-    const selectedDates = getDate();
     return(
         <div className="flex flex-col gap-[20px]">
             <div className="flex flex-row justify-between">
@@ -185,12 +301,13 @@ const InterventionGrid=({ id }: { id: string })=>{
                     Historial de intervenciones
                 </h1>
                 <div className="flex flex-row gap-5">
-                    <Button
-                            className="max-w-[40px] h-[40px] p-3 gap-0 
-                                    rounded border border-[#BDD7B3] bg-white flex items-center justify-center"
-                    >
-                        <Funnel className="w-[16px] h-[16px] text-[#5B9B40]" />
-                    </Button>
+                    
+                        <FilterDropDown
+                            selectedMes={selectedMes}
+                            selectedAnio={selectedAnio}
+                            onRangeChange={handleRangeChange}
+                            onMesAnioChange={handleMesAnioChange}
+                        />
                     <DownloadButton id={id} dates={selectedDates} />
                 </div>
             </div>

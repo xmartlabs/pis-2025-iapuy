@@ -7,8 +7,8 @@ export default function Detalle() {
   const institutionId = searchParams.get("id") ?? "";
 
   return (
-    <div>
-      <InstitutionDetail id={institutionId}/>
-    </div>
+
+    <InstitutionDetail id={institutionId}/>
+
   );
 }
