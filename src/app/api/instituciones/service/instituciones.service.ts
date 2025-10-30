@@ -23,13 +23,11 @@ import { User } from "@/app/models/user.entity";
 import { Perro } from "@/app/models/perro.entity";
 
 export class InstitucionesService {
-  async findAll(
-    pagination: PaginationDto
-  ): Promise<PaginationResultDto<Institucion>> {
-    const result = await Institucion.findAndCountAll({
-      where: pagination.query
-        ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
-        : undefined,
+  async findOne(id: string) {
+    return await Institucion.findOne({
+      where: {
+        id,
+      },
       include: [
         {
           model: Patologia,
@@ -43,12 +41,125 @@ export class InstitucionesService {
           attributes: ["id", "name", "contact"],
         },
       ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
     });
+  }
 
-    return getPaginationResultFromModel(pagination, result);
+  async findInterventions(
+    id: string,
+    dates: Date[],
+    pagination: PaginationDto
+  ) {
+    const where =
+      dates && dates.length > 0
+        ? {
+            [Op.or]: dates.map((rawDate) => {
+              const date = new Date(rawDate);
+              const year = date.getFullYear();
+              const month = date.getMonth() + 1;
+
+              return {
+                [Op.and]: [
+                  sequelize.where(
+                    sequelize.fn(
+                      "EXTRACT",
+                      sequelize.literal(`YEAR FROM "timeStamp"`)
+                    ),
+                    year
+                  ),
+                  sequelize.where(
+                    sequelize.fn(
+                      "EXTRACT",
+                      sequelize.literal(`MONTH FROM "timeStamp"`)
+                    ),
+                    month
+                  ),
+                ],
+              };
+            }),
+          }
+        : undefined;
+    const [count, interventions] = await Promise.all([
+      Intervention.count({
+        where,
+      }),
+      Intervention.findAll({
+        attributes: ["id", "timeStamp"],
+        where,
+        include: [
+          {
+            model: Institucion,
+            as: "Institucions",
+            where: { id },
+            required: true,
+            attributes: [],
+          },
+          {
+            model: UsrPerro,
+            as: "UsrPerroIntervention",
+            attributes: ["id"],
+            include: [
+              {
+                model: User,
+                as: "User",
+                attributes: ["ci", "nombre"],
+              },
+              {
+                model: Perro,
+                as: "Perro",
+                attributes: ["id", "nombre"],
+              },
+            ],
+          },
+          {
+            model: Paciente,
+            as: "Pacientes",
+            attributes: ["id", "nombre"],
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+      }),
+    ]);
+
+    return getPaginationResultFromModel(pagination, {
+      rows: interventions,
+      count,
+    });
+  }
+
+  async findAll(
+    pagination: PaginationDto
+  ): Promise<PaginationResultDto<Institucion>> {
+    const [rows, count] = await Promise.all([
+      Institucion.findAll({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+        include: [
+          {
+            model: Patologia,
+            as: "Patologias",
+            attributes: ["id", "nombre"],
+            through: { attributes: [] },
+          },
+          {
+            model: InstitutionContact,
+            as: "InstitutionContacts",
+            attributes: ["id", "name", "contact"],
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Institucion.count({
+        where: pagination.query
+          ? { nombre: { [Op.iLike]: `%${pagination.query}%` } }
+          : undefined,
+      }),
+    ]);
+
+    return getPaginationResultFromModel(pagination, { rows, count });
   }
 
   async create(institutionDTO: CreateInstitutionDTO): Promise<Institucion> {
