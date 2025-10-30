@@ -74,3 +74,32 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const activity = request.nextUrl.searchParams.get("activity");
+    await registrosSanidadController.deleteRegistroSanidad(request);
+    return NextResponse.json(
+      { message: `${activity} deleted successfully` },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      const activity = request.nextUrl.searchParams.get("activity");
+      return NextResponse.json(
+        { error: `${activity} not found.` },
+        { status: 404 }
+      );
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
+      { status: 500 }
+    );
+  }
+}

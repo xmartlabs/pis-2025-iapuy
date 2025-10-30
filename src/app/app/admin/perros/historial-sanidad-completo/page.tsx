@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import {
@@ -16,6 +16,7 @@ import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "@/app/components/pagination";
 import CustomBreadCrumb2Links from "@/app/components/bread-crumb/bread-crumb-2links";
+import EliminarEventoSanidad from "@/app/components/dogs/eliminar-evento-sanidad";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
@@ -279,9 +280,11 @@ export default function HistorialSanidad() {
                         >
                           <Pencil />
                         </button>
-                        <button className="shrink-0 p-1 hidden">
-                          <Trash2 />
-                        </button>
+                        <EliminarEventoSanidad
+                          id={registro.id}
+                          activity={registro.activity}
+                          disabled={registro.hasPaidExpense}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

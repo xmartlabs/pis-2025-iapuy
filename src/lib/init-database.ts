@@ -254,6 +254,25 @@ const registerExpenseAssociations = () => {
       as: "Intervencion",
     });
   }
+
+  if (!hasAssociation(Vacuna, Expense)) {
+    Vacuna.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "VacunaExpense",
+    });
+  }
+  if (!hasAssociation(Banio, Expense)) {
+    Banio.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "BanioExpense",
+    });
+  }
+  if (!hasAssociation(Desparasitacion, Expense)) {
+    Desparasitacion.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "DesparasitacionExpense",
+    });
+  }
 };
 const registerPatientsAssociations = () => {
   if (!hasAssociation(Paciente, Intervention)) {

@@ -3,6 +3,7 @@ import { RegistrosSanidadService } from "../service/registro-sanidad.service";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import type { CreateRegistrosSanidadDTO } from "../dtos/create-registro-sanidad.dto";
 import type { PayloadForUser } from "../../perros/detalles/route";
+import jwt from "jsonwebtoken";
 
 export class RegistrosSanidadController {
   constructor(
@@ -75,6 +76,27 @@ export class RegistrosSanidadController {
     return ret;
   }
 
+  async deleteRegistroSanidad(request: NextRequest) {
+    const id = request.nextUrl.searchParams.get("id");
+    const activity = request.nextUrl.searchParams.get("activity");
+    if (!id) {
+      throw new Error(`Register not found with id: ${id}`);
+    }
+    const authHeader = request.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+
+    const payload = jwt.decode(accessToken) as PayloadForUser;
+    const ret = await this.registrosSanidadService.delete(
+      id,
+      activity || "",
+      payload
+    );
+    return ret;
+  }
   async findOne(id: string) {
     return await this.registrosSanidadService.findOne(id);
   }
