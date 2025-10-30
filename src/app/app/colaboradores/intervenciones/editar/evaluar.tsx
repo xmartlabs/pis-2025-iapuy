@@ -222,6 +222,15 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
         files instanceof FileList &&
         Array.from(files).every((file) => file.size <= MAX_FILE_SIZE),
       "Cada foto debe pesar menos de 15MB"
+    )
+    .refine(
+      (files) =>
+        files instanceof FileList &&
+        Array.from(files).every(
+          (file) =>
+            typeof file.type === "string" && file.type.startsWith("image/")
+        ),
+      "Solo se permiten archivos de imagen"
     );
 
   const FormSchema = z.object({
@@ -723,6 +732,7 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
               <Input
                 id="picture"
                 type="file"
+                accept="image/*"
                 multiple
                 {...form.register("photos")}
                 className="
