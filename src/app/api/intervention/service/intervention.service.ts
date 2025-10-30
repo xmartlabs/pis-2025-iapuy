@@ -490,7 +490,13 @@ export class InterventionService {
           "interventionsPictures",
           id
         );
-        if (!fs.existsSync(uploadDir)) {
+        
+        if (fs.existsSync(uploadDir)) {
+          const oldFiles = fs.readdirSync(uploadDir);
+          for (const file of oldFiles) {
+          fs.unlinkSync(path.join(uploadDir, file));
+          }
+        } else {
           fs.mkdirSync(uploadDir, { recursive: true });
         }
 
