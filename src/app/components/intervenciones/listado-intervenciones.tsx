@@ -287,10 +287,12 @@ export default function ListadoIntervenciones({
           </div>
         ) : (
           <div className="flex justify-start sm:justify-end items-center">
-            <CustomSearchBar
-              searchInput={searchInput}
-              setSearchInput={setSearchInput}
-            />
+            <div className= "mr-5">
+              <CustomSearchBar
+                searchInput={searchInput}
+                setSearchInput={setSearchInput}
+              />
+            </div>
             <FilterDropdown
               months={availableMonths}
               statuses={statuses}
@@ -303,10 +305,12 @@ export default function ListadoIntervenciones({
       </div>
       {!isColab && (
         <div className="flex justify-start sm:justify-end items-center">
-          <CustomSearchBar
-            searchInput={searchInput}
-            setSearchInput={setSearchInput}
-          />
+          <div className= "mr-5">
+            <CustomSearchBar
+              searchInput={searchInput}
+              setSearchInput={setSearchInput}
+            />
+          </div>
           <FilterDropdown
             months={availableMonths}
             statuses={statuses}

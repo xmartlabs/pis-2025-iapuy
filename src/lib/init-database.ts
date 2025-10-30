@@ -170,16 +170,34 @@ const registerRegistroSanidadAssociations = () => {
       as: "Banios",
     });
   }
+  if (!hasAssociation(Banio, RegistroSanidad)) {
+    Banio.belongsTo(RegistroSanidad, {
+      foreignKey: "registroSanidadId",
+      as: "RegistroSanidad",
+    });
+  }
   if (!hasAssociation(RegistroSanidad, Vacuna)) {
     RegistroSanidad.hasMany(Vacuna, {
       foreignKey: "registroSanidadId",
       as: "Vacunas",
     });
   }
+  if (!hasAssociation(Vacuna, RegistroSanidad)) {
+    Vacuna.belongsTo(RegistroSanidad, {
+      foreignKey: "registroSanidadId",
+      as: "RegistroSanidad",
+    });
+  }
   if (!hasAssociation(RegistroSanidad, Desparasitacion)) {
     RegistroSanidad.hasMany(Desparasitacion, {
       foreignKey: "registroSanidadId",
       as: "Desparasitaciones",
+    });
+  }
+  if (!hasAssociation(Desparasitacion, RegistroSanidad)) {
+    Desparasitacion.belongsTo(RegistroSanidad, {
+      foreignKey: "registroSanidadId",
+      as: "RegistroSanidad",
     });
   }
 };
@@ -234,6 +252,25 @@ const registerExpenseAssociations = () => {
       foreignKey: "interventionId",
       targetKey: "id",
       as: "Intervencion",
+    });
+  }
+
+  if (!hasAssociation(Vacuna, Expense)) {
+    Vacuna.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "VacunaExpense",
+    });
+  }
+  if (!hasAssociation(Banio, Expense)) {
+    Banio.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "BanioExpense",
+    });
+  }
+  if (!hasAssociation(Desparasitacion, Expense)) {
+    Desparasitacion.hasOne(Expense, {
+      foreignKey: "sanidadId",
+      as: "DesparasitacionExpense",
     });
   }
 };

@@ -50,10 +50,55 @@ export async function POST(request: NextRequest) {
       request
     );
     return NextResponse.json(regSanidad, { status: 201 });
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const regSanidad = await registrosSanidadController.updateEventoSanidad(
+      request
+    );
+    return NextResponse.json(regSanidad, { status: 200 });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const activity = request.nextUrl.searchParams.get("activity");
+    await registrosSanidadController.deleteRegistroSanidad(request);
+    return NextResponse.json(
+      { message: `${activity} deleted successfully` },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      const activity = request.nextUrl.searchParams.get("activity");
+      return NextResponse.json(
+        { error: `${activity} not found.` },
+        { status: 404 }
+      );
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error.",
+      },
       { status: 500 }
     );
   }

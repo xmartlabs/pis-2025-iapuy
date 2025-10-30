@@ -351,7 +351,7 @@ export default function InscribirIntervencion({
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Duplas */}
         {duplas.map((d, idx) => {

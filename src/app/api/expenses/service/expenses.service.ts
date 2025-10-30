@@ -1,16 +1,19 @@
 import { Expense } from "@/app/models/expense.entity";
 import { Intervention } from "@/app/models/intervention.entity";
 import { User } from "@/app/models/user.entity";
+import { RegistroSanidad } from "@/app/models/registro-sanidad.entity";
+import { Perro } from "@/app/models/perro.entity";
+import { Vacuna } from "@/app/models/vacuna.entity";
+import { Desparasitacion } from "@/app/models/desparasitacion.entity";
+import { Banio } from "@/app/models/banio.entity";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 import { Op, Sequelize, type Transaction } from "sequelize";
 import type { CreateExpenseDto } from "../dtos/create-expense.dto";
 import { type PayloadForUser } from "../../users/service/user.service";
 import { type ListExpenseDto } from "../dtos/list-expense.dto";
+import { fixedCostsService } from "../../fixed-costs/service/fixed-costs.service";
 import sequelize from "@/lib/database";
-import { Banio } from "@/app/models/banio.entity";
-import { Vacuna } from "@/app/models/vacuna.entity";
-import { Desparasitacion } from "@/app/models/desparasitacion.entity";
 
 const monthNames = [
   "Ene",
@@ -55,6 +58,76 @@ const monthMap: Record<string, number> = {
   diciembre: 11,
 };
 export class ExpensesService {
+  async getExpenseDetails(id: string) {
+    const payload: Record<string, unknown> = {};
+
+    const exp = await Expense.findByPk(id, {
+      include: [
+        { model: User, as: "User", attributes: ["ci", "nombre"] },
+        {
+          model: Intervention,
+          as: "Intervencion",
+          attributes: ["id", "timeStamp"],
+          required: false,
+        },
+      ],
+    });
+
+    if (!exp) return null;
+
+    payload.expense = exp;
+
+    const type = exp.type as string | undefined;
+    const sanidadId = exp.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (isSanidadType && sanidadId) {
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      let kind: "vacuna" | "banio" | "desparasitacion" | undefined = undefined;
+
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          kind = "vacuna";
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          kind = "banio";
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          kind = "desparasitacion";
+          break;
+      }
+
+      if (entity) {
+        let registroId: string | undefined = undefined;
+        if (
+          entity &&
+          typeof entity === "object" &&
+          "registroSanidadId" in entity
+        ) {
+          registroId = (entity as { registroSanidadId?: string })
+            .registroSanidadId;
+        }
+        const registro = registroId
+          ? await RegistroSanidad.findByPk(registroId).catch(() => null)
+          : null;
+        payload.registroSanidad = registro;
+        payload.event = { kind, data: entity };
+        return payload;
+      }
+    }
+
+    return payload;
+  }
+
   async findAll(
     pagination: PaginationDto,
     payload: PayloadForUser,
@@ -189,32 +262,157 @@ export class ExpensesService {
       ];
     }
 
-    const result = await Expense.findAndCountAll({
-      where: {
-        ...whereBase,
-        ...(timeStampWhere && {
-          [Op.or]: [
-            { dateSanity: timeStampWhere },
-            { "$Intervencion.timeStamp$": timeStampWhere },
-          ],
-        }),
-      },
-      include: [
-        { model: User, as: "User", attributes: ["ci", "nombre"] },
-        {
-          model: Intervention,
-          as: "Intervencion",
-          attributes: ["id", "timeStamp"],
-          required: false,
+    const [rows, count] = await Promise.all([
+      Expense.findAll({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
         },
-      ],
-      limit: pagination.size,
-      offset: pagination.getOffset(),
-      order: pagination.getOrder(),
-      distinct: true,
-    });
+        include: [
+          { model: User, as: "User", attributes: ["ci", "nombre"] },
+          {
+            model: Intervention,
+            as: "Intervencion",
+            attributes: ["id", "timeStamp"],
+            required: false,
+          },
+        ],
+        limit: pagination.size,
+        offset: pagination.getOffset(),
+        order: pagination.getOrder(),
+      }),
+      Expense.count({
+        where: {
+          ...whereBase,
+          ...(timeStampWhere && {
+            [Op.or]: [
+              { dateSanity: timeStampWhere },
+              { "$Intervencion.timeStamp$": timeStampWhere },
+            ],
+          }),
+        },
+      }),
+    ]);
 
-    const data: ListExpenseDto[] = result.rows.map((exp) => {
+    const sanidadIds = {
+      vacunas: [] as string[],
+      desparasitaciones: [] as string[],
+      banios: [] as string[],
+    };
+
+    for (const exp of rows) {
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          sanidadIds.vacunas.push(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          sanidadIds.desparasitaciones.push(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          sanidadIds.banios.push(exp.sanidadId);
+        }
+      }
+    }
+
+    const [vacunasWithDogs, desparasitacionesWithDogs, baniosWithDogs] =
+      await Promise.all([
+        sanidadIds.vacunas.length > 0
+          ? Vacuna.findAll({
+              where: { id: { [Op.in]: sanidadIds.vacunas } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.desparasitaciones.length > 0
+          ? Desparasitacion.findAll({
+              where: { id: { [Op.in]: sanidadIds.desparasitaciones } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+        sanidadIds.banios.length > 0
+          ? Banio.findAll({
+              where: { id: { [Op.in]: sanidadIds.banios } },
+              include: {
+                model: RegistroSanidad,
+                as: "RegistroSanidad",
+                include: [
+                  {
+                    model: Perro,
+                    as: "Perro",
+                    attributes: ["nombre"],
+                  },
+                ],
+              },
+            })
+          : [],
+      ]);
+
+    const dogNameMaps = {
+      vacunas: new Map<string, string>(),
+      desparasitaciones: new Map<string, string>(),
+      banios: new Map<string, string>(),
+    };
+
+    type ModelWithDogName = {
+      id: string;
+      RegistroSanidad?: {
+        Perro?: {
+          nombre: string;
+        };
+      };
+    };
+
+    for (const vacuna of vacunasWithDogs) {
+      const typedVacuna = vacuna as unknown as ModelWithDogName;
+      const dogName = typedVacuna?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.vacunas.set(typedVacuna.id, dogName);
+      }
+    }
+
+    for (const desparasitacion of desparasitacionesWithDogs) {
+      const typedDesparasitacion =
+        desparasitacion as unknown as ModelWithDogName;
+      const dogName = typedDesparasitacion?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.desparasitaciones.set(typedDesparasitacion.id, dogName);
+      }
+    }
+
+    for (const banio of baniosWithDogs) {
+      const typedBanio = banio as unknown as ModelWithDogName;
+      const dogName = typedBanio?.RegistroSanidad?.Perro?.nombre;
+      if (dogName) {
+        dogNameMaps.banios.set(typedBanio.id, dogName);
+      }
+    }
+
+    const data: ListExpenseDto[] = rows.map((exp) => {
       let fecha: Date | null = null;
       if (exp.interventionId) {
         const intervention = exp.Intervencion;
@@ -231,23 +429,40 @@ export class ExpensesService {
         }
       }
 
+      let dogName: string | undefined = undefined;
+      if (exp.sanidadId) {
+        if (exp.type === "Vacunacion") {
+          dogName = dogNameMaps.vacunas.get(exp.sanidadId);
+        } else if (
+          exp.type === "Desparasitacion Interna" ||
+          exp.type === "Desparasitacion Externa"
+        ) {
+          dogName = dogNameMaps.desparasitaciones.get(exp.sanidadId);
+        } else if (exp.type === "Baño") {
+          dogName = dogNameMaps.banios.get(exp.sanidadId);
+        }
+      }
+
       return {
         id: exp.id,
         userId: exp.userId,
+        interventionId: exp.interventionId || undefined,
+        sanityId: exp.sanidadId || undefined,
         concept: exp.concept,
         type: exp.type,
         state: exp.state === "pagado" ? "Pagado" : "Pendiente de pago",
         amount: exp.amount,
         fecha,
+        dogName,
         user: userExpense,
       };
     });
 
     return {
       data,
-      count: result.count,
-      totalPages: Math.ceil(result.count / pagination.size),
-      totalItems: result.count,
+      count,
+      totalPages: Math.ceil(count / pagination.size),
+      totalItems: count,
       page: pagination.page,
       size: pagination.size,
     };
@@ -338,6 +553,10 @@ export class ExpensesService {
     if (!user) {
       throw new Error(`User with id "${request.userId}" not found`);
     }
+
+    if (intervention && request.km)
+      request.amount *= fixedCostsService.getCostoKilometros();
+
     const expense = await Expense.create(
       {
         userId: request.userId,
@@ -375,16 +594,73 @@ export class ExpensesService {
     return updated;
   }
 
+  async updateSanidadForExpense(
+    expenseId: string,
+    payload: Record<string, unknown>
+  ): Promise<Vacuna | Banio | Desparasitacion | null> {
+    const expense = await Expense.findByPk(expenseId).catch(() => null);
+    if (!expense) return null;
+
+    const type = expense.type as string | undefined;
+    const sanidadId = expense.sanidadId as string | undefined;
+
+    const isSanidadType =
+      type === "Baño" ||
+      type === "Vacunacion" ||
+      type === "Desparasitacion Interna" ||
+      type === "Desparasitacion Externa";
+
+    if (!isSanidadType) return null;
+
+    const sanitizeUpdateObj = (obj: Record<string, unknown>) => {
+      const forbidden = new Set([
+        "id",
+        "registroSanidadId",
+        "createdAt",
+        "updatedAt",
+      ]);
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(obj)) {
+        if (forbidden.has(k)) continue;
+        out[k] = obj[k];
+      }
+      return out;
+    };
+
+    if (sanidadId && type) {
+      let entity: Vacuna | Banio | Desparasitacion | null = null;
+      switch (type) {
+        case "Vacunacion":
+          entity = await Vacuna.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Baño":
+          entity = await Banio.findByPk(sanidadId).catch(() => null);
+          break;
+        case "Desparasitacion Interna":
+        case "Desparasitacion Externa":
+          entity = await Desparasitacion.findByPk(sanidadId).catch(() => null);
+          break;
+      }
+      if (entity) {
+        const upd = sanitizeUpdateObj(payload);
+        await entity.update(upd).catch(() => null);
+        return entity;
+      }
+    }
+
+    return null;
+  }
+
   getFixedCost(sanidadtype: string): number {
     switch (sanidadtype) {
       case "Baño":
-        return 50;
+        return fixedCostsService.getCostoBanio();
       case "Vacunacion":
-        return 80;
+        return fixedCostsService.getCostoVacunas();
       case "Desparasitacion Interna":
-        return 30;
+        return fixedCostsService.getCostoDesparasitacionInterna();
       case "Desparasitacion Externa":
-        return 40;
+        return fixedCostsService.getCostoDesparasitacionExterna();
       default:
         return 0;
     }

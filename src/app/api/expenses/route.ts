@@ -5,6 +5,7 @@ import { extractPagination } from "@/lib/pagination/extraction";
 import type { PayloadForUser } from "../perros/detalles/route";
 import jwt from "jsonwebtoken";
 import type { Expense } from "@/app/models/expense.entity";
+import { Expense as ExpenseModel } from "@/app/models/expense.entity";
 
 const expensesController = new ExpensesController();
 await initDatabase();
@@ -44,7 +45,6 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.json(res);
   } catch (error) {
-    console.log(error);
     const message = getErrorMessage(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -64,17 +64,65 @@ export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const raw = (await request.json()) as unknown;
-    const data =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (
-        raw && typeof raw === "object" ? (raw as any).expense ?? raw : raw
-      ) as Partial<Expense>;
+    let data = {} as Partial<Expense>;
+    if (raw && typeof raw === "object" && raw !== null) {
+      const obj = raw as Record<string, unknown>;
+      if ("expense" in obj && obj.expense && typeof obj.expense === "object") {
+        data = obj.expense as Partial<Expense>;
+      } else {
+        data = obj as Partial<Expense>;
+      }
+    }
     const id = searchParams.get("id");
     if (!id) {
       return NextResponse.json(
         { error: "Missing id parameter" },
         { status: 400 }
       );
+    }
+
+    if (!data.state) {
+      // If the expense is a sanidad-type (Baño, Vacunacion, Desparasitacion..)
+      // then delegate the update to the service that edits the sanidad entity.
+      try {
+        const sanidadTypes = new Set([
+          "Baño",
+          "Vacunacion",
+          "Desparasitacion Interna",
+          "Desparasitacion Externa",
+        ]);
+        const expenseRecord = await ExpenseModel.findByPk(id).catch(() => null);
+        const currentType = expenseRecord?.type;
+        if (typeof currentType === "string" && sanidadTypes.has(currentType)) {
+          const obj =
+            raw && typeof raw === "object" && raw !== null
+              ? (raw as Record<string, unknown>)
+              : {};
+          const payload =
+            "expense" in obj && obj.expense && typeof obj.expense === "object"
+              ? (obj.expense as Record<string, unknown>)
+              : obj;
+          const updated = await expensesController.updateSanidadForExpense(
+            id,
+            payload
+          );
+          if (!updated) {
+            return NextResponse.json(
+              { error: "Sanidad entity not found" },
+              { status: 404 }
+            );
+          }
+          return new NextResponse(null, { status: 204 });
+        }
+      } catch {
+        // ignore and continue to normal expense update flow
+      }
+    }
+
+    const notEditableTypes = new Set(["Pago a guía", "Pago a acompañante"]);
+    const expenseType = data.type;
+    if (typeof expenseType === "string" && notEditableTypes.has(expenseType)) {
+      return null;
     }
 
     const allowed = [

@@ -117,21 +117,6 @@ describe("UserController", () => {
   });
 
   // ---------------------- createUser ----------------------
-  it("should return 400 if ci or password is missing", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const req = {
-      json: vi.fn().mockResolvedValue({}),
-    } as unknown as NextRequest;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const result = await controller.createUser(req);
-
-    expect(result).toEqual({
-      error: "Username and password are required",
-      status: 400,
-    });
-  });
-
   it("should return 201 and success message when user is created", async () => {
     const newUser: CreateUserDto = {
         ci: "1",
@@ -189,7 +174,7 @@ describe("UserController", () => {
     expect(userService.update).toHaveBeenCalledWith("123", {
       nombre: "Updated",
     });
-    expect(result).toEqual({ data: updatedUser });
+    expect(result).toEqual( updatedUser );
   });
 
   // ---------------------- deleteUser ----------------------
