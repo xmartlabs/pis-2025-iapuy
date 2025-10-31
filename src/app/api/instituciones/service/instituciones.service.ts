@@ -81,6 +81,15 @@ export class InstitucionesService {
     const [count, interventions] = await Promise.all([
       Intervention.count({
         where,
+        include: [
+          {
+            model: Institucion,
+            as: "Institucions",
+            where: { id },
+            required: true,
+            attributes: [],
+          },
+        ],
       }),
       Intervention.findAll({
         attributes: ["id", "timeStamp"],

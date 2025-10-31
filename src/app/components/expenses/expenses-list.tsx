@@ -70,7 +70,8 @@ function formatMonthYear(ts: string | number | Date) {
   return `${monthCap} ${d.getFullYear()}`;
 }
 
-export default function ExpensesList() {
+export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
+
   const [expense, setExpense] = useState<ListExpenseDto[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [peopleWhoHaveExpent, setPeopleWhoHaveExpent] = useState<pairPerson[]>(
@@ -528,17 +529,19 @@ export default function ExpensesList() {
           </h1>
         </div>
 
-        <div className="flex justify-end gap-4">
+        <div className={`flex justify-end ${isAdmin ? 'gap-2.5' : ''}`}>
           <AddExpenseButton
             onCreated={() => {
               setReload((r) => !r);
             }}
           />
-          <ConfigureExpensesButton
-            onCreated={() => {
-              setReload((r) => !r);
-            }}
-          />
+          <div style={{ display: isAdmin ? 'block' : 'none' }}>
+            <ConfigureExpensesButton
+              onCreated={() => {
+                setReload((r) => !r);
+              }}
+            />
+          </div>
         </div>
       </div>
 

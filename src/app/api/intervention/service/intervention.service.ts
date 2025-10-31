@@ -600,6 +600,17 @@ export class InterventionService {
     } as InterventionWithInstitution;
   }
 
+  async suspend(id: string) {
+    const intervention = await Intervention.update(
+      { status: "Suspendida" },
+      { where: { id } }
+    );
+    if (intervention[0] === 0) {
+      throw new Error(`Intervention not found with id ${id}`);
+    }
+    return intervention;
+  }
+
   async delete(id: string): Promise<void> {
     const res = await Intervention.destroy({ where: { id } });
     if (res === 0) {

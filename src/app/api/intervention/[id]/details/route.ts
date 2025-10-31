@@ -1,6 +1,6 @@
 /* eslint-disable check-file/folder-naming-convention */
 import { initDatabase } from "@/lib/init-database";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { InterventionController } from "../../controller/intervention.controller";
 
 const interventionController = new InterventionController();
@@ -22,5 +22,21 @@ export async function GET(
       { error: "Internal Server Error" },
       { status: 500 }
     );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const updated = await interventionController.suspendIntervention(id);
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
