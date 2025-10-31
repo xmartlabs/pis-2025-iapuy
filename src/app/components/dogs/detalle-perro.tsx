@@ -97,7 +97,7 @@ export default function DetallePerro() {
       .catch(() => {
         setIsOpenError(true);
       });
-  }, [id]);
+  }, [fetchDetallesPerro, id]);
   if (!context?.userType) {
     return null;
   }
