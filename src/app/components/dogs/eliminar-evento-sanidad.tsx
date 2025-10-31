@@ -1,7 +1,6 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
@@ -118,8 +117,7 @@ export default function EliminarEventoSanidad({
             title={disabled ? "No se puede eliminar porque ya se pagó" : ""}
             className="text-green-500 hover:text-green-700"
           >
-            <Button
-              type="button"
+            <button
               disabled={disabled}
               className={`shrink-0 p-1 ${
                 disabled
@@ -129,7 +127,7 @@ export default function EliminarEventoSanidad({
               onClick={open}
             >
               <Trash2 />
-            </Button>
+            </button>
           </div>
         )}
       </ConfirmDelete>
