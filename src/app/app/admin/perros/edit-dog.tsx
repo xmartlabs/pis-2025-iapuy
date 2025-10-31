@@ -71,6 +71,7 @@ interface EditDogProps {
   dogDetails: DetallesPerroDto;
   ownerRequired?: boolean;
   creatingOwner?: boolean;
+  admin: boolean;
 }
 
 export const EditDogDialog: React.FC<EditDogProps> = ({
@@ -88,6 +89,8 @@ export const EditDogDialog: React.FC<EditDogProps> = ({
   dogDetails,
   // eslint-disable-next-line react/prop-types
   creatingOwner = false,
+  // eslint-disable-next-line react/prop-types
+  admin = false,
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
   const context = useContext(LoginContext);
@@ -96,69 +99,80 @@ export const EditDogDialog: React.FC<EditDogProps> = ({
 
 
   useEffect(() => {
-    const llamadaApi = async () => {
-      try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        const response = await fetch("/api/users?size=-1", {
-          headers: baseHeaders,
-        });
-        if (response.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
+    if (admin) {
+      const llamadaApi = async () => {
+        try {
+          const token = context?.tokenJwt;
+          const baseHeaders: Record<string, string> = {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          };
+          const response = await fetch("/api/users?size=-1", {
+            headers: baseHeaders,
           });
+          if (response.status === 401) {
+            const resp2 = await fetch("/api/auth/refresh", {
+              method: "POST",
+              headers: { Accept: "application/json" },
+            });
 
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
+            if (resp2.ok) {
+              const refreshBody = (await resp2.json().catch(() => null)) as {
+                accessToken?: string;
+              } | null;
 
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch("/api/users?size=-1", {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
+              const newToken = refreshBody?.accessToken ?? null;
+              if (newToken) {
+                context?.setToken(newToken);
+                const retryResp = await fetch("/api/users?size=-1", {
+                  method: "GET",
+                  headers: {
+                    Accept: "application/json",
+                    Authorization: `Bearer ${newToken}`,
+                  },
+                });
 
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
+                if (!retryResp.ok) {
+                  const txt = await retryResp.text().catch(() => "");
+                  throw new Error(
+                    `API ${retryResp.status}: ${retryResp.statusText}${
+                      txt ? ` - ${txt}` : ""
+                    }`
+                  );
+                }
+
+                const ct2 = retryResp.headers.get("content-type") ?? "";
+                if (!ct2.includes("application/json"))
+                  throw new Error("Expected JSON response");
+
+                const body2 = (await retryResp.json()) as UsersResponse;
+                const duenios = body2.data;
+                setDuenos(duenios);
+                return;
               }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as UsersResponse;
-              const duenios = body2.data;
-              setDuenos(duenios);
-              return;
             }
           }
+          const datos = (await response.json()) as UsersResponse;
+          const duenios = datos.data;
+          setDuenos(duenios);
+        } catch (err) {
+          reportError(err);
         }
-        const datos = (await response.json()) as UsersResponse;
-        const duenios = datos.data;
-        setDuenos(duenios);
-      } catch (err) {
+      };
+    
+      llamadaApi().catch((err) => {
         reportError(err);
-      }
-    };
-    llamadaApi().catch((err) => {
-      reportError(err);
-    });
-  }, [context]);
+      });
+    } else {
+      const duenios: UserPair[] = [{
+        // eslint-disable-next-line react/prop-types
+        ci: dogDetails.duenioId || '',
+        // eslint-disable-next-line react/prop-types
+        nombre: dogDetails.duenioNombre || 'Usted'
+      }];
+      setDuenos(duenios);
+    }
+  }, [admin, context, dogDetails]);
 
   const createPerroBase = z.object({
     nombrePerro: z.string().min(2, {

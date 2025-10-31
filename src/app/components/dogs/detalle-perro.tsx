@@ -117,7 +117,6 @@ export default function DetallePerro() {
             {infoPerro.nombre}
           </h1>
           <div className="flex gap-2">
-            {userType === UserType.Administrator && (
               <Button
                 onClick={() => {
                   setOpenEdit(true);
@@ -128,19 +127,17 @@ export default function DetallePerro() {
                 <Pencil className="w-4 h-4" />
                 Editar
               </Button>
-            )}
             <RegistroSanidad />
           </div>
         </div>
-        {userType === UserType.Administrator && (
           <EditDogDialog
             reload={reload}
             setReload={setReload}
             open={isOpenEdit}
             setOpen={setOpenEdit}
             dogDetails={infoPerro}
+            admin={userType === UserType.Administrator}
           />
-        )}
 
         <div className="space-y-4 text-[#121F0D]">
           <Dato
