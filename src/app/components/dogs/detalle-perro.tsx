@@ -9,6 +9,7 @@ import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { UserType } from "@/app/page";
 import { forbidden } from "next/navigation";
+import { EditDogDialog } from "@/app/app/admin/perros/edit-dog";
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -36,6 +37,8 @@ type ApiResponse = {
 export default function DetallePerro() {
   const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
   const [isOpenError, setIsOpenError] = useState(false);
+  const [isOpenEdit, setOpenEdit] = useState(false);
+  const [reload, setReload] = useState(false);
   const context = useContext(LoginContext);
   const fetchDetallesPerro = useCallback(
     async (id: string): Promise<ApiResponse> => {
@@ -116,8 +119,11 @@ export default function DetallePerro() {
           <div className="flex gap-2">
             {userType === UserType.Administrator && (
               <Button
+                onClick={() => {
+                  setOpenEdit(true);
+                }}
                 variant="outline"
-                className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50 hidden"
+                className="flex items-center gap-2 border-green-700 text-green-700 hover:bg-green-50"
               >
                 <Pencil className="w-4 h-4" />
                 Editar
@@ -126,6 +132,13 @@ export default function DetallePerro() {
             <RegistroSanidad />
           </div>
         </div>
+        <EditDogDialog
+          reload={reload}
+          setReload={setReload}
+          open={isOpenEdit}
+          setOpen={setOpenEdit}
+          dogDetails={infoPerro}
+        />
 
         <div className="space-y-4 text-[#121F0D]">
           <Dato
