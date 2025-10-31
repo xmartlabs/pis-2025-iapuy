@@ -58,7 +58,14 @@ import { PerrosController } from "@/app/api/perros/controller/perros.controller"
 import type { NextRequest } from "next/server";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
 
-interface MockService { findAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; findOne: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; }
+interface MockService { 
+  findAll: ReturnType<typeof vi.fn>; 
+  create: ReturnType<typeof vi.fn>; 
+  findOne: ReturnType<typeof vi.fn>; 
+  delete: ReturnType<typeof vi.fn>; 
+  update: ReturnType<typeof vi.fn>;
+  listOptions: ReturnType<typeof vi.fn>;
+}
 
 describe("PerrosController", () => {
   let controller: PerrosController = {} as PerrosController; 
@@ -70,6 +77,8 @@ describe("PerrosController", () => {
       create: vi.fn(),
       findOne: vi.fn(),
       delete: vi.fn(),
+      update: vi.fn(),
+      listOptions: vi.fn(),
     };
     controller = new PerrosController(service);
     vi.clearAllMocks();
@@ -109,5 +118,46 @@ describe("PerrosController", () => {
     } as unknown as NextRequest;
 
     await expect(controller.createPerro(mockRequest)).rejects.toThrow("DB error");
+  });
+
+  it("updatePerro should update and return the updated dog", async () => {
+    service.update.mockResolvedValue({ 
+      id: "123", 
+      nombre: "Rex Updated",
+      descripcion: "Updated description",
+      fortalezas: "New strengths" 
+    });
+
+    const mockRequest = {
+      json: vi.fn().mockResolvedValue({
+        id: "123",
+        nombre: "Rex Updated",
+        descripcion: "Updated description",
+        fortalezas: "New strengths"
+      }),
+    } as unknown as NextRequest;
+
+    const res = await controller.updatePerro(mockRequest);
+
+    expect(service.update).toHaveBeenCalledWith("123", {
+      id: "123",
+      nombre: "Rex Updated",
+      descripcion: "Updated description",
+      fortalezas: "New strengths"
+    });
+    expect(res?.nombre).toBe("Rex Updated");
+  });
+
+  it("updatePerro should propagate an error if the service fails", async () => {
+    service.update.mockRejectedValue(new Error("Update failed"));
+
+    const mockRequest = {
+      json: vi.fn().mockResolvedValue({
+        id: "123",
+        nombre: "Failed Update"
+      }),
+    } as unknown as NextRequest;
+
+    await expect(controller.updatePerro(mockRequest)).rejects.toThrow("Update failed");
   });
 });

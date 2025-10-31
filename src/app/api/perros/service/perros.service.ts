@@ -91,6 +91,12 @@ export class PerrosService {
     return await Perro.create({ ...createPerroDto });
   }
 
+  async update(id: string, updateData: Partial<DetallesPerroDto>): Promise<Perro | null> {
+    const dog = await Perro.findByPk(id);
+    if (!dog) return null;
+    return await dog.update(updateData);
+  }
+
   async findOne(id: string, payload: PayloadForUser) {
     const perro = await Perro.findByPk(id, {
       include: [
