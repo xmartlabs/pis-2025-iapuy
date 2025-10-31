@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import ConfirmDelete from "../confirm-delete";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type ApiResponse = {
   success: boolean;
@@ -19,43 +20,18 @@ export default function EliminarPerro() {
   const id: string = searchParams.get("id") ?? "";
   const router = useRouter();
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   async function handleDelete(): Promise<void> {
     try {
-      const makeDelete = async (bearer?: string) => {
-        const headers: Record<string, string> = {
-          Accept: "application/json",
-          ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-        };
-        const res = await fetch(`/api/perros?id=${encodeURIComponent(id)}`, {
+      const res = await fetchWithAuth(
+        context,
+        `/api/perros?id=${encodeURIComponent(id)}`,
+        {
           method: "DELETE",
-          headers,
-        });
-        return res;
-      };
-
-      const token = context?.tokenJwt ?? undefined;
-      let res = await makeDelete(token);
-
-      if (res.status === 401) {
-        const refreshResp = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
           headers: { Accept: "application/json" },
-        });
-
-        if (refreshResp.ok) {
-          const body = (await refreshResp.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-          const newToken = body?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            res = await makeDelete(newToken);
-          }
         }
-      }
+      );
 
       const data = (await res.json().catch(() => null)) as ApiResponse | null;
 
@@ -64,7 +40,7 @@ export default function EliminarPerro() {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#DEEBD9",
             border: "1px solid #BDD7B3",
@@ -75,7 +51,7 @@ export default function EliminarPerro() {
         try {
           await context?.refreshPerros?.();
         } catch {
-          // ignore refresh errors
+          /* ignore */
         }
 
         router.push("/app/admin/perros/listado");
@@ -84,7 +60,7 @@ export default function EliminarPerro() {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#cfaaaaff",
             border: "1px solid #ec0909ff",
@@ -97,7 +73,7 @@ export default function EliminarPerro() {
         duration: 5000,
         icon: null,
         className:
-          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
         style: {
           background: "#cfaaaaff",
           border: "1px solid #ec0909ff",
@@ -106,6 +82,7 @@ export default function EliminarPerro() {
       });
     }
   }
+
 
   return (
     <>

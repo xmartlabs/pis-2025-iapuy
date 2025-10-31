@@ -46,6 +46,7 @@ import EditCostNotSanity from "./list/edit-cost";
 import { toast } from "sonner";
 
 import DeleteExpenseDialog from "./delete-expense-dialog";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 const statusToColor: Record<string, string> = {
   Pagado: "#DEEBD9",
@@ -108,7 +109,7 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
   const anchorRef = useRef<HTMLElement | null>(null);
   const [menuExpenseId, setMenuExpenseId] = useState<string | null>(null);
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -126,114 +127,38 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
       pageNum: number,
       pageSize: number,
       query?: string,
-      signal?: AbortSignal,
-      triedRefresh = false
+      signal?: AbortSignal
     ): Promise<PaginationResultDto<ListExpenseDto> | null> => {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
+
       const url = new URL(
         "/api/expenses",
-        (typeof window !== "undefined" && window.location?.origin) || ""
+        typeof window !== "undefined" ? window.location.origin : ""
       );
+
       url.searchParams.set("page", String(p));
       url.searchParams.set("size", String(s));
-      if (query?.trim().length) {
-        url.searchParams.set("query", query.trim());
-      }
-      if (selectedMonths && selectedMonths.length) {
-        url.searchParams.set("months", selectedMonths.join(","));
-      }
-      if (selectedStatuses && selectedStatuses.length) {
-        url.searchParams.set("statuses", selectedStatuses.join(","));
-      }
-      if (selectedPeople && selectedPeople.length) {
-        url.searchParams.set("people", selectedPeople.join(","));
-      }
+
+      if (query?.trim()) url.searchParams.set("query", query.trim());
+      if (selectedMonths?.length) url.searchParams.set("months", selectedMonths.join(","));
+      if (selectedStatuses?.length) url.searchParams.set("statuses", selectedStatuses.join(","));
+      if (selectedPeople?.length) url.searchParams.set("people", selectedPeople.join(","));
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+      const timeout = setTimeout(() => { controller.abort(); }, 10000);
 
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, url.toString(), {
           method: "GET",
-          headers: baseHeaders,
-          signal: combinedSignal,
+          headers: { Accept: "application/json" },
+          signal: signal ?? controller.signal,
         });
 
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL(
-              "/api/auth/refresh",
-              (typeof window !== "undefined" && window.location?.origin) || ""
-            ),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                const errTxt = txt ? ` - ${txt}` : "";
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${errTxt}`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (
-                !body2 ||
-                typeof body2 !== "object" ||
-                !Array.isArray(
-                  (body2 as PaginationResultDto<ListExpenseDto>).data
-                )
-              )
-                throw new Error("Malformed API response");
-              return body2 as PaginationResultDto<ListExpenseDto>;
-            }
-          }
-        }
-
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          const errTxt = txt ? ` - ${txt}` : "";
-          throw new Error(`API ${resp.status}: ${resp.statusText}${errTxt}`);
-        }
+        if (!resp.ok) throw new Error(`API ${resp.status}: ${resp.statusText}`);
 
         const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
-          throw new Error("Expected JSON response");
+        if (!ct.includes("application/json")) throw new Error("Expected JSON response");
 
         const body = (await resp.json()) as unknown;
         if (
@@ -242,11 +167,10 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
           !Array.isArray((body as PaginationResultDto<ListExpenseDto>).data)
         )
           throw new Error("Malformed API response");
+
         return body as PaginationResultDto<ListExpenseDto>;
       } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
+        if ((err as DOMException)?.name === "AbortError") return null;
         return null;
       } finally {
         clearTimeout(timeout);
@@ -256,96 +180,24 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
   );
 
   const fetchExpensesFilters = useCallback(
-    async (
-      signal?: AbortSignal,
-      triedRefresh = false
-    ): Promise<FiltersExpenseDto | null> => {
+    async (signal?: AbortSignal): Promise<FiltersExpenseDto | null> => {
       const url = new URL(
         "/api/expenses/filter",
-        (typeof window !== "undefined" && window.location?.origin) || ""
+        typeof window !== "undefined" ? window.location.origin : ""
       );
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+      const timeout = setTimeout(() => { controller.abort(); }, 10000);
 
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, url.toString(), {
           method: "GET",
-          headers: baseHeaders,
-          signal: combinedSignal,
+          headers: { Accept: "application/json" },
+          signal: signal ?? controller.signal,
         });
 
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL(
-              "/api/auth/refresh",
-              (typeof window !== "undefined" && window.location?.origin) || ""
-            ),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (
-                !body2 ||
-                typeof body2 !== "object" ||
-                !Array.isArray((body2 as FiltersExpenseDto).months)
-              )
-                throw new Error("Malformed API response");
-
-              return body2 as FiltersExpenseDto;
-            }
-          }
-        }
-
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(
-            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
-          );
-        }
+        if (!resp.ok)
+          throw new Error(`API ${resp.status}: ${resp.statusText}`);
 
         const ct = resp.headers.get("content-type") ?? "";
         if (!ct.includes("application/json"))
@@ -361,9 +213,7 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
 
         return body as FiltersExpenseDto;
       } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
+        if ((err as DOMException)?.name === "AbortError") return null;
         return null;
       } finally {
         clearTimeout(timeout);
@@ -462,15 +312,15 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
 
   const changeToPaid = async (id: string) => {
     try {
-      const token = context?.tokenJwt;
-      const resp = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ state: "pagado" }),
-      });
+      const resp = await fetchWithAuth(
+        context,
+        `/api/expenses?id=${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state: "pagado" }),
+        }
+      );
 
       if (resp.ok || resp.status === 204) {
         toast.success("Gasto marcado como Pagado", {
@@ -489,6 +339,7 @@ export default function ExpensesList({ isAdmin }: { isAdmin: boolean }) {
         return;
       }
 
+      // Si hubo error, intentamos leerlo y mostrarlo
       let msg = `Error ${resp.status}`;
       const body = (await resp.json().catch(() => null)) as unknown;
       if (body && typeof body === "object") {

@@ -30,6 +30,7 @@ import { useEffect, useState, useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type Pathology = {
   id: string;
@@ -44,15 +45,12 @@ type Dog = {
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 export default function EvaluarIntervencion({ id }: { id: string | null }) {
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   if (!id) {
     throw new Error("Falta el parámetro id en la URL");
@@ -61,61 +59,31 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        const response = await fetch(`/api/intervention/${id}/pathologies`, {
-          headers: baseHeaders,
-        });
-        if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
-          );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(
-                `/api/intervention/${id}/pathologies`,
-                {
-                  method: "GET",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${newToken}`,
-                  },
-                }
-              );
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as Pathology[];
-              setPathologys(body2);
-
-              return;
-            }
+        const response = await fetchWithAuth(
+          context,
+          `/api/intervention/${id}/pathologies`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
           }
+        );
+
+        if (!response.ok) {
+          const txt = await response.text().catch(() => "");
+          throw new Error(
+            `API ${response.status}: ${response.statusText}${txt ? ` - ${txt}` : ""}`
+          );
         }
-        const datos = (await response.json()) as Pathology[];
-        const pathologysData = datos ?? [];
-        setPathologys(pathologysData);
+
+        const ct = response.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json")) {
+          throw new Error("Expected JSON response");
+        }
+
+        const body = (await response.json()) as Pathology[];
+        setPathologys(body ?? []);
       } catch (err) {
         reportError(err);
       }
@@ -128,58 +96,31 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        const response = await fetch(`/api/intervention/${id}/dogs`, {
-          headers: baseHeaders,
-        });
-        if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
-          );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(`/api/intervention/${id}/dogs`, {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as Dog[];
-              setDogs(body2);
-
-              return;
-            }
+        const response = await fetchWithAuth(
+          context,
+          `/api/intervention/${id}/dogs`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
           }
+        );
+
+        if (!response.ok) {
+          const txt = await response.text().catch(() => "");
+          throw new Error(
+            `API ${response.status}: ${response.statusText}${txt ? ` - ${txt}` : ""}`
+          );
         }
-        const datos = (await response.json()) as Dog[];
-        const pathologysData = datos ?? [];
-        setDogs(pathologysData);
+
+        const ct = response.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json")) {
+          throw new Error("Expected JSON response");
+        }
+
+        const body = (await response.json()) as Dog[];
+        setDogs(body ?? []);
       } catch (err) {
         reportError(err);
       }
@@ -259,87 +200,74 @@ export default function EvaluarIntervencion({ id }: { id: string | null }) {
   }, [dogs, form]);
 
   const router = useRouter();
-  // eslint-disable-next-line @typescript-eslint/consistent-return
-  async function onSubmit(data: FormValues) {
-    try {
-      const mapFeeling = (f: "good" | "bad" | "regular" | undefined) => {
-        switch (f) {
-          case "good":
-            return "buena";
-          case "bad":
-            return "mala";
-          case "regular":
-            return "regular";
-          default:
-            return undefined;
-        }
-      };
-
-      //transform data to match DTO
-      const patients = data.patients.map((p) => ({
-        name: p.name,
-        age: String(p.age), //? string
-        pathology_id: p.pathology,
-        experience: mapFeeling(p.feeling),
-      }));
-
-      const experiences = (data.dogs ?? []).map((exp) => ({
-        perro_id: exp.dogId,
-        experiencia: mapFeeling(exp.feelingDog),
-      }));
-
-      const formData = new FormData();
-
-      formData.append("patients", JSON.stringify(patients));
-      formData.append("experiences", JSON.stringify(experiences));
-
-      if (data.photos && data.photos instanceof FileList) {
-        Array.from(data.photos)
-          .slice(0, 2)
-          .forEach((file) => {
-            formData.append("photos", file); //array de File
-          });
+ async function onSubmit(data: FormValues) {
+  try {
+    const mapFeeling = (f: "good" | "bad" | "regular" | undefined) => {
+      switch (f) {
+        case "good":
+          return "buena";
+        case "bad":
+          return "mala";
+        case "regular":
+          return "regular";
+        default:
+          return undefined;
       }
+    };
 
-      formData.append("driveLink", data.driveLink ?? "");
+    //transform data to match DTO
+    const patients = data.patients.map((p) => ({
+      name: p.name,
+      age: String(p.age), //? string
+      pathology_id: p.pathology,
+      experience: mapFeeling(p.feeling),
+    }));
 
-      const res = await fetch(`/api/intervention/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${context?.tokenJwt}`,
-        },
-        body: formData,
-      });
+    const experiences = (data.dogs ?? []).map((exp) => ({
+      perro_id: exp.dogId,
+      experiencia: mapFeeling(exp.feelingDog),
+    }));
 
-      if (res.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
-          method: "POST",
+    const formData = new FormData();
+
+    formData.append("patients", JSON.stringify(patients));
+    formData.append("experiences", JSON.stringify(experiences));
+
+    if (data.photos && data.photos instanceof FileList) {
+      Array.from(data.photos)
+        .slice(0, 2)
+        .forEach((file) => {
+          formData.append("photos", file); //array de File
         });
-        if (resp2.ok) {
-          return onSubmit(data);
-        }
-        return;
-      }
-      if (res.ok) {
-        form.reset();
-        router.push("/app/colaboradores/intervenciones/listado?success=1");
-      } else {
-        throw new Error("Error en el registro");
-      }
-    } catch {
-      toast.error(`No se pudo guardar la informacion.`, {
-        duration: 5000,
-        icon: null,
-        className:
-          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-        style: {
-          background: "#cfaaaaff",
-          border: "1px solid #ec0909ff",
-          color: "#ec0909ff",
-        },
-      });
     }
+
+    formData.append("driveLink", data.driveLink ?? "");
+
+    const res = await fetchWithAuth(context, `/api/intervention/${id}`, {
+      method: "PUT",
+      body: formData,
+    });
+
+    if (res.ok) {
+      form.reset();
+      router.push("/app/colaboradores/intervenciones/listado?success=1");
+    } else {
+      throw new Error("Error en el registro");
+    }
+  } catch {
+    toast.error(`No se pudo guardar la informacion.`, {
+      duration: 5000,
+      icon: null,
+      className:
+        "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+      style: {
+        background: "#cfaaaaff",
+        border: "1px solid #ec0909ff",
+        color: "#ec0909ff",
+      },
+    });
   }
+}
 
   const addPatCard = () => {
     const newIndex = patientsCards.length;

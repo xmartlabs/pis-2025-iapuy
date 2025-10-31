@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 export default function DeleteExpenseDialog({
   open,
   exp,
@@ -25,53 +26,28 @@ export default function DeleteExpenseDialog({
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [dogName, setDogName] = useState("");
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   async function handleDelete(): Promise<void> {
     if (isDeleting) return;
+
     const url = `/api/expenses?id=${encodeURIComponent(exp.id)}`;
     setIsDeleting(true);
+
     try {
-      const makeDelete = async (bearer?: string) => {
-        const headers: Record<string, string> = {
+      const res = await fetchWithAuth(context, url, {
+        method: "DELETE",
+        headers: {
           Accept: "application/json",
-          ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-        };
-        const res = await fetch(url, {
-          method: "DELETE",
-          headers,
-        });
-        return res;
-      };
-
-      const token = context?.tokenJwt ?? undefined;
-      let res = await makeDelete(token);
-
-      if (res.status === 401) {
-        const refreshResp = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-
-        if (refreshResp.ok) {
-          const body = (await refreshResp.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-          const newToken = body?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            res = await makeDelete(newToken);
-          }
-        }
-      }
+        },
+      });
 
       if (res.ok) {
         toast.success(`Gasto eliminado correctamente.`, {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#DEEBD9",
             border: "1px solid #BDD7B3",
@@ -82,11 +58,11 @@ export default function DeleteExpenseDialog({
         onSuccess?.();
         onClose();
       } else {
-        toast.error(`No se pudo eliminar al Gasto.`, {
+        toast.error(`No se pudo eliminar el gasto.`, {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#cfaaaaff",
             border: "1px solid #ec0909ff",
@@ -95,11 +71,11 @@ export default function DeleteExpenseDialog({
         });
       }
     } catch {
-      toast.error(`No se pudo eliminar al gasto.`, {
+      toast.error(`No se pudo eliminar el gasto.`, {
         duration: 5000,
         icon: null,
         className:
-          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
         style: {
           background: "#cfaaaaff",
           border: "1px solid #ec0909ff",

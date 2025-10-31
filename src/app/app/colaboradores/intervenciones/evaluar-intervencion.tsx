@@ -35,6 +35,7 @@ import type { JwtPayload } from "jsonwebtoken";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { ExpenseForm } from "@/app/components/expenses/intervention-expense-dialog-step-two";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type Pathology = {
   id: string;
@@ -64,16 +65,12 @@ interface Intervention {
 type ExperienceDog = "good" | "regular" | "bad";
 type ExperiencePat = "good" | "regular" | "bad" | undefined;
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
-
 export default function EvaluarIntervencion() {
   const [pathologys, setPathologys] = useState<Pathology[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [patientsCards, setPatientCard] = useState([0]);
   const [interv, setInterv] = useState<Intervention>();
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const formRefs = useRef<(HTMLFormElement | null)[]>([]);
@@ -105,60 +102,28 @@ export default function EvaluarIntervencion() {
   useEffect(() => {
     const callApi = async () => {
       try {
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        const response = await fetch(`/api/intervention/${id}/pathologies`, {
-          headers: baseHeaders,
-        });
-        if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
-          );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(
-                `/api/intervention/${id}/pathologies`,
-                {
-                  method: "GET",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${newToken}`,
-                  },
-                }
-              );
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as Pathology[];
-              setPathologys(body2);
-
-              return;
-            }
+        const resp = await fetchWithAuth(
+          context,
+          `/api/intervention/${id}/pathologies`,
+          {
+            method: "GET",
+            headers: { Accept: "application/json" },
           }
+        );
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
         }
-        const datos = (await response.json()) as Pathology[];
-        const pathologysData = datos ?? [];
-        setPathologys(pathologysData);
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const body = (await resp.json()) as Pathology[];
+        setPathologys(body ?? []);
       } catch (err) {
         reportError(err);
       }
@@ -175,50 +140,25 @@ export default function EvaluarIntervencion() {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch(`/api/intervention/${id}/dogs`, {
+
+        const response = await fetchWithAuth(context, `/api/intervention/${id}/dogs`, {
+          method: "GET",
           headers: baseHeaders,
         });
-        if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
+
+        if (!response.ok) {
+          const txt = await response.text().catch(() => "");
+          throw new Error(
+            `API ${response.status}: ${response.statusText}${
+              txt ? ` - ${txt}` : ""
+            }`
           );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(`/api/intervention/${id}/dogs`, {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as Dog[];
-              setDogs(body2);
-
-              return;
-            }
-          }
         }
+
+        const ct2 = response.headers.get("content-type") ?? "";
+        if (!ct2.includes("application/json"))
+          throw new Error("Expected JSON response");
+
         const datos = (await response.json()) as Dog[];
         const pathologysData = datos ?? [];
         setDogs(pathologysData);
@@ -238,50 +178,25 @@ export default function EvaluarIntervencion() {
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        const response = await fetch(`/api/intervention/${id}`, {
+
+        const response = await fetchWithAuth(context, `/api/intervention/${id}`, {
+          method: "GET",
           headers: baseHeaders,
         });
-        if (response.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", BASE_API_URL),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-            }
+
+        if (!response.ok) {
+          const txt = await response.text().catch(() => "");
+          throw new Error(
+            `API ${response.status}: ${response.statusText}${
+              txt ? ` - ${txt}` : ""
+            }`
           );
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(`/api/intervention/${id}`, {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as Intervention;
-              setInterv(body2);
-
-              return;
-            }
-          }
         }
+
+        const ct2 = response.headers.get("content-type") ?? "";
+        if (!ct2.includes("application/json"))
+          throw new Error("Expected JSON response");
+
         const datos = (await response.json()) as Intervention;
         const intervData = datos ?? [];
         setInterv(intervData);
@@ -414,7 +329,6 @@ export default function EvaluarIntervencion() {
     check();
   });
 
-  // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: FormValues) {
     try {
       const mapFeeling = (f: "good" | "bad" | "regular" | undefined) => {
@@ -457,7 +371,7 @@ export default function EvaluarIntervencion() {
 
       formData.append("driveLink", data.driveLink ?? "");
 
-      const res = await fetch(`/api/intervention/${id}`, {
+      const res = await fetchWithAuth(context, `/api/intervention/${id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${context?.tokenJwt}`,
@@ -465,25 +379,16 @@ export default function EvaluarIntervencion() {
         body: formData,
       });
 
-      if (res.status === 401) {
-        const resp2 = await fetch(new URL("/api/auth/refresh", BASE_API_URL), {
-          method: "POST",
-        });
-        if (resp2.ok) {
-          return onSubmit(data);
-        }
-        return;
-      }
       if (!res.ok) {
         throw new Error("Error en el registro");
       }
+
       const expensesToSend = (data.expenses ?? []).filter(
         (e) => e && typeof e.amount === "number" && e.amount > 0
       );
-      console.log("Expenses que voy a enviar:", expensesToSend);
       await Promise.all(
         expensesToSend.map((exp) =>
-          fetch("/api/expenses", {
+          fetchWithAuth(context, "/api/expenses", {
             method: "POST",
             headers: {
               Accept: "application/json",
@@ -504,7 +409,6 @@ export default function EvaluarIntervencion() {
 
       form.reset();
       router.push("/app/colaboradores/intervenciones/listado?success=1");
-
     } catch {
       toast.error(`No se pudo guardar la informacion.`, {
         duration: 5000,

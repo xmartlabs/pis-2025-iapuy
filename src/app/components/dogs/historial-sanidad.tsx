@@ -16,6 +16,7 @@ import {
 import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import EliminarEventoSanidad from "./eliminar-evento-sanidad";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
@@ -24,60 +25,23 @@ export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const sanidadContext = useContext(SanidadContext);
   const router = useRouter();
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const triedRefresh = false;
-
-      const resp = await fetch(
-        `/api/registros-sanidad?id=${encodeURIComponent(
-          id
-        )}&page=${page}&size=${size}`,
+      const resp = await fetchWithAuth(
+        context,
+        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
         {
           method: "GET",
-          headers: baseHeaders,
+          headers: {
+            Accept: "application/json",
+          },
         }
       );
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
 
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(
-              `/api/registros-sanidad?id=${encodeURIComponent(
-                id
-              )}&page=${page}&size=${size}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              }
-            );
-
-            return (await retryResp.json()) as Promise<
-              PaginationResultDto<EventoSanidadDto>
-            >;
-          }
-        }
-      }
       return (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
     },
     [context, page, size]

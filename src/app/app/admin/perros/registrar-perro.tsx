@@ -38,6 +38,7 @@ import { useContext, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { LoginContext } from "@/app/context/login-context";
 import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type UserPair = {
   ci: string; //! chequear seguridad (es correcto manipular el id o solo manipular el JWT)
@@ -85,66 +86,33 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
   creatingOwner = false,
 }) => {
   const [duenos, setDuenos] = useState<UserPair[]>([]);
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const [descChars, setDescChars] = useState(0);
   const [fuertesChars, setFuertesChars] = useState(0);
 
   useEffect(() => {
     const llamadaApi = async () => {
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        const response = await fetch("/api/users?size=-1", {
-          headers: baseHeaders,
+        const resp = await fetchWithAuth(context, "/api/users?size=-1", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         });
-        if (response.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-          });
 
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch("/api/users?size=-1", {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as UsersResponse;
-              const duenios = body2.data;
-              setDuenos(duenios);
-              return;
-            }
-          }
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
         }
-        const datos = (await response.json()) as UsersResponse;
-        const duenios = datos.data;
-        setDuenos(duenios);
+
+        const ct = resp.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json"))
+          throw new Error("Expected JSON response");
+
+        const datos = (await resp.json()) as UsersResponse;
+        setDuenos(datos.data);
       } catch (err) {
         reportError(err);
       }
@@ -199,21 +167,22 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
     };
   }, [form, open]);
 
-  // eslint-disable-next-line @typescript-eslint/consistent-return
   async function onSubmit(data: z.infer<typeof createPerroSchema>) {
-    if(creatingOwner){
+    if (creatingOwner) {
       const dog = {
         nombre: data.nombrePerro,
         descripcion: data.descripcion ? data.descripcion : "",
         fortalezas: data.fuertes ? data.fuertes : "",
       } as CreatePerroDTO;
-      onCreated?.( dog );
+
+      onCreated?.(dog);
       setOpen(false);
       form.reset();
       setDescChars(0);
       setFuertesChars(0);
       return;
     }
+
     try {
       const dataFormat: dataPerro = {
         nombre: data.nombrePerro,
@@ -223,28 +192,15 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
           ? { duenioId: data.dueno }
           : {}),
       };
-
-      //! las desc y fortalezas si se dejan vacíos se estan insertando como ''
-      //! y no como null, chequear para futuras consultas a la DB al no tener campo NULL
-
-      const res = await fetch("/api/perros", {
+      const res = await fetchWithAuth(context, "/api/perros", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${context?.tokenJwt}`,
         },
         body: JSON.stringify(dataFormat),
       });
 
-      if (res.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-
-        if (resp2.ok) {
-          return onSubmit(data);
-        }
+      if (!res.ok) {
         toast.message(`NO se pudo agregar a "${data.nombrePerro}" al equipo.`, {
           duration: 5000,
           icon: null,
@@ -258,50 +214,33 @@ export const RegistrarPerro: React.FC<AgregarPerroProps> = ({
         });
         return;
       }
+      setOpen(false);
+      form.reset();
+      setDescChars(0);
+      setFuertesChars(0);
 
-      if (res.ok) {
+      toast.success(`¡Guau! Agregaste a "${data.nombrePerro}" al equipo.`, {
+        duration: 5000,
+        icon: null,
+        className:
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+        style: {
+          background: "#DEEBD9",
+          border: "1px solid #BDD7B3",
+          color: "#121F0D",
+        },
+      });
 
-        setOpen(false);
-        form.reset();
-        setDescChars(0);
-        setFuertesChars(0);
-
-        toast.success(`¡Guau! Agregaste a "${data.nombrePerro}" al equipo.`, {
-          duration: 5000,
-          icon: null,
-          className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-          style: {
-            background: "#DEEBD9",
-            border: "1px solid #BDD7B3",
-            color: "#121F0D",
-          },
-        });
-
-        setReload(!reload);
-        try {
-          await context?.refreshPerros?.();
-        } catch {
-          // ignore refresh errors
-        }
-      } else {
-        toast.message(`NO se pudo agregar a "${data.nombrePerro}" al equipo.`, {
-          duration: 5000,
-          icon: null,
-          className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-          style: {
-            background: "#cfaaaaff",
-            border: "1px solid #ec0909ff",
-            color: "#ec0909ff",
-          },
-        });
+      setReload(!reload);
+      try {
+        await context?.refreshPerros?.();
+      } catch {
+        // ignore refresh errors
       }
     } catch (error) {
       reportError(error);
     }
   }
-
   return (
     <div className="font-sans">
       <Dialog open={open} onOpenChange={setOpen}>

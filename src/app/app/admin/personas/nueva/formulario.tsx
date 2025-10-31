@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, CheckCircle, Copy, Link } from "lucide-react";
 import type { CreatePerroDTO } from "@/app/api/perros/dtos/create-perro.dto";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 const formSchema = z
   .object({
@@ -77,7 +78,6 @@ const perrosSchema = z.object({
 });
 const perrosArraySchema = z.array(perrosSchema);
 const perrosEnvelopeSchema = z.object({ data: perrosArraySchema });
-const refreshSchema = z.object({ accessToken: z.string() });
 
 type Perro = z.infer<typeof perrosSchema>;
 type PerroOption = { value: string; label: string };
@@ -111,7 +111,7 @@ export default function Formulario() {
     },
   });
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const [listaPerros, setListaPerros] = useState<PerroOption[]>([]);
   const [reload, setReload] = useState(false);
   const [open, setOpen] = useState(false);
@@ -129,40 +129,10 @@ export default function Formulario() {
       const url = `/api/perros?size=-1`;
 
       try {
-        const token = context?.tokenJwt ?? undefined;
-
-        const doFetch = async (authToken?: string) => {
-          const resp = await fetch(url, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-            },
-            signal: controller.signal,
-          });
-          return resp;
-        };
-
-        let resp = await doFetch(token);
-
-        if (resp.status === 401) {
-          const refreshResp = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-
-          if (refreshResp.ok) {
-            const body = (await refreshResp.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = body?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              resp = await doFetch(newToken);
-            }
-          }
-        }
+        const resp = await fetchWithAuth(context, url, {
+          method: "GET",
+          signal: controller.signal,
+        });
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -226,44 +196,17 @@ export default function Formulario() {
     }, 10000);
 
     try {
-      const token = context?.tokenJwt ?? undefined;
       const url = `/api/users`;
 
-      const doPost = async (authToken?: string) =>
-        await fetch(url.toString(), {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
-          body: JSON.stringify({ ...values, perrosDto: dogs, password: "" }),
-          signal: controller.signal,
-        });
-
-      let res = await doPost(token);
-
-      if (res.status === 401) {
-        const refreshResp = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-
-        if (refreshResp.status === 200) {
-          const raw: unknown = await refreshResp.json().catch(() => null);
-          const parsed = refreshSchema.safeParse(raw);
-          if (parsed.success) {
-            const newToken = parsed.data.accessToken;
-            context?.setToken(newToken);
-            res = await doPost(newToken);
-          } else {
-            throw new Error();
-          }
-        } else {
-          throw new Error();
-        }
-      }
+      const res = await fetchWithAuth(context, url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...values, perrosDto: dogs, password: "" }),
+        signal: controller.signal,
+      });
 
       if (res.status === 409) {
         form.setError("ci", {
@@ -285,14 +228,11 @@ export default function Formulario() {
         }, 10000);
 
         const body = { ci: values.ci, nombre: values.nombre };
-        const resp = await fetch("/api/magic-link", {
+        const resp = await fetchWithAuth(context, "/api/magic-link", {
           method: "POST",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            ...(context?.tokenJwt
-              ? { Authorization: `Bearer ${context.tokenJwt}` }
-              : {}),
           },
           body: JSON.stringify(body),
           signal: mlController.signal,

@@ -15,6 +15,7 @@ import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto
 import { LoginContext } from "@/app/context/login-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { InterventionDto } from "@/app/app/admin/intervenciones/dtos/intervention.dto";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function HistorialIntervenciones() {
   const [intervention, setIntervention] = useState<InterventionDto[]>([]);
@@ -24,7 +25,7 @@ export default function HistorialIntervenciones() {
   const [loading, setLoading] = useState<boolean>(false);
   const [reload] = useState(false);
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const router = useRouter();
 
   function go(id: string) {
@@ -32,124 +33,65 @@ export default function HistorialIntervenciones() {
   }
 
   const fetchIntervenciones = useCallback(
-    async (
-      id: string,
-      pageNum: number,
-      pageSize: number,
-      signal?: AbortSignal,
-      triedRefresh = false
-    ): Promise<PaginationResultDto<InterventionDto> | null> => {
-      const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
-      const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
+  async (
+    id: string,
+    pageNum: number,
+    pageSize: number,
+    signal?: AbortSignal
+  ): Promise<PaginationResultDto<InterventionDto> | null> => {
+    const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
+    const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const url = new URL(`/api/perros/interventions`, location.origin);
-      url.searchParams.set("id", id);
-      url.searchParams.set("page", String(p));
-      url.searchParams.set("size", String(s));
+    const url = new URL(`/api/perros/interventions`, location.origin);
+    url.searchParams.set("id", id);
+    url.searchParams.set("page", String(p));
+    url.searchParams.set("size", String(s));
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 10000);
+    const combinedSignal = signal ?? controller.signal;
 
-      try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
+    try {
+      const resp = await fetchWithAuth(context, url.toString(), {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: combinedSignal,
+      });
 
-        const resp = await fetch(url.toString(), {
-          method: "GET",
-          headers: baseHeaders,
-          signal: combinedSignal,
-        });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", location.origin),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (
-                !body2 ||
-                typeof body2 !== "object" ||
-                !Array.isArray(
-                  (body2 as PaginationResultDto<InterventionDto>).data
-                )
-              )
-                throw new Error("Malformed API response");
-              return body2 as PaginationResultDto<InterventionDto>;
-            }
-          }
-        }
-
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(
-            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
-          );
-        }
-
-        const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
-          throw new Error("Expected JSON response");
-
-        const body = (await resp.json()) as unknown;
-        if (
-          !body ||
-          typeof body !== "object" ||
-          !Array.isArray((body as PaginationResultDto<InterventionDto>).data)
-        )
-          throw new Error("Malformed API response");
-        return body as PaginationResultDto<InterventionDto>;
-      } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
-        return null;
-      } finally {
-        clearTimeout(timeout);
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error(
+          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+        );
       }
-    },
-    [context]
-  );
+
+      const ct = resp.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json"))
+        throw new Error("Expected JSON response");
+
+      const body = (await resp.json()) as unknown;
+      if (
+        !body ||
+        typeof body !== "object" ||
+        !Array.isArray((body as PaginationResultDto<InterventionDto>).data)
+      )
+        throw new Error("Malformed API response");
+
+      return body as PaginationResultDto<InterventionDto>;
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") {
+        return null;
+      }
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  },
+  [context]
+);
+
 
   const searchParams = useSearchParams();
   const id: string = searchParams.get("id") ?? "";

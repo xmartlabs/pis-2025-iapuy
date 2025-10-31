@@ -22,6 +22,7 @@ import {
 import React, { useContext } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function Nueva() {
   const [tempValue, setTempValue] = React.useState("");
@@ -42,24 +43,30 @@ export default function Nueva() {
     name: "contacts",
   });
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!context) {
+      toast.error("Contexto de autenticación no disponible", { duration: 5000 });
+      return;
+    }
+
+    const url = "/api/instituciones";
+    const bodyData = {
+      name: data.main.name,
+      pathologies: data.main.Pathologies,
+      institutionContacts: (data.contacts ?? []).map((c) => ({
+        name: c.name,
+        contact: c.contact,
+      })),
+    };
+
     try {
-      const res = await fetch("/api/instituciones", {
+      const res = await fetchWithAuth(context, url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${context?.tokenJwt}`,
-        },
-        body: JSON.stringify({
-          name: data.main.name,
-          pathologies: data.main.Pathologies,
-          institutionContacts: (data.contacts ?? []).map((c) => ({
-            name: c.name,
-            contact: c.contact,
-          })),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData),
       });
+
       if (res.ok) {
-        toast.success("Institucion creada con exito", {
+        toast.success("Institucion creada con éxito", {
           duration: 5000,
           icon: null,
           className:
@@ -71,34 +78,40 @@ export default function Nueva() {
           },
         });
         router.push("/app/admin/instituciones/listado");
-      } else if (res.status === 409) {
-        toast.error(`Ya existe la institucion ${data.main.name}`, {
-          duration: 5000,
-          icon: null,
-          className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-          style: {
-            background: "#cfaaaaff",
-            border: "1px solid #ec0909ff",
-            color: "#ec0909ff",
-          },
-        });
-      } else {
-        toast.error("Ocurrio un error inesperado", {
-          duration: 5000,
-          icon: null,
-          className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
-          style: {
-            background: "#cfaaaaff",
-            border: "1px solid #ec0909ff",
-            color: "#ec0909ff",
-          },
-        });
+        return;
       }
+
+      if (res.status === 409) {
+        toast.error(`Ya existe la institución ${data.main.name}`, {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#cfaaaaff",
+            border: "1px solid #ec0909ff",
+            color: "#ec0909ff",
+          },
+        });
+        return;
+      }
+
+      const txt = await res.text().catch(() => "");
+      toast.error(txt || "Ocurrió un error inesperado", {
+        duration: 5000,
+        icon: null,
+        className:
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+        style: {
+          background: "#cfaaaaff",
+          border: "1px solid #ec0909ff",
+          color: "#ec0909ff",
+        },
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(error);
+      toast.error("Ocurrió un error inesperado", { duration: 5000 });
     }
   };
 

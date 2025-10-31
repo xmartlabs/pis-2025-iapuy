@@ -45,6 +45,7 @@ import React, {
 } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type PersonA = { userCi: string; userName: string };
 type PersonB = { userId: string; nombre: string };
@@ -180,84 +181,47 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
       { userCi: string; userName: string }[]
     >([]);
 
-    const context = useContext(LoginContext);
-    const token = context?.tokenJwt;
+    const context = useContext(LoginContext)!;
 
     useEffect(() => {
       if (!InterventionID) {
         setPeople([]);
         return;
       }
-
       const url = `/api/intervention/collaborators-for-expense?interventionId=${encodeURIComponent(
         InterventionID
       )}`;
-
-      const fetchWithToken = (t?: string) => {
-        const headers: Record<string, string> = { Accept: "application/json" };
-        if (t) headers.Authorization = `Bearer ${t}`;
-        return fetch(url, {
-          headers,
-          credentials: "include",
-        });
-      };
-
       const doFetch = async () => {
         try {
-          let res = await fetchWithToken(token ?? undefined);
-
-          if (res.status === 401) {
-            // try refresh
-            const refreshRes = await fetch("/api/auth/refresh", {
-              method: "GET",
+          const res = await fetchWithAuth(
+            context,
+            url,
+            {
+              headers: { Accept: "application/json" },
               credentials: "include",
-            });
-
-            if (refreshRes.ok) {
-              const refreshData = (await refreshRes.json()) as Record<
-                string,
-                unknown
-              >;
-              const newToken =
-                (refreshData.accessToken as string | undefined) ??
-                (refreshData.token as string | undefined) ??
-                (refreshData.tokenJwt as string | undefined) ??
-                null;
-
-              const ctx = context as {
-                setTokenJwt?: (t: string) => void;
-              } | null;
-              if (newToken && ctx && typeof ctx.setTokenJwt === "function") {
-                try {
-                  ctx.setTokenJwt?.(newToken);
-                } catch {
-                  /* ignore setter failure */
-                }
-              }
-
-              res = await fetchWithToken(newToken ?? undefined);
-            } else {
-              setPeople([]);
-              return;
             }
+          );
+
+          if (!res.ok) {
+            setPeople([]);
+            return;
           }
 
-          if (res.ok) {
-            const data = (await res.json()) as {
-              userCi: string;
-              userName: string;
-            }[];
-            setPeople(Array.isArray(data) ? data : []);
-          } else {
-            setPeople([]);
-          }
-        } catch {
+          const data = (await res.json()) as {
+            userCi: string;
+            userName: string;
+          }[];
+
+          setPeople(Array.isArray(data) ? data : []);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error("Error fetching people:", err);
           setPeople([]);
         }
       };
 
       doFetch().catch(() => {});
-    }, [InterventionID, token, context]);
+    }, [InterventionID, context]);
 
     const handleFormSubmit = (data: z.infer<typeof FormSchema>) => {
       if (onSubmit) {
@@ -394,8 +358,7 @@ export default function EditCostNotSanity({
   onEdited,
 }: Props2) {
   const [submitting, setSubmitting] = useState(false);
-  const context = useContext(LoginContext);
-  const token = context?.tokenJwt;
+  const context = useContext(LoginContext)!;
   const formRef = useRef<HTMLFormElement>(null);
 
   const [initialData, setInitialData] = useState<Partial<
@@ -404,17 +367,20 @@ export default function EditCostNotSanity({
   const [loading, setLoading] = useState(false);
 
   const submit = async (data: z.infer<typeof FormSchema>) => {
-    if (!submitting) {
-      setSubmitting(true);
-      try {
-        const params = new URLSearchParams();
-        params.set("id", costID);
-        const res = await fetch(`/api/expenses?${params.toString()}`, {
+  if (!submitting) {
+    setSubmitting(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("id", costID);
+
+      const res = await fetchWithAuth(
+        context,
+        `/api/expenses?${params.toString()}`,
+        {
           method: "PUT",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             interventionId: data.interventionID,
@@ -422,45 +388,42 @@ export default function EditCostNotSanity({
             type: data.type,
             amount: data.amount,
           }),
-        });
-
-        if (res.status === 204 || res.ok) {
-          onOpenChange(false);
-          onEdited();
-        } else {
-          toast.error("Error al editar el gasto. Intente nuevamente.");
         }
-      } catch {
+      );
+
+      if (res.status === 204 || res.ok) {
+        onOpenChange(false);
+        onEdited();
+      } else {
         toast.error("Error al editar el gasto. Intente nuevamente.");
-      } finally {
-        setSubmitting(false);
       }
+    } catch {
+      toast.error("Error al editar el gasto. Intente nuevamente.");
+    } finally {
+      setSubmitting(false);
     }
-  };
+  }
+};
+
 
   // load expense details when dialog opens and a costID is provided
   useEffect(() => {
     if (!open || !costID) return;
     let mounted = true;
 
-    const doFetch = async (withRetry = true): Promise<void> => {
+    const doFetch = async (): Promise<void> => {
       try {
         setLoading(true);
-        const headers: Record<string, string> = { Accept: "application/json" };
-        if (token) headers.Authorization = `Bearer ${token}`;
 
-        const res = await fetch(
+        const res = await fetchWithAuth(
+          context,
           `/api/expenses/details?id=${encodeURIComponent(costID)}`,
-          { headers }
-        );
-
-        if (res.status === 401 && withRetry) {
-          const resp2 = await fetch("/api/auth/refresh", { method: "POST" });
-          if (resp2.ok) {
-            await doFetch(false);
-            return;
+          {
+            headers: {
+              Accept: "application/json",
+            },
           }
-        }
+        );
 
         if (!res.ok) {
           if (mounted) setInitialData(null);
@@ -491,8 +454,7 @@ export default function EditCostNotSanity({
           if (!rec) return undefined;
           for (const k of keys) {
             const v = rec[k];
-            if (typeof v === "string" || typeof v === "number")
-              return String(v);
+            if (typeof v === "string" || typeof v === "number") return String(v);
           }
           return undefined;
         }
@@ -535,12 +497,12 @@ export default function EditCostNotSanity({
       }
     };
 
-    doFetch(true).catch(() => {});
+    doFetch().catch(() => {});
     // eslint-disable-next-line
     return () => {
       mounted = false;
     };
-  }, [open, costID, token]);
+  }, [open, costID, context]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

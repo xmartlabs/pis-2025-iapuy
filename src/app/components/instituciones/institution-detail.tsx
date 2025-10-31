@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import CustomPagination from "../pagination";
 import DeleteInstitutionButton from "./eliminar-institucion";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -169,10 +170,9 @@ const InterventionGrid=({ id }: { id: string })=>{
     const [loading, setLoading] = useState<boolean>(false);
     const [error,setError] =useState<string>("");
     const [data, setData] = useState<APIInstitutionIntervention[]>([]);
-    const context = useContext(LoginContext);
+    const context = useContext(LoginContext)!;
     const [selectedMes, setSelectedMes] = useState<string>("Todos");
     const [selectedAnio, setSelectedAnio] = useState<string>("Todos");
-    const token = context?.tokenJwt ?? undefined;
     const [selectedRange, setSelectedRange] = useState<{ fechaInicio: Date | null; fechaFin: Date | null }>({
         fechaInicio: null,
         fechaFin: null,
@@ -215,22 +215,20 @@ const InterventionGrid=({ id }: { id: string })=>{
     );
     const handleDelete = async (idI: string) => {
         try {
-            const response = await fetch(`/api/intervention?id=${idI}`, {
-                method: "DELETE",
-                headers: {
-                    "Accept": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await fetchWithAuth(context, `/api/intervention?id=${idI}`, {
+            method: "DELETE",
+            headers: {
+                Accept: "application/json",
+            },});
 
             if (!response.ok) {
                 setError("Error eliminando intervención");
-            }else{
+            } else {
                 setData(prev => prev.filter(interv => interv.id !== idI));
             }
         } catch (error2) {
             if (error2 instanceof Error) {
-               setError("Error eliminando intervención");
+                setError("Error eliminando intervención");
             } else {
                 setError("Error desconocido al eliminar intervención");
             }
@@ -241,14 +239,14 @@ const InterventionGrid=({ id }: { id: string })=>{
         setError("");
         const fetchData = async () => {
             try {
-            const params = new URLSearchParams();
-            params.set("page", String(page));
-            params.set("size", String(size));
+                const params = new URLSearchParams();
+                params.set("page", String(page));
+                params.set("size", String(size));
 
-            if (selectedRange.fechaInicio && selectedRange.fechaFin) {
+                if (selectedRange.fechaInicio && selectedRange.fechaFin) {
                 const pad2 = (n: number) => n.toString().padStart(2, "0");
 
-                const formatDate = (d: Date, endOfDay = false) => 
+                const formatDate = (d: Date, endOfDay = false) =>
                     `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T` +
                     `${pad2(endOfDay ? 23 : d.getHours())}:` +
                     `${pad2(endOfDay ? 59 : d.getMinutes())}:` +
@@ -258,28 +256,23 @@ const InterventionGrid=({ id }: { id: string })=>{
                 const fechaFinStr = formatDate(selectedRange.fechaFin, true);
 
                 params.set("dates", `${fechaInicioStr},${fechaFinStr}`);
-            }
-            
-            const response = await fetch(
-                `/api/instituciones/${id}/interventions?${params.toString()}`,
-                {
-                headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
                 }
-            );
 
-            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const response = await fetchWithAuth(
+                context,
+                `/api/instituciones/${id}/interventions?${params.toString()}`
+                );
 
-            const result = (await response.json()) as PaginationResultDto<APIInstitutionIntervention>;
-            setData(result.data ?? []);
-            setTotalPages(result.totalPages ?? 1);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+                const result = (await response.json()) as PaginationResultDto<APIInstitutionIntervention>;
+                setData(result.data ?? []);
+                setTotalPages(result.totalPages ?? 1);
             } catch (err) {
-            if (err instanceof Error) setError(err.message);
-            else setError(String(err));
+                if (err instanceof Error) setError(err.message);
+                else setError(String(err));
             } finally {
-            setLoading(false);
+                setLoading(false);
             }
         };
 
@@ -288,7 +281,7 @@ const InterventionGrid=({ id }: { id: string })=>{
             else setError(String(err));
             setLoading(false);
         });
-        }, [token, id, page, size, selectedRange.fechaInicio, selectedRange.fechaFin]);
+        }, [id, page, size, selectedRange.fechaInicio, selectedRange.fechaFin, context]);
     if (loading) return <p>Cargando...</p>;
     if (error) return <p>Error: {error}</p>;
     return(
@@ -425,22 +418,19 @@ export default function InstitutionDetail({id}:Props){
     const [data, setData] = useState<APIInstitutionResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const context = useContext(LoginContext);
-    const token = context?.tokenJwt ?? undefined;
+    const context = useContext(LoginContext)!;
+
     useEffect(() => {
         const fetchData = async () => {
-
             try {
-                const response = await fetch(`/api/instituciones/${id}`,{
-                    headers:{
-                        Accept: "application/json",
-                        Authorization: `Bearer ${token}`
-                    }                              
+                const response = await fetchWithAuth(context, `/api/instituciones/${id}`, {
+                    method: "GET",
                 });
+
                 if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
+                    throw new Error(`Error HTTP: ${response.status}`);
                 }
-                const result = await response.json() as APIInstitutionResponse;
+                const result = (await response.json()) as APIInstitutionResponse;
                 setData(result);
             } catch (err) {
                 if (err instanceof Error) {
@@ -453,13 +443,10 @@ export default function InstitutionDetail({id}:Props){
             }
         };
         fetchData().catch((err) => {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError(String(err));
-            }
+            if (err instanceof Error) setError(err.message);
+            else setError(String(err));
         });
-    }, [token, id]);
+    }, [context, id]);
     if (loading) return <p>Cargando...</p>;
     if (error) return <p>Error: {error}</p>;
     return (
