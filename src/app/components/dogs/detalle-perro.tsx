@@ -132,13 +132,15 @@ export default function DetallePerro() {
             <RegistroSanidad />
           </div>
         </div>
-        <EditDogDialog
-          reload={reload}
-          setReload={setReload}
-          open={isOpenEdit}
-          setOpen={setOpenEdit}
-          dogDetails={infoPerro}
-        />
+        {userType === UserType.Administrator && (
+          <EditDogDialog
+            reload={reload}
+            setReload={setReload}
+            open={isOpenEdit}
+            setOpen={setOpenEdit}
+            dogDetails={infoPerro}
+          />
+        )}
 
         <div className="space-y-4 text-[#121F0D]">
           <Dato
