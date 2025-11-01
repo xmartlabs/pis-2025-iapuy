@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import CustomBreadCrumb from "../bread-crumb/bread-crumb";
 import { LoginContext } from "@/app/context/login-context";
 import { Button } from "@/components/ui/button";
-import { Funnel, Trash2 } from "lucide-react";
+import { Funnel, Trash2, Pencil } from "lucide-react";
 import { DownloadButton } from "./download-pdf";
 import {
   Table,
@@ -38,6 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { UserType } from "@/app/types/user.types";
+import { useRouter } from "next/navigation";
 interface Props {
   id: string;
 }
@@ -535,38 +537,40 @@ export default function InstitutionDetail({ id }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const context = useContext(LoginContext)!;
+  const router = useRouter();
+
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetchWithAuth(
+        context,
+        `/api/instituciones/${id}`,
+        {
+          method: "GET",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+      const result = (await response.json()) as APIInstitutionResponse;
+      setData(result);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [context, id]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetchWithAuth(
-          context,
-          `/api/instituciones/${id}`,
-          {
-            method: "GET",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-        const result = (await response.json()) as APIInstitutionResponse;
-        setData(result);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError(String(err));
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData().catch((err) => {
       if (err instanceof Error) setError(err.message);
       else setError(String(err));
     });
-  }, [context, id]);
+  }, [fetchData]);
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>Error: {error}</p>;
   return (
@@ -580,19 +584,22 @@ export default function InstitutionDetail({ id }: Props) {
         <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-2.5%] align-middle">
           {data?.nombre ?? ""}
         </h1>
-        {/*
-                NO ENTRA EN EL SPRINT
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        className="w-[90px] h-[40px] min-w-[80px] px-3 py-2 gap-1            
-                                    rounded-md bg-[#5B9B40] flex items-center justify-center text-white
-                                    hover:bg-[#5B9B40] hover:text-white"
-                    >
-                        <Pencil className="w-4 h-4" />
-                        Editar
-                    </Button>
-                </div>*/}
+        {context.userType === UserType.Administrator && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                router.push(`/app/admin/instituciones/editar?id=${id}`);
+              }}
+              className="w-[90px] h-[40px] min-w-[80px] px-3 py-2 gap-1            
+                          rounded-md bg-[#5B9B40] flex items-center justify-center text-white
+                          hover:bg-[#4a7d33] hover:text-white"
+            >
+              <Pencil className="w-4 h-4" />
+              Editar
+            </Button>
+          </div>
+        )}
       </div>
       <div className="flex flex-col">
         <p

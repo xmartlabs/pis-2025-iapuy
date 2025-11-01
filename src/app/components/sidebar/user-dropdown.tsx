@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserType } from "@/app/page";
+import { UserType } from "@/app/types/user.types";
 import { useEffect, useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
 import {

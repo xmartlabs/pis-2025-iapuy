@@ -1,13 +1,8 @@
-import { initDatabase } from "@/lib/init-database";
 import jwt from "jsonwebtoken";
 import { Hashing } from "@/lib/crypto/hash";
 import { UserService } from "../../users/service/user.service";
+import { UserType } from "@/app/types/user.types";
 const JWT_SECRET = process.env.JWT_SECRET!;
-
-export enum UserType {
-  Collaborator = "Colaborador",
-  Administrator = "Administrador",
-}
 
 export interface LoginRequest {
   ci: string;
