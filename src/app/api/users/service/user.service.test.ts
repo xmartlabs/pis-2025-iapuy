@@ -192,6 +192,8 @@ describe("UserService", () => {
     const result = await service.delete("12345678");
     expect(destroyMock).toHaveBeenCalledWith({
       where: { ci: "12345678" },
+      force: true,
+      cascade: true,
     });
     expect(result).toBe(true);
   });

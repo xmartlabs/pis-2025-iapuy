@@ -119,7 +119,7 @@ describe("UserController", () => {
   // ---------------------- createUser ----------------------
   it("should return 201 and success message when user is created", async () => {
     const newUser: CreateUserDto = {
-        ci: "1",
+        ci: "12345678",
         password: "pw",
         nombre: "Alice",
         celular: "",
@@ -133,7 +133,7 @@ describe("UserController", () => {
       json: vi.fn().mockResolvedValue(newUser),
     } as unknown as NextRequest;
 
-    userService.create.mockResolvedValue("1" as never);
+    userService.create.mockResolvedValue("12345678" as never);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const result = await controller.createUser(req);
@@ -141,7 +141,7 @@ describe("UserController", () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(userService.create).toHaveBeenCalledWith(newUser);
     expect(result).toEqual({
-      message: "Usuario con ci 1 creado con éxito",
+      message: "Usuario con ci 12345678 creado con éxito",
       status: 201,
     });
   });
@@ -149,7 +149,16 @@ describe("UserController", () => {
   it("should throw error if userService.create rejects", async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const req = {
-      json: vi.fn().mockResolvedValue({ ci: "1", password: "pw" }),
+      json: vi.fn().mockResolvedValue({ 
+        ci: "12345678", 
+        password: "pw",
+        nombre: "Test",
+        celular: "",
+        banco: "",
+        cuentaBancaria: "",
+        rol: "admin",
+        perros: []
+      }),
     } as unknown as NextRequest;
 
     userService.create.mockRejectedValue(new Error("fail"));

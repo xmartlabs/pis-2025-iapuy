@@ -39,12 +39,15 @@ vi.mock("@/lib/pagination/transform", () => ({
 vi.mock("@/app/models/institution-contact.entity", () => ({
   InstitutionContact: {
     create: vi.fn(),
+    bulkCreate: vi.fn(),
   },
 }));
 
 vi.mock("@/app/models/patologia.entity", () => ({
   Patologia: {
     findOrCreate: vi.fn(),
+    findAll: vi.fn(),
+    bulkCreate: vi.fn(),
   },
 }));
 
@@ -53,6 +56,7 @@ vi.mock("@/app/models/intitucion-patalogia.entity", () => ({
     findOrCreate: vi.fn(),
     create: vi.fn(),
     findAll: vi.fn(),
+    bulkCreate: vi.fn(),
   },
 }));
 
@@ -207,12 +211,29 @@ describe("InstitucionesService", () => {
     } as never);
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    vi.mocked(InstitutionContact.create).mockResolvedValue({} as never);
+    vi.mocked(InstitutionContact.bulkCreate).mockResolvedValue([] as never);
+    
+    // First call to Patologia.findAll (checking existing) returns empty
+    // Second call to Patologia.findAll (after bulkCreate) returns the created pathologies
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Patologia.findAll)
+      .mockResolvedValueOnce([] as never) // First call: no existing pathologies
+      .mockResolvedValueOnce([ // Second call: return all pathologies
+        { id: "pat-1", nombre: "Diabetes" },
+        { id: "pat-2", nombre: "Hipertensión" }
+      ] as never);
+    
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(Patologia.bulkCreate).mockResolvedValue([] as never);
     // eslint-disable-next-line @typescript-eslint/unbound-method
     vi.mocked(Patologia.findOrCreate).mockResolvedValue([
       { id: "mock-id", nombre: "Diabetes" },
       true,
     ] as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(InstitucionPatologias.findAll).mockResolvedValue([] as never);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(InstitucionPatologias.bulkCreate).mockResolvedValue([] as never);
     // eslint-disable-next-line @typescript-eslint/unbound-method
     vi.mocked(InstitucionPatologias.findOrCreate).mockResolvedValue([
       { institucionId: "inst-1", patologiaId: "mock-id" },
@@ -228,11 +249,11 @@ describe("InstitucionesService", () => {
     );
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(InstitutionContact.create).toHaveBeenCalledTimes(2);
+    expect(InstitutionContact.bulkCreate).toHaveBeenCalledTimes(1);
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(Patologia.findOrCreate).toHaveBeenCalledTimes(2);
+    expect(Patologia.findOrCreate).toHaveBeenCalledTimes(0);
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(InstitucionPatologias.findOrCreate).toHaveBeenCalledTimes(2);
+    expect(InstitucionPatologias.bulkCreate).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ id: "inst-1", nombre: mockDTO.name });
   });
 
