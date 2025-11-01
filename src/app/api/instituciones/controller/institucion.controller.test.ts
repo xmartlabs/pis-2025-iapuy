@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InstitucionesController } from "./institucion.controller";
 import type { PaginationDto } from "@/lib/pagination/pagination.dto";
