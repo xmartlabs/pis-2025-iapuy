@@ -219,36 +219,17 @@ export class InstitucionesService {
   }
 
   async interventionsPDF(id: string, dates: Date[]): Promise<Uint8Array> {
-    const interventions = await Intervention.findAll({
-      where:
-        dates && dates.length > 0
-          ? {
-              [Op.or]: dates.map((rawDate) => {
-                const date = new Date(rawDate);
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1;
+    const where =
+      dates && dates.length === 2
+        ? {
+            timeStamp: {
+              [Op.between]: [new Date(dates[0]), new Date(dates[1])],
+            },
+          }
+        : undefined;
 
-                return {
-                  [Op.and]: [
-                    sequelize.where(
-                      sequelize.fn(
-                        "EXTRACT",
-                        sequelize.literal(`YEAR FROM "timeStamp"`)
-                      ),
-                      year
-                    ),
-                    sequelize.where(
-                      sequelize.fn(
-                        "EXTRACT",
-                        sequelize.literal(`MONTH FROM "timeStamp"`)
-                      ),
-                      month
-                    ),
-                  ],
-                };
-              }),
-            }
-          : undefined,
+    const interventions = await Intervention.findAll({
+      where,
       include: [
         {
           model: Institucion,
