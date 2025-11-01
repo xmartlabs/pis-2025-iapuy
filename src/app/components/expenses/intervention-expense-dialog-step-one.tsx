@@ -17,6 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { cn } from "@/lib/utils";
 import { LoginContext } from "@/app/context/login-context";
 import { Label } from "@/components/ui/label";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export type Intervention = {
   intervensionId: string;
@@ -34,8 +35,7 @@ export function InterventionCombobox({ value: propValue, onChange }: Interventio
     const [internalValue, setInternalValue] = useState("");
     const value = propValue ?? internalValue;
     const triggerRef = useRef<HTMLButtonElement>(null);
-    const context = useContext(LoginContext);
-    const token = context?.tokenJwt;
+    const context = useContext(LoginContext)!;
     const [data, setData] = useState<Intervention[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -49,34 +49,41 @@ export function InterventionCombobox({ value: propValue, onChange }: Interventio
     };
    useEffect(() => {
     const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch("/api/intervention/findall-simple",{
-            headers:{
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetchWithAuth(
+            context,
+            "/api/intervention/findall-simple",
+            {
+                headers: {
                 Accept: "application/json",
-                Authorization: `Bearer ${token}`
-            },            
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = (await response.json()) as Intervention[];
-        setData(result);
-      }catch (err) {
-        if (err instanceof Error) {
-            setError(err.message); 
-        } else {
+                },
+            }
+            );
+
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = (await response.json()) as Intervention[];
+            setData(result);
+
+        } catch (err) {
+            if (err instanceof Error) {
+            setError(err.message);
+            } else {
             setError("Error desconocido");
+            }
+        } finally {
+            setLoading(false);
         }
-      }finally {
-        setLoading(false);
-      }
-    };
+        };
 
     // eslint-disable-next-line no-console
     fetchData().catch(err => { console.error(err); });
-  }, []);
+  }, [context]);
   return (
     <div className="flex flex-col w-full">
         <Popover open={open} onOpenChange={setOpen}>

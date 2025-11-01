@@ -9,6 +9,7 @@ import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { UserType } from "@/app/page";
 import { forbidden } from "next/navigation";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   return (
     <div>
@@ -36,46 +37,21 @@ type ApiResponse = {
 export default function DetallePerro() {
   const [infoPerro, setInfoPerro] = useState<DetallesPerroDto>(perroDefault);
   const [isOpenError, setIsOpenError] = useState(false);
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const fetchDetallesPerro = useCallback(
     async (id: string): Promise<ApiResponse> => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const triedRefresh = false;
-
-      const resp = await fetch(`/api/perros/detalles?id=${id}`, {
-        method: "GET",
-        headers: baseHeaders,
-      });
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(`/api/perros/detalles?id=${id}`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${newToken}`,
-              },
-            });
-
-            return (await retryResp.json()) as Promise<Promise<ApiResponse>>;
-          }
+      const resp = await fetchWithAuth(
+        context,
+        `/api/perros/detalles?id=${encodeURIComponent(id)}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         }
-      }
-      return (await resp.json()) as Promise<ApiResponse>;
+      );
+
+      return (await resp.json()) as ApiResponse;
     },
     [context]
   );
@@ -94,7 +70,7 @@ export default function DetallePerro() {
       .catch(() => {
         setIsOpenError(true);
       });
-  }, [id]);
+  }, [fetchDetallesPerro, id]);
   if (!context?.userType) {
     return null;
   }

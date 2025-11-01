@@ -38,6 +38,7 @@ import { AlertCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useContext, useEffect, useRef, useState, forwardRef } from "react";
 import { LoginContext } from "@/app/context/login-context";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 interface ComboboxProps {
   readonly value: string;
@@ -213,73 +214,28 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
       name: "measurementType",
     });
 
-    const context = useContext(LoginContext);
-    const token = context?.tokenJwt;
-
+    const context = useContext(LoginContext)!;
     useEffect(() => {
       if (!InterventionID) {
         setPeople([]);
         return;
       }
 
+      const controller = new AbortController();
       const url = `/api/intervention/collaborators-for-expense?interventionId=${encodeURIComponent(
         InterventionID
       )}`;
 
-      const fetchWithToken = (t?: string) => {
-        const headers: Record<string, string> = { Accept: "application/json" };
-        if (t) headers.Authorization = `Bearer ${t}`;
-        return fetch(url, {
-          headers,
-          credentials: "include",
-        });
-      };
-
       const doFetch = async () => {
         try {
-          let res = await fetchWithToken(token ?? undefined);
-
-          if (res.status === 401) {
-            // try refresh
-            const refreshRes = await fetch("/api/auth/refresh", {
-              method: "GET",
-              credentials: "include",
-            });
-
-            if (refreshRes.ok) {
-              const refreshData = (await refreshRes.json()) as Record<
-                string,
-                unknown
-              >;
-              const newToken =
-                (refreshData.accessToken as string | undefined) ??
-                (refreshData.token as string | undefined) ??
-                (refreshData.tokenJwt as string | undefined) ??
-                null;
-
-              // if context exposes a setter, update it
-              const ctx = context as {
-                setTokenJwt?: (t: string) => void;
-              } | null;
-              if (newToken && ctx && typeof ctx.setTokenJwt === "function") {
-                try {
-                  ctx.setTokenJwt?.(newToken);
-                } catch {
-                  /* ignore setter failure */
-                }
-              }
-
-              // retry with refreshed token
-              res = await fetchWithToken(newToken ?? undefined);
-            } else {
-              // couldn't refresh -> clear people and exit
-              setPeople([]);
-              return;
-            }
-          }
+          const res = await fetchWithAuth(context, url, {
+            method: "GET",
+            credentials: "include",
+            signal: controller.signal,
+          });
 
           if (res.ok) {
-            const data = (await res.json()) as {
+            const data = (await res.json().catch(() => [])) as {
               userCi: string;
               userName: string;
             }[];
@@ -293,7 +249,9 @@ export const ExpenseForm = forwardRef<HTMLFormElement, Props>(
       };
 
       doFetch().catch(() => {});
-    }, [InterventionID, token, context]);
+      // eslint-disable-next-line @typescript-eslint/consistent-return
+      return () => { controller.abort(); };
+    }, [InterventionID, context]);
 
     useEffect(() => {
       if (!selectedType) {
@@ -467,19 +425,21 @@ export default function ExpenseDialogTwo({
   onCreated,
 }: Props2) {
   const [submitting, setSubmitting] = useState(false);
-  const context = useContext(LoginContext);
-  const token = context?.tokenJwt;
+  const context = useContext(LoginContext)!;
   const formRef = useRef<HTMLFormElement>(null);
 
   const submit = async (data: z.infer<typeof FormSchema>) => {
-    if (!submitting) {
-      setSubmitting(true);
-      try {
-        const res = await fetch("/api/expenses", {
+    if (submitting) return;
+    setSubmitting(true);
+
+    try {
+      const res = await fetchWithAuth(
+        context,
+        "/api/expenses",
+        {
           method: "POST",
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             userId: data.peopleCI || "",
@@ -488,34 +448,20 @@ export default function ExpenseDialogTwo({
             concept: "",
             state: "Pendiente de pago",
             amount: data.amount,
-            km: data.measurementType === "KM"
+            km: data.measurementType === "KM",
           }),
-        });
-
-        if (res.ok) {
-          // on success, close dialog and notify parent
-          try {
-            onOpenChange(false);
-          } catch {
-            /* ignore */
-          }
-          try {
-            onCreated?.();
-          } catch {
-            /* ignore */
-          }
-          // eslint-disable-next-line no-console
-          console.log("Pago ingresado con éxito");
-        } else {
-          // eslint-disable-next-line no-console
-          console.error("Error al ingresar pago");
         }
-      } catch {
-        // eslint-disable-next-line no-console
-        console.error("Error al enviar gasto");
-      } finally {
-        setSubmitting(false);
+      );
+
+      if (res.ok) {
+        onOpenChange?.(false);
+        onCreated?.();
       }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Error al enviar gasto", err);
+    } finally {
+      setSubmitting(false);
     }
   };
 

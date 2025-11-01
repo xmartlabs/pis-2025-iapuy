@@ -13,6 +13,7 @@ import NuevaIntervencionForm, {
   type NuevaIntervencionFormRef,
 } from "@/app/components/intervenciones/form-new-intervention";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type Institution = {
   id: string;
@@ -34,62 +35,24 @@ export default function NewIntervention() {
   const fetchInterventionsByInstitution = useCallback(
     async (
       institutionName: string,
-      signal?: AbortSignal,
-      triedRefresh = false
+      signal?: AbortSignal
     ): Promise<PaginationResultDto<InterventionDto> | null> => {
       const url = new URL("/api/intervention", location.origin);
       url.searchParams.set("query", institutionName);
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+      const controller = signal ? null : new AbortController();
+      const combinedSignal = signal ?? controller?.signal;
+      const timeout = controller ? setTimeout(() => { controller.abort(); }, 10000) : null;
 
       try {
-        const token = context?.tokenJwt;
-
-        if (!token) {
+        if (!context?.tokenJwt) {
           throw new Error("No authentication token available");
         }
 
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, url.toString(), {
           method: "GET",
-          headers: baseHeaders,
           signal: combinedSignal,
         });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", location.origin),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              return await fetchInterventionsByInstitution(
-                institutionName,
-                signal,
-                true
-              );
-            }
-          }
-        }
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -99,15 +62,17 @@ export default function NewIntervention() {
         }
 
         const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
+        if (!ct.includes("application/json")) {
           throw new Error("Expected JSON response");
+        }
 
         const body = (await resp.json()) as unknown;
         if (
           !body ||
           !Array.isArray((body as PaginationResultDto<InterventionDto>).data)
-        )
+        ) {
           throw new Error("Malformed API response");
+        }
 
         return body as PaginationResultDto<InterventionDto>;
       } catch (err) {
@@ -116,7 +81,7 @@ export default function NewIntervention() {
         }
         throw err;
       } finally {
-        clearTimeout(timeout);
+        if (timeout) clearTimeout(timeout);
       }
     },
     [context]
@@ -124,8 +89,8 @@ export default function NewIntervention() {
   const onSubmit = async (values: FormValues) => {
     setRepeatedIntervention(null);
     setInstitution(values.institution);
+
     try {
-      const token = context?.tokenJwt;
       if (!context) {
         toast("Error: Contexto de autenticación no disponible", {
           description:
@@ -134,7 +99,7 @@ export default function NewIntervention() {
         return;
       }
 
-      if (!token) {
+      if (!context.tokenJwt) {
         toast("Error: No hay token de autenticación", {
           description: "Por favor, inicie sesión nuevamente.",
         });
@@ -152,6 +117,8 @@ export default function NewIntervention() {
         fotosUrls: [],
         state: "Pendiente de asignacion",
       };
+
+      // Verificar si ya existe una intervención en la misma institución y hora
       if (!retrying) {
         const interventions = await fetchInterventionsByInstitution(
           values.institution
@@ -171,66 +138,37 @@ export default function NewIntervention() {
           }
         }
       }
+
+      // --- Usamos fetchWithAuth para el POST ---
       const url = new URL("/api/intervention", location.origin);
 
-      const doPost = async (authToken: string) => {
-        const headers = {
-          Accept: "application/json",
+      const resp = await fetchWithAuth(context, url.toString(), {
+        method: "POST",
+        headers: {
           "Content-Type": "application/json",
-          authorization: `Bearer ${authToken}`,
-        };
+        },
+        body: JSON.stringify(backendData),
+      });
 
-        return await fetch(url.toString(), {
-          method: "POST",
-          headers,
-          body: JSON.stringify(backendData),
-        });
-      };
-      let response = await doPost(token);
-
-      if (response.status === 401) {
-        const refreshResponse = await fetch(
-          new URL("/api/auth/refresh", location.origin),
-          {
-            method: "POST",
-            headers: { Accept: "application/json" },
-          }
-        );
-
-        if (refreshResponse.ok) {
-          const refreshData = (await refreshResponse
-            .json()
-            .catch(() => null)) as { accessToken?: string } | null;
-          const newToken = refreshData?.accessToken;
-
-          if (newToken && typeof newToken === "string") {
-            context?.setToken(newToken);
-            response = await doPost(newToken);
-          } else {
-            throw new Error("No se pudo obtener un nuevo token de acceso");
-          }
-        } else {
-          throw new Error("Error al refrescar la autenticación");
-        }
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
         throw new Error(
-          errorText || `Error ${response.status}: ${response.statusText}`
+          errorText || `Error ${resp.status}: ${resp.statusText}`
         );
       }
+
       setInstitution(null);
       setRetrying(false);
       router.push("/app/admin/intervenciones/listado?success=1");
-    } catch {
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
       toast("Error creando intervención");
     }
   };
   const fetchInstitutions = useCallback(
     async (
-      signal?: AbortSignal,
-      triedRefresh = false
+      signal?: AbortSignal
     ): Promise<Array<{ id: string; name: string }> | null> => {
       const url = new URL("/api/instituciones/findall-simple", location.origin);
 
@@ -241,45 +179,14 @@ export default function NewIntervention() {
       const combinedSignal = signal ?? controller.signal;
 
       try {
-        const token = context?.tokenJwt;
-
-        if (!token) {
-          throw new Error("No authentication token available");
+        if (!context) {
+          throw new Error("No authentication context available");
         }
 
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, url.toString(), {
           method: "GET",
-          headers: baseHeaders,
           signal: combinedSignal,
         });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", location.origin),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              return await fetchInstitutions(signal, true);
-            }
-          }
-        }
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -289,12 +196,14 @@ export default function NewIntervention() {
         }
 
         const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
+        if (!ct.includes("application/json")) {
           throw new Error("Expected JSON response");
+        }
 
         const body = (await resp.json()) as unknown;
-        if (!body || !Array.isArray(body))
+        if (!body || !Array.isArray(body)) {
           throw new Error("Malformed API response");
+        }
 
         return body as Array<{ id: string; name: string }>;
       } catch (err) {

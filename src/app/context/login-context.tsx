@@ -7,7 +7,7 @@ export interface Dog {
   nombre: string;
 }
 
-interface LoginContextType {
+export interface LoginContextType {
   tokenJwt: string | null;
   userType: UserType | null;
   userName: string | null;

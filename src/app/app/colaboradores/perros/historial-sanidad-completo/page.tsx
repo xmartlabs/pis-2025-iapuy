@@ -17,6 +17,7 @@ import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "@/app/components/pagination";
 import EliminarEventoSanidad from "@/app/components/dogs/eliminar-evento-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function HistorialSanidad() {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
@@ -26,84 +27,22 @@ export default function HistorialSanidad() {
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
   const [dogName, setDogName] = useState<string>("");
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const sanidadContext = useContext(SanidadContext);
 
   const fetchDogDetails = useCallback(
     async (
       id: string,
-      signal?: AbortSignal,
-      triedRefresh = false
+      signal?: AbortSignal
     ): Promise<{ perro?: { nombre?: string } } | null> => {
-      const url = new URL(`/api/perros/detalles`, location.origin);
-      url.searchParams.set("id", id);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+      const url = `/api/perros/detalles?id=${encodeURIComponent(id)}`;
 
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, url, {
           method: "GET",
-          headers: baseHeaders,
-          signal: combinedSignal,
+          headers: { Accept: "application/json" },
+          signal,
         });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch(
-            new URL("/api/auth/refresh", location.origin),
-            {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              signal: combinedSignal,
-            }
-          );
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (!body2 || typeof body2 !== "object")
-                throw new Error("Malformed API response");
-              return body2 as { perro?: { nombre?: string } };
-            }
-          }
-        }
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -113,20 +52,17 @@ export default function HistorialSanidad() {
         }
 
         const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
+        if (!ct.includes("application/json")) {
           throw new Error("Expected JSON response");
+        }
 
-        const body = (await resp.json()) as unknown;
-        if (!body || typeof body !== "object")
-          throw new Error("Malformed API response");
-        return body as { perro?: { nombre?: string } };
+        const body = (await resp.json()) as { perro?: { nombre?: string } };
+        return body;
       } catch (err) {
         if ((err as DOMException)?.name === "AbortError") {
           return null;
         }
         return null;
-      } finally {
-        clearTimeout(timeout);
       }
     },
     [context]
@@ -134,55 +70,29 @@ export default function HistorialSanidad() {
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const triedRefresh = false;
-
-      const resp = await fetch(
-        `/api/registros-sanidad?id=${encodeURIComponent(
-          id
-        )}&page=${page}&size=${size}`,
+      const resp = await fetchWithAuth(
+        context,
+        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
         {
           method: "GET",
-          headers: baseHeaders,
+          headers: { Accept: "application/json" },
         }
       );
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
 
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(
-              `/api/registros-sanidad?id=${encodeURIComponent(
-                id
-              )}&page=${page}&size=${size}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              }
-            );
-
-            return (await retryResp.json()) as Promise<
-              PaginationResultDto<EventoSanidadDto>
-            >;
-          }
-        }
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        throw new Error(
+          `API ${resp.status}: ${resp.statusText}${text ? ` - ${text}` : ""}`
+        );
       }
-      return (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
+
+      const contentType = resp.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Expected JSON response");
+      }
+
+      const body = (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
+      return body;
     },
     [context, page, size]
   );

@@ -21,6 +21,7 @@ import DeleteIntervention from "@/app/components/interventions/details/delete-in
 import DogsNPersons from "@/app/components/interventions/details/tab-dogs-and-persons";
 import InterventionDay from "@/app/components/interventions/details/tab-intervention-day";
 import type { ApiResponse } from "@/app/components/interventions/details/types";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 const statusToColor: Record<string, string> = {
   "Pendiente de asignacion": "#FECACA",
@@ -69,43 +70,39 @@ export default function IntervencionPage() {
 
   const fetchDetallesIntervencion = useCallback(
     async (id: string): Promise<ApiResponse> => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const triedRefresh = false;
-
-      const resp = await fetch(`/api/intervention/${id}/details`, {
-        method: "GET",
-        headers: baseHeaders,
-      });
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            const retryResp = await fetch(`/api/intervention/${id}/details`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${newToken}`,
-              },
-            });
-
-            return (await retryResp.json()) as Promise<Promise<ApiResponse>>;
-          }
-        }
+      if (!context) {
+        throw new Error("No authentication context available");
       }
-      return (await resp.json()) as Promise<ApiResponse>;
+
+      const resp = await fetchWithAuth(
+        context,
+        `/api/intervention/${id}/details`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error(
+          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+        );
+      }
+
+      const ct = resp.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json")) {
+        throw new Error("Expected JSON response");
+      }
+
+      const body = (await resp.json()) as unknown;
+      if (!body || typeof body !== "object") {
+        throw new Error("Malformed API response");
+      }
+
+      return body as ApiResponse;
     },
     [context]
   );
