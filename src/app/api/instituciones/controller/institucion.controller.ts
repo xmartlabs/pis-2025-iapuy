@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { InstitucionesService } from "../service/instituciones.service";
 import { type PaginationDto } from "@/lib/pagination/pagination.dto";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
+import { type UpdateInstitutionDTO } from "../dtos/update-institucion.dto";
 import type { Institucion } from "@/app/models/institucion.entity";
 
 export class InstitucionesController {
@@ -30,6 +31,11 @@ export class InstitucionesController {
 
   async deleteInstitution(id: string): Promise<void> {
     await this.institutionsService.delete(id);
+  }
+
+  async updateInstitution(req: NextRequest, id: string): Promise<Institucion> {
+    const body = (await req.json()) as unknown as UpdateInstitutionDTO;
+    return this.institutionsService.update(id, body);
   }
 
   async getInterventions(id: string, dates: Date[], pagination: PaginationDto) {

@@ -20,6 +20,7 @@ import type { PerroDTO } from "./DTOS/perro.dto";
 import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { Button } from "@/components/ui/button";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function ListadoPerrosTable() {
   const [perros, setPerros] = useState<PerroDTO[]>([]);
@@ -32,7 +33,7 @@ export default function ListadoPerrosTable() {
   const [reload, setReload] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const router = useRouter();
 
   // Debounce para la búsqueda
@@ -56,8 +57,7 @@ export default function ListadoPerrosTable() {
       pageNum: number,
       pageSize: number,
       query?: string,
-      signal?: AbortSignal,
-      triedRefresh = false
+      signal?: AbortSignal
     ): Promise<PaginationResultDto<PerroDTO> | null> => {
       const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
       const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
@@ -69,73 +69,15 @@ export default function ListadoPerrosTable() {
       const url = `/api/perros?${qs.toString()}`;
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
+      const timeout = setTimeout(() => { controller.abort(); }, 10000);
       const combinedSignal = signal ?? controller.signal;
 
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const resp = await fetch(url.toString(), {
+        // 🔹 Usamos tu función centralizada
+        const resp = await fetchWithAuth(context, url, {
           method: "GET",
-          headers: baseHeaders,
           signal: combinedSignal,
         });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-            signal: combinedSignal,
-          });
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (
-                !body2 ||
-                typeof body2 !== "object" ||
-                !Array.isArray((body2 as PaginationResultDto<PerroDTO>).data)
-              )
-                throw new Error("Malformed API response");
-
-              return body2 as PaginationResultDto<PerroDTO>;
-            }
-          }
-        }
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -158,11 +100,8 @@ export default function ListadoPerrosTable() {
 
         return body as PaginationResultDto<PerroDTO>;
       } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
-        // you were swallowing errors and returning null — keep that behaviour
-        return null;
+        if ((err as DOMException)?.name === "AbortError") return null;
+        return null; // mantiene el mismo comportamiento que antes
       } finally {
         clearTimeout(timeout);
       }

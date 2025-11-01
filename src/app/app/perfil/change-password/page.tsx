@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 const FormSchema = z.object({
   password: z.string()
@@ -30,7 +31,7 @@ export interface PasswordChangeResponse {
 
 export default function Home() {
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [reponseError, setError] = useState<string | null>(null);
@@ -54,13 +55,15 @@ export default function Home() {
           return;
       }
 
-
-      const token = context?.tokenJwt;
-
-      const res = await fetch("/api/users", {
+      const res = await fetchWithAuth(context, "/api/users", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({username: context?.userCI, password: newPassword }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: context?.userCI,
+          password: newPassword,
+        }),
       });
 
       if (!res.ok) {

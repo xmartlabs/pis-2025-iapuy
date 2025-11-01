@@ -15,8 +15,8 @@ import {
 import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "@/app/components/pagination";
-import CustomBreadCrumb2Links from "@/app/components/bread-crumb/bread-crumb-2links";
 import EliminarEventoSanidad from "@/app/components/dogs/eliminar-evento-sanidad";
+import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function HistorialSanidad() {
@@ -35,19 +35,13 @@ export default function HistorialSanidad() {
       id: string,
       signal?: AbortSignal
     ): Promise<{ perro?: { nombre?: string } } | null> => {
-      const url = new URL(`/api/perros/detalles`, location.origin);
-      url.searchParams.set("id", id);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+      const url = `/api/perros/detalles?id=${encodeURIComponent(id)}`;
 
       try {
-        const resp = await fetchWithAuth(context, url.toString(), {
+        const resp = await fetchWithAuth(context, url, {
           method: "GET",
-          signal: combinedSignal,
+          headers: { Accept: "application/json" },
+          signal,
         });
 
         if (!resp.ok) {
@@ -62,19 +56,13 @@ export default function HistorialSanidad() {
           throw new Error("Expected JSON response");
         }
 
-        const body = (await resp.json()) as unknown;
-        if (!body || typeof body !== "object") {
-          throw new Error("Malformed API response");
-        }
-
-        return body as { perro?: { nombre?: string } };
+        const body = (await resp.json()) as { perro?: { nombre?: string } };
+        return body;
       } catch (err) {
         if ((err as DOMException)?.name === "AbortError") {
           return null;
         }
         return null;
-      } finally {
-        clearTimeout(timeout);
       }
     },
     [context]
@@ -82,36 +70,29 @@ export default function HistorialSanidad() {
 
   const fetchRegistrosSanidad = useCallback(
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
-      const url = `/api/registros-sanidad?id=${encodeURIComponent(
-        id
-      )}&page=${page}&size=${size}`;
-
-      const resp = await fetchWithAuth(context, url, {
-        method: "GET",
-      });
+      const resp = await fetchWithAuth(
+        context,
+        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+        {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        }
+      );
 
       if (!resp.ok) {
-        const txt = await resp.text().catch(() => "");
+        const text = await resp.text().catch(() => "");
         throw new Error(
-          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          `API ${resp.status}: ${resp.statusText}${text ? ` - ${text}` : ""}`
         );
       }
 
-      const ct = resp.headers.get("content-type") ?? "";
-      if (!ct.includes("application/json")) {
+      const contentType = resp.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
         throw new Error("Expected JSON response");
       }
 
-      const body = (await resp.json()) as unknown;
-      if (
-        !body ||
-        typeof body !== "object" ||
-        !Array.isArray((body as PaginationResultDto<EventoSanidadDto>).data)
-      ) {
-        throw new Error("Malformed API response");
-      }
-
-      return body as PaginationResultDto<EventoSanidadDto>;
+      const body = (await resp.json()) as PaginationResultDto<EventoSanidadDto>;
+      return body;
     },
     [context, page, size]
   );
@@ -149,9 +130,8 @@ export default function HistorialSanidad() {
   return (
     <>
       <div className="w-full">
-        <CustomBreadCrumb2Links
-          link={["/app/admin/perros/listado", "Perros"]}
-          link2={[`/app/admin/perros/detalles?id=${id}`, dogName]}
+        <CustomBreadCrumb
+          link={[`/app/colaboradores/perros/detalles?id=${id}`, dogName]}
           current={"Historial de Sanidad"}
           className="mb-8"
         />
@@ -214,6 +194,26 @@ export default function HistorialSanidad() {
                           activity={registro.activity}
                           disabled={registro.hasPaidExpense}
                         />
+                        {/* <button
+                          onClick={() => {
+                            handleDelete(registro.id, registro.activity).catch(
+                              console.error
+                            );
+                          }}
+                          disabled={registro.hasPaidExpense}
+                          title={
+                            registro.hasPaidExpense
+                              ? "No se puede eliminar porque ya se pagó"
+                              : ""
+                          }
+                          className={`shrink-0 p-1 ${
+                            registro.hasPaidExpense
+                              ? "disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100"
+                              : ""
+                          }`}
+                        >
+                          <Trash2 />
+                        </button> */}
                       </div>
                     </TableCell>
                   </TableRow>

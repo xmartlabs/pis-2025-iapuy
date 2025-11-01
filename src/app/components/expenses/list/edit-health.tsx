@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type Props = {
   readonly open: boolean;
@@ -56,7 +57,7 @@ export default function SeeOrEditCost({
   onEdited,
 }: Props) {
   const [tab, setTab] = React.useState<Tab>("vacuna");
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const sanidadContext = useContext(SanidadContext);
 
   const vacunaSchema = z.object({
@@ -198,23 +199,13 @@ export default function SeeOrEditCost({
         nombreCompleto?: string;
       };
 
-      const doFetch = async (withRetry = true): Promise<void> => {
+      const doFetch = async (): Promise<void> => {
         try {
-          const headers: Record<string, string> = {};
-          if (context?.tokenJwt)
-            headers.Authorization = `Bearer ${context.tokenJwt}`;
-
-          const res = await fetch("/api/perros/options", { headers });
-
-          if (res.status === 401 && withRetry) {
-            // try refresh once
-            const resp2 = await fetch("/api/auth/refresh", { method: "POST" });
-            if (resp2.ok) {
-              await doFetch(false);
-              return;
-            }
-            throw new TypeError("Unauthorized");
-          }
+          const res = await fetchWithAuth(context, "/api/perros/options", {
+            headers: {
+              Accept: "application/json",
+            },
+          });
 
           if (!res.ok) {
             const text = await res.text().catch(() => "");
@@ -255,7 +246,7 @@ export default function SeeOrEditCost({
         }
       };
 
-      doFetch(true).catch(() => {});
+      doFetch().catch(() => {});
     }
 
     fetchPerrosOptions();
@@ -280,25 +271,13 @@ export default function SeeOrEditCost({
     if (!costId || !open) return;
 
     let mounted = true;
-    const doFetch = async (withRetry = true): Promise<void> => {
+    const doFetch = async (): Promise<void> => {
       try {
-        const headers: Record<string, string> = {};
-        if (context?.tokenJwt)
-          headers.Authorization = `Bearer ${context.tokenJwt}`;
-
-        const res = await fetch(
+        const res = await fetchWithAuth(
+          context,
           `/api/expenses/details?id=${encodeURIComponent(costId)}`,
-          { headers }
+          { headers: { Accept: "application/json" } }
         );
-
-        if (res.status === 401 && withRetry) {
-          const resp2 = await fetch("/api/auth/refresh", { method: "POST" });
-          if (resp2.ok) {
-            await doFetch(false);
-            return;
-          }
-          throw new TypeError("Unauthorized");
-        }
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");
@@ -354,9 +333,7 @@ export default function SeeOrEditCost({
               : undefined;
           defaults.fechaInVac = formatDateForInput(fechaStr);
           defaults.marcaInVac = (data.vac as string) ?? "";
-          // Attempt to extract an existing carnet: prefer explicit base64
-          // helper produced by the server, otherwise fall back to earlier
-          // Buffer-like heuristics.
+
           try {
             const fromServer = data.carneVacunasBase64;
             if (typeof fromServer === "string" && fromServer.length > 0) {
@@ -388,8 +365,7 @@ export default function SeeOrEditCost({
               } else if (maybe && typeof maybe === "object") {
                 const arr = Array.isArray(maybe)
                   ? (maybe as unknown[])
-                  : ((maybe as { data?: unknown }).data as unknown[] | null) ??
-                    null;
+                  : ((maybe as { data?: unknown }).data as unknown[] | null) ?? null;
                 if (Array.isArray(arr) && arr.length > 0) {
                   const byteArray = new Uint8Array(arr as number[]);
                   const { url, ext } = createObjectUrlFromBytes(byteArray);
@@ -405,7 +381,6 @@ export default function SeeOrEditCost({
               }
             }
           } catch {
-            // if anything goes wrong, clear existing preview
             setExistingCarnetUrl(undefined);
             setExistingCarnetName(undefined);
           }
@@ -471,9 +446,7 @@ export default function SeeOrEditCost({
             form.setValue("fechaInBanio", defaults.fechaInBanio || "");
           if (defaults.desparasitacionTipo !== undefined) {
             const validTipo =
-              defaults.desparasitacionTipo === "Externa"
-                ? "Externa"
-                : "Interna";
+              defaults.desparasitacionTipo === "Externa" ? "Externa" : "Interna";
             form.setValue("desparasitacionTipo", validTipo);
           }
           if (defaults.fechaInDes !== undefined)
@@ -481,10 +454,8 @@ export default function SeeOrEditCost({
           if (defaults.marcaInDes !== undefined)
             form.setValue("marcaInDes", defaults.marcaInDes || "");
         } catch {
-          // ignore setValue errors in case control not registered yet
+          // ignorar errores de setValue
         }
-        // cleanup: revoke previous objectURLs when component unmounts or new file loaded
-        // handled by effect below
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (mounted) {
@@ -493,7 +464,7 @@ export default function SeeOrEditCost({
       }
     };
 
-    doFetch(true).catch(() => {});
+    doFetch().catch(() => {});
 
     // eslint-disable-next-line @typescript-eslint/consistent-return
     return () => {
@@ -521,20 +492,15 @@ export default function SeeOrEditCost({
 
       if (tab === "vacuna") {
         const d = data as z.infer<typeof vacunaSchema>;
-
         formData.append("tipoSanidad", "vacuna");
         formData.append("perroId", finalPerroId);
         formData.append("fecha", d.fechaInVac);
         formData.append("vac", d.marcaInVac ?? "");
         formData.append("medicamento", "");
         formData.append("tipoDesparasitacion", "Externa");
-
-        if (d.carnetInVac) {
-          formData.append("carneVacunas", d.carnetInVac);
-        }
+        if (d.carnetInVac) formData.append("carneVacunas", d.carnetInVac);
       } else if (tab === "banio") {
         const d = data as z.infer<typeof banioSchema>;
-
         formData.append("tipoSanidad", "banio");
         formData.append("perroId", finalPerroId);
         formData.append("fecha", d.fechaInBanio);
@@ -551,42 +517,29 @@ export default function SeeOrEditCost({
         formData.append("tipoDesparasitacion", d.desparasitacionTipo);
       }
 
-      // Ensure we have an eventoId to update the correct sanidad event
       if (!eventoId) {
         toast.error(
           "No se pudo determinar el id del evento de sanidad. No se puede editar."
         );
         return;
       }
+
       formData.append("eventoId", eventoId);
 
-      const res = await fetch("/api/registros-sanidad", {
+      const res = await fetchWithAuth(context, "/api/registros-sanidad", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${context?.tokenJwt}`,
-        },
         body: formData,
       });
-
-      if (res.status === 401) {
-        const resp2 = await fetch("/api/auth/refresh", {
-          method: "POST",
-        });
-        if (resp2.ok) {
-          return submitHandler(data);
-        }
-        return;
-      }
 
       if (res.ok) {
         onOpenChange(false);
         form.reset();
-        if (sanidadContext) sanidadContext.refresh();
-        toast.success(`¡Datos de Sanidad guardados correctamente!`, {
+        sanidadContext?.refresh();
+        toast.success("¡Datos de Sanidad guardados correctamente!", {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#DEEBD9",
             border: "1px solid #BDD7B3",
@@ -595,11 +548,11 @@ export default function SeeOrEditCost({
         });
         onEdited();
       } else {
-        toast.error(`No se pudo guardar los datos de Sanidad.`, {
+        toast.error("No se pudo guardar los datos de Sanidad.", {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#cfaaaaff",
             border: "1px solid #ec0909ff",
@@ -608,9 +561,6 @@ export default function SeeOrEditCost({
         });
       }
     } catch (error) {
-      // reportError is used across the project; preserve original behavior if available.
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       reportError(error);
     }
   }

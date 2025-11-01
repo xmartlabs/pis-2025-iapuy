@@ -1,13 +1,13 @@
 "use client";
 import { createContext } from "react";
-import type { UserType } from "@/app/api/auth/service/auth.service";
+import type { UserType } from "@/app/types/user.types";
 
 export interface Dog {
   id: string;
   nombre: string;
 }
 
-interface LoginContextType {
+export interface LoginContextType {
   tokenJwt: string | null;
   userType: UserType | null;
   userName: string | null;

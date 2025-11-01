@@ -46,7 +46,13 @@ export class UserController {
     const usrData: CreateUserDto = (await request.json()) as CreateUserDto;
     if (!usrData.ci) {
       return {
-        error: "Username is required",
+        error: "ci is required",
+        status: 400,
+      };
+    }
+    if (usrData.ci.length !== 8) {
+      return {
+        error: "ci must be 8 characters long",
         status: 400,
       };
     }

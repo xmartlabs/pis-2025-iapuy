@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 "use client";
 
 import React, { useContext, useState } from "react";
@@ -7,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export type DeleteInstitutionButtonProps = {
   id: string;
@@ -21,54 +21,28 @@ export default function DeleteInstitutionButton({
 }: DeleteInstitutionButtonProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const router = useRouter();
 
   async function handleDelete(): Promise<void> {
     try {
-      const makeDelete = async (bearer?: string) => {
-        const headers: Record<string, string> = {
-          Accept: "application/json",
-          ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-        };
-        const res = await fetch(
-          `/api/instituciones?id=${encodeURIComponent(id)}`,
-          {
-            method: "DELETE",
-            headers,
-          }
-        );
-        return res;
-      };
-
-      const token = context?.tokenJwt ?? undefined;
-      let res = await makeDelete(token);
-
-      if (res.status === 401) {
-        const refreshResp = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-
-        if (refreshResp.ok) {
-          const body = (await refreshResp.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-          const newToken = body?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            res = await makeDelete(newToken);
-          }
+      const res = await fetchWithAuth(
+        context,
+        `/api/instituciones?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
         }
-      }
+      );
 
       if (res.ok) {
-        toast.success(`Institucion eliminada correctamente.`, {
+        toast.success(`Institución eliminada correctamente.`, {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#DEEBD9",
             border: "1px solid #BDD7B3",
@@ -78,11 +52,11 @@ export default function DeleteInstitutionButton({
 
         router.push("/app/admin/instituciones/listado");
       } else {
-        toast.error(`No se pudo eliminar la Institucion.`, {
+        toast.error(`No se pudo eliminar la Institución.`, {
           duration: 5000,
           icon: null,
           className:
-            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
           style: {
             background: "#cfaaaaff",
             border: "1px solid #ec0909ff",
@@ -91,11 +65,11 @@ export default function DeleteInstitutionButton({
         });
       }
     } catch {
-      toast.error(`No se pudo eliminar la Institucion.`, {
+      toast.error(`No se pudo eliminar la Institución.`, {
         duration: 5000,
         icon: null,
         className:
-          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md font-sans font-semibold text-sm leading-5 tracking-normal",
         style: {
           background: "#cfaaaaff",
           border: "1px solid #ec0909ff",
@@ -151,6 +125,7 @@ export default function DeleteInstitutionButton({
                 </Button>
                 <Button
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium shadow transition sm:h-10"
+                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   onClick={async () => {
                     setIsConfirmOpen(false);
                     await handleDelete();

@@ -15,7 +15,7 @@ export interface PayloadForUser extends jwt.JwtPayload {
 export async function GET(request: NextRequest) {
   try {
     const id: string = request.nextUrl.searchParams.get("id") ?? "";
-    
+
     if (!id) {
       return NextResponse.json(
         { perro: null, error: "ID is required" },
@@ -47,7 +47,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     return NextResponse.json(
-      { perro: null, error: error instanceof Error ? error.message : "Internal error" },
+      {
+        perro: null,
+        error: error instanceof Error ? error.message : "Internal error",
+      },
       { status: 500 }
     );
   }

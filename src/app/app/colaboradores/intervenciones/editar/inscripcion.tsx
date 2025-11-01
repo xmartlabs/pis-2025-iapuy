@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multiselect";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type Option = { id: string; nombre: string };
 
@@ -42,105 +43,44 @@ export default function InscribirIntervencion({
   const [lockedDuplas, setLockedDuplas] = useState<DuplaSelection[]>([]);
   const [lockedAcompIds, setLockedAcompIds] = useState<string[]>([]);
   const [duplasCountState, setDuplasCountState] = useState<number>(duplasCount);
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   const [selectedAcomp, setSelectedAcomp] = useState<string[]>([]);
   const [duplas, setDuplas] = useState<DuplaSelection[]>([]);
 
   const router = useRouter();
 
-  const fetchWithRefresh = React.useCallback(
-    async (input: RequestInfo, init?: RequestInit) => {
-      const res = await fetch(input, init);
-      if (res.status !== 401) return res;
-
-      const resp2 = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-      });
-      if (!resp2.ok) return res;
-      const refreshBody = (await resp2.json().catch(() => null)) as {
-        accessToken?: string;
-      } | null;
-      const newToken = refreshBody?.accessToken ?? null;
-      if (!newToken) return res;
-      context?.setToken?.(newToken);
-
-      const newHeaders = {
-        ...(init?.headers as Record<string, string> | undefined),
-        Authorization: `Bearer ${newToken}`,
-      } as Record<string, string>;
-
-      const retry = await fetch(input, { ...init, headers: newHeaders });
-      return retry;
-    },
-    [context]
-  );
-
   const postInscription = React.useCallback(
     async (bodyStr: string) => {
-      const token = context?.tokenJwt;
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      const res = await fetchWithRefresh(`/api/intervention/inscription`, {
-        method: "POST",
-        headers: baseHeaders,
-        body: bodyStr,
-      });
+      const res = await fetchWithAuth(
+        context,
+        `/api/intervention/inscription`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: bodyStr,
+        }
+      );
 
       return res;
     },
-    [context, fetchWithRefresh]
+    [context]
   );
 
   useEffect(() => {
     const callApi = async () => {
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
         const url = `/api/intervention/inscription?id=${encodeURIComponent(
           intervention ?? ""
         )}`;
-
-        let response = await fetchWithRefresh(url, { headers: baseHeaders });
-
-        if (response.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-          });
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken?.(newToken);
-
-              response = await fetchWithRefresh(url, {
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-              });
-              if (!response.ok) {
-                const txt = await response.text().catch(() => "");
-                const suffix = txt ? ` - ${txt}` : "";
-                throw new Error(
-                  `API ${response.status}: ${response.statusText}${suffix}`
-                );
-              }
-            }
-          }
-        }
+        const response = await fetchWithAuth(context, url, {
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
         if (!response.ok) {
           const txt = await response.text().catch(() => "");
@@ -205,7 +145,7 @@ export default function InscribirIntervencion({
       // eslint-disable-next-line no-console
       console.error(err);
     });
-  }, [intervention, context, duplasCount, fetchWithRefresh]);
+  }, [intervention, context, duplasCount]);
 
   useEffect(() => {
     const editableCount = Math.max(0, duplasCountState - lockedDuplas.length);
@@ -351,7 +291,7 @@ export default function InscribirIntervencion({
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Duplas */}
         {duplas.map((d, idx) => {

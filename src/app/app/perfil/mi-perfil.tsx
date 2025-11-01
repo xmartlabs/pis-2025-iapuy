@@ -21,14 +21,15 @@ import {
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {UserType} from "@/app/page"
+import {UserType} from "@/app/types/user.types"
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;
   esAdmin?: boolean;
 };
 
 export default function DetallePersona() {
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -37,89 +38,19 @@ export default function DetallePersona() {
   const userType:UserType |null=context?.userType ??null;
 
   const fetchUser = useCallback(
-    async (
-      signal?: AbortSignal,
-      triedRefresh = false
-    ): Promise<UserData | null> => {
-      /* Broken when refreshing webpage, because context is empty at first
-      TODO: implement later since its not a priority
-      if (!userCi) {
-        if (!context?.tokenJwt) {
-          setError("Debes iniciar sesión para ver tu perfil");
-        } else {
-          setError(
-            "No se pudo identificar el usuario. Por favor, inicia sesión nuevamente."
-          );
-        }
-        return null;
-      }*/
-
-      const url = `/api/users/profile`;
-
+    async (signal?: AbortSignal): Promise<UserData | null> => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
+      const timeout = setTimeout(() => { controller.abort(); }, 10000);
       const combinedSignal = signal ?? controller.signal;
 
       try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const resp = await fetch(url.toString(), {
+        const resp = await fetchWithAuth(context, "/api/users/profile", {
           method: "GET",
-          headers: baseHeaders,
+          headers: {
+            Accept: "application/json",
+          },
           signal: combinedSignal,
         });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-            signal: combinedSignal,
-          });
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (!body2 || typeof body2 !== "object")
-                throw new Error("Malformed API response");
-
-              return body2 as UserData;
-            }
-          }
-        }
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
@@ -138,9 +69,7 @@ export default function DetallePersona() {
 
         return body as UserData;
       } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
+        if ((err as DOMException)?.name === "AbortError") return null;
         return null;
       } finally {
         clearTimeout(timeout);

@@ -1,10 +1,9 @@
 "use client";
-import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { z } from "zod";
 import ContactFields, {
@@ -19,36 +18,76 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
+import { useRouter } from "next/navigation";
+import CustomBreadCrumb from "../bread-crumb/bread-crumb";
 
-export default function Nueva() {
+interface EditInstitutionScreenProps {
+  readonly institution: {
+    id: string;
+    nombre: string;
+    Patologias: { id: string; nombre: string }[];
+    InstitutionContacts: { id: string; name: string; contact: string }[];
+  };
+}
+
+export default function EditInstitutionScreen({
+  institution,
+}: Readonly<EditInstitutionScreenProps>) {
   const [tempValue, setTempValue] = React.useState("");
   const context = useContext(LoginContext);
   const router = useRouter();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       main: {
-        name: "",
-        Pathologies: [],
+        name: institution.nombre,
+        Pathologies: institution.Patologias.map((p) => p.nombre),
       },
-      contacts: [{ name: "", contact: "" }],
+      contacts:
+        institution.InstitutionContacts.length > 0
+          ? institution.InstitutionContacts.map((c) => ({
+              name: c.name,
+              contact: c.contact,
+            }))
+          : [{ name: "", contact: "" }],
     },
   });
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contacts",
   });
+
+  // Reset form when institution changes
+  useEffect(() => {
+    form.reset({
+      main: {
+        name: institution.nombre,
+        Pathologies: institution.Patologias.map((p) => p.nombre),
+      },
+      contacts:
+        institution.InstitutionContacts.length > 0
+          ? institution.InstitutionContacts.map((c) => ({
+              name: c.name,
+              contact: c.contact,
+            }))
+          : [{ name: "", contact: "" }],
+    });
+  }, [institution, form]);
+
   const handleFormSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!context) {
-      toast.error("Contexto de autenticación no disponible", { duration: 5000 });
+      toast.error("Contexto de autenticación no disponible", {
+        duration: 5000,
+      });
       return;
     }
 
-    const url = "/api/instituciones";
+    const url = `/api/instituciones/${institution.id}`;
     const bodyData = {
       name: data.main.name,
       pathologies: data.main.Pathologies,
@@ -60,13 +99,13 @@ export default function Nueva() {
 
     try {
       const res = await fetchWithAuth(context, url, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),
       });
 
       if (res.ok) {
-        toast.success("Institucion creada con éxito", {
+        toast.success("Institución actualizada con éxito", {
           duration: 5000,
           icon: null,
           className:
@@ -77,12 +116,27 @@ export default function Nueva() {
             color: "#121F0D",
           },
         });
-        router.push("/app/admin/instituciones/listado");
+        router.back();
         return;
       }
 
       if (res.status === 409) {
         toast.error(`Ya existe la institución ${data.main.name}`, {
+          duration: 5000,
+          icon: null,
+          className:
+            "w-full max-w-[388px] h-[68px] pl-6 pb-6 pt-6 pr-8 rounded-md w font-sans font-semibold text-sm leading-5 tracking-normal",
+          style: {
+            background: "#cfaaaaff",
+            border: "1px solid #ec0909ff",
+            color: "#ec0909ff",
+          },
+        });
+        return;
+      }
+
+      if (res.status === 403) {
+        toast.error("No tiene permisos para realizar esta acción", {
           duration: 5000,
           icon: null,
           className:
@@ -116,16 +170,25 @@ export default function Nueva() {
   };
 
   return (
-    <main className="mr-8 space-y-8 !bg-transparent">
+    <div className="flex flex-col gap-6 p-6">
       <CustomBreadCrumb
         link={["/app/admin/instituciones/listado", "Instituciones"]}
-        current="Nueva institución"
+        current="Editar institución"
         className=""
       />
 
-      <div className="max-w-[1116px] flex mt-8">
-        <h1 className="font-serif font-semibold text-5xl leading-[100%] tracking-[-0.025em] align-middle">
-          Nueva institución
+      <div className="flex items-center gap-4 mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            router.back();
+          }}
+          className="p-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="font-serif font-semibold text-4xl">
+          Editar institución
         </h1>
       </div>
 
@@ -136,13 +199,14 @@ export default function Nueva() {
               .handleSubmit(handleFormSubmit)(e)
               .catch(() => {});
           }}
+          className="space-y-6"
         >
-          <div className="flex gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="main.name"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem>
                   <FormLabel>Nombre*</FormLabel>
                   <FormControl>
                     <Input {...field} />
@@ -175,13 +239,13 @@ export default function Nueva() {
                   field.onChange(newValues);
                 };
                 return (
-                  <FormItem className="flex-1">
+                  <FormItem>
                     <FormLabel>Patologías</FormLabel>
                     <FormControl>
-                      <div className="flex flex-wrap gap-2 items-center py-1 min-h-[40px]">
-                        {field.value?.map((p: string, i: number) => (
+                      <div className="flex flex-wrap gap-2 items-center py-1 min-h-[40px] border rounded-md px-3">
+                        {field.value?.map((p: string) => (
                           <div
-                            key={i}
+                            key={p}
                             className="flex items-center gap-0 !bg-[#5B9B40] border border-gray-300 rounded-full pt-0.5 pr-2.5 pb-0.5 pl-2.5"
                           >
                             <Badge className="px-0 !bg-[#5B9B40]">
@@ -192,7 +256,8 @@ export default function Nueva() {
                             <X
                               className="w-4 h-4 cursor-pointer text-white"
                               onClick={() => {
-                                handleRemove(i);
+                                const idx = field.value?.indexOf(p) ?? -1;
+                                if (idx !== -1) handleRemove(idx);
                               }}
                             />
                           </div>
@@ -203,7 +268,8 @@ export default function Nueva() {
                             setTempValue(e.target.value);
                           }}
                           onKeyDown={handleKeyDown}
-                          className="flex-1 min-w-[60px] border border-#D4D4D4 rounded-md p-0 focus:ring-0"
+                          placeholder="Presiona Enter para agregar"
+                          className="flex-1 min-w-[150px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </div>
                     </FormControl>
@@ -212,34 +278,44 @@ export default function Nueva() {
               }}
             />
           </div>
-          <div className="mt-4 flex flex-wrap gap-4">
-            {fields.map((field, index) => (
-              <div key={field.id}>
-                <ContactFields
-                  control={form.control}
-                  index={index}
-                  appendContact={append}
-                  removeContact={remove}
-                  renderAppend={index===fields.length-1}
-                  renderRemove={index>0}
-                />
-              </div>
-            ))}
+
+          <div className="space-y-4">
+            <h2 className="font-serif font-semibold text-2xl">Contactos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {fields.map((field, index) => (
+                <div key={field.id}>
+                  <ContactFields
+                    control={form.control}
+                    index={index}
+                    appendContact={append}
+                    removeContact={remove}
+                    renderAppend={index === fields.length - 1}
+                    renderRemove={index > 0}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-8">
+
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                router.back();
+              }}
+            >
+              Cancelar
+            </Button>
             <Button
               type="submit"
-              className="w-[136px] h-10 min-w-[80px] px-3 py-2 rounded-md bg-[#5B9B40] flex items-center justify-center gap-1 opacity-50"
+              className="bg-[#5B9B40] hover:bg-[#4a7d33] text-white"
             >
-              <div className="w-[112px] h-6 px-1 gap-0 opacity-100">
-                <span className="font-sans font-medium text-sm leading-6 tracking-normal text-[#EFF5EC]">
-                  Crear institución
-                </span>
-              </div>
+              Guardar cambios
             </Button>
           </div>
         </form>
       </Form>
-    </main>
+    </div>
   );
 }

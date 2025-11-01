@@ -1,12 +1,10 @@
 'use client'
 
 import { LoginContext } from "@/app/context/login-context";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
 
-const BASE_API_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");
 
 interface Intervention {
   id: string;
@@ -24,63 +22,36 @@ interface Intervention {
 
 export default function HeaderIntervenciones({ id }: { id: string | null }) {
     const [interv, setInterv] = useState<Intervention>();
-    const context = useContext(LoginContext);
+    const context = useContext(LoginContext)!;
   
     useEffect(() => {
       const callApi = async () => {
         try {
-          const token = context?.tokenJwt;
-          const baseHeaders: Record<string, string> = {
-            Accept: "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          };
-          const response = await fetch(`/api/intervention/${id}`, {
-            headers: baseHeaders,
-          });
-          if (response.status === 401) {
-            const resp2 = await fetch(
-              new URL("/api/auth/refresh", BASE_API_URL),
-              {
-                method: "POST",
-                headers: { Accept: "application/json" },
-              }
-            );
-            if (resp2.ok) {
-              const refreshBody = (await resp2.json().catch(() => null)) as {
-                accessToken?: string;
-              } | null;
-              const newToken = refreshBody?.accessToken ?? null;
-              if (newToken) {
-                context?.setToken(newToken);
-                const retryResp = await fetch(`/api/intervention/${id}`, {
-                  method: "GET",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${newToken}`,
-                  },
-                });
-                if (!retryResp.ok) {
-                  const txt = await retryResp.text().catch(() => "");
-                  throw new Error(
-                    `API ${retryResp.status}: ${retryResp.statusText}${
-                      txt ? ` - ${txt}` : ""
-                    }`
-                  );
-                }
-                const ct2 = retryResp.headers.get("content-type") ?? "";
-                if (!ct2.includes("application/json"))
-                  throw new Error("Expected JSON response");
-  
-                const body2 = (await retryResp.json()) as Intervention;
-                setInterv(body2);
-  
-                return;
-              }
+          const response = await fetchWithAuth(
+            context,
+            `/api/intervention/${id}`,
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
             }
+          );
+
+          if (!response.ok) {
+            const txt = await response.text().catch(() => "");
+            throw new Error(
+              `API ${response.status}: ${response.statusText}${txt ? ` - ${txt}` : ""}`
+            );
           }
-          const datos = (await response.json()) as Intervention;
-          const intervData = datos ?? [];
-          setInterv(intervData);
+
+          const ct = response.headers.get("content-type") ?? "";
+          if (!ct.includes("application/json")) {
+            throw new Error("Expected JSON response");
+          }
+
+          const body = (await response.json()) as Intervention;
+          setInterv(body);
         } catch (err) {
           reportError(err);
         }

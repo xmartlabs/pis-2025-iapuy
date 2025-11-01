@@ -7,79 +7,50 @@ import { BotonEliminarUsuario } from "./eliminar-usuario-boton";
 import { MagicLinkDialog } from "./magic-link-dialog";
 import { LoginContext } from "@/app/context/login-context";
 import type { UserSanitized } from "@/app/api/users/service/user.service.ts";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 function DetallePersonaContent() {
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const searchParams = useSearchParams();
   const ci: string = searchParams.get("ci") ?? "";
   const [user, setUser] = useState<UserSanitized | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = context?.tokenJwt;
-    const baseHeaders: Record<string, string> = {
-      Accept: "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
+    const loadUser = async () => {
+      if (!ci) return;
+      setLoading(true);
 
-    const fetchUser = async (
-      triedRefresh = false
-    ): Promise<UserSanitized | null> => {
-      const resp = await fetch(`/api/users/${ci}`, {
-        method: "GET",
-        headers: baseHeaders,
-      });
-
-      if (!resp.ok && !triedRefresh && resp.status === 401) {
-        const resp2 = await fetch(
-          new URL("/api/auth/refresh", location.origin),
+      try {
+        const resp = await fetchWithAuth(
+          context,
+          `/api/users/${ci}`,
           {
-            method: "POST",
+            method: "GET",
             headers: { Accept: "application/json" },
           }
         );
-        if (resp2.ok) {
-          const refreshBody = (await resp2.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
 
-          const newToken = refreshBody?.accessToken ?? null;
-          if (newToken && context?.setToken) {
-            context.setToken(newToken);
-            return await fetchUser(true);
-          }
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => "");
+          throw new Error(
+            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+          );
         }
-      }
 
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => "");
-        throw new Error(
-          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
-        );
-      }
-
-      const respJson = (await resp.json()) as UserSanitized;
-      return respJson;
-    };
-
-    const loadUser = async () => {
-      setLoading(true);
-      try {
-        const userData = await fetchUser();
+        const userData = (await resp.json()) as UserSanitized;
         setUser(userData);
-      } catch {
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Error loading user:", err);
         throw new Error("Error loading user");
       } finally {
         setLoading(false);
       }
     };
 
-    if (ci) {
-      loadUser().catch(() => {
-        throw new Error("Error loading user");
-      });
-    }
-  }, [ci, context, context?.tokenJwt]);
+    loadUser().catch(() => { throw new Error("Error loading user"); });
+  }, [ci, context]);
 
   if (loading) {
     return <div>Cargando persona...</div>;
@@ -148,7 +119,7 @@ function DetallePersonaContent() {
         </div>
       </div>
 
-      <div className="m-8">
+      <div className="mb-8 mt-8">
         <BotonEliminarUsuario ci={ci} />
       </div>
       {user?.isActivated && (

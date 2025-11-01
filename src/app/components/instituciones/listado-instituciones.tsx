@@ -1,11 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-//import React, { useContext, useEffect, useState } from "react";
 import {
   Table,
   TableBody,
   TableCell,
-  //TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -18,7 +16,8 @@ import CustomPagination from "@/app/components/pagination";
 import CustomSearchBar from "@/app/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
-import { type InstitutionDto } from "./dtos/institution.dto";
+import { type InstitutionDto } from "../../app/admin/instituciones/dtos/institution.dto";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 export default function InstitutionList() {
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([]);
@@ -28,7 +27,7 @@ export default function InstitutionList() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
   const router = useRouter();
 
   // Debounce para la búsqueda
@@ -47,119 +46,63 @@ export default function InstitutionList() {
     const controller = new AbortController();
     setLoading(true);
     async function fetchInstitutions(
-      pageNum: number,
-      pageSize: number,
-      query?: string,
-      signal?: AbortSignal,
-      triedRefresh = false
-    ): Promise<PaginationResultDto<InstitutionDto> | null> {
-      const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
-      const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
+  pageNum: number,
+  pageSize: number,
+  query?: string,
+  signal?: AbortSignal
+  ): Promise<PaginationResultDto<InstitutionDto> | null> {
+    const p = Math.max(1, Math.trunc(Number(pageNum) || 1));
+    const s = Math.max(1, Math.min(100, Math.trunc(Number(pageSize) || 12)));
 
-      const qs = new URLSearchParams();
-      qs.set("page", String(p));
-      qs.set("size", String(s));
-      if (query?.trim().length) qs.set("query", query.trim());
-      const url = `/api/instituciones?${qs.toString()}`;
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 10000);
-      const combinedSignal = signal ?? controller.signal;
+    const qs = new URLSearchParams();
+    qs.set("page", String(p));
+    qs.set("size", String(s));
+    if (query?.trim().length) qs.set("query", query.trim());
 
-      try {
-        const token = context?.tokenJwt;
-        const baseHeaders: Record<string, string> = {
+    const url = `/api/instituciones?${qs.toString()}`;
+    const timeout = setTimeout(() => { controller.abort(); }, 10000);
+    const combinedSignal = signal ?? controller.signal;
+
+    try {
+      const resp = await fetchWithAuth(context, url, {
+        method: "GET",
+        headers: {
           Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
+        },
+        signal: combinedSignal,
+      });
 
-        const resp = await fetch(url.toString(), {
-          method: "GET",
-          headers: baseHeaders,
-          signal: combinedSignal,
-        });
-
-        if (!resp.ok && !triedRefresh && resp.status === 401) {
-          const resp2 = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { Accept: "application/json" },
-            signal: combinedSignal,
-          });
-
-          if (resp2.ok) {
-            const refreshBody = (await resp2.json().catch(() => null)) as {
-              accessToken?: string;
-            } | null;
-
-            const newToken = refreshBody?.accessToken ?? null;
-            if (newToken) {
-              context?.setToken(newToken);
-              const retryResp = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  Authorization: `Bearer ${newToken}`,
-                },
-                signal: combinedSignal,
-              });
-
-              if (!retryResp.ok) {
-                const txt = await retryResp.text().catch(() => "");
-                throw new Error(
-                  `API ${retryResp.status}: ${retryResp.statusText}${
-                    txt ? ` - ${txt}` : ""
-                  }`
-                );
-              }
-
-              const ct2 = retryResp.headers.get("content-type") ?? "";
-              if (!ct2.includes("application/json"))
-                throw new Error("Expected JSON response");
-
-              const body2 = (await retryResp.json()) as unknown;
-              if (
-                !body2 ||
-                typeof body2 !== "object" ||
-                !Array.isArray(
-                  (body2 as PaginationResultDto<InstitutionDto>).data
-                )
-              )
-                throw new Error("Malformed API response");
-
-              return body2 as PaginationResultDto<InstitutionDto>;
-            }
-          }
-        }
-
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(
-            `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
-          );
-        }
-
-        const ct = resp.headers.get("content-type") ?? "";
-        if (!ct.includes("application/json"))
-          throw new Error("Expected JSON response");
-
-        const body = (await resp.json()) as unknown;
-        if (
-          !body ||
-          typeof body !== "object" ||
-          !Array.isArray((body as PaginationResultDto<InstitutionDto>).data)
-        )
-          throw new Error("Malformed API response");
-
-        return body as PaginationResultDto<InstitutionDto>;
-      } catch (err) {
-        if ((err as DOMException)?.name === "AbortError") {
-          return null;
-        }
-        return null;
-      } finally {
-        clearTimeout(timeout);
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error(
+          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+        );
       }
+
+      const ct = resp.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json")) {
+        throw new Error("Expected JSON response");
+      }
+
+      const body = (await resp.json()) as unknown;
+      if (
+        !body ||
+        typeof body !== "object" ||
+        !Array.isArray((body as PaginationResultDto<InstitutionDto>).data)
+      ) {
+        throw new Error("Malformed API response");
+      }
+
+      return body as PaginationResultDto<InstitutionDto>;
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") {
+        return null;
+      }
+      return null;
+    } finally {
+      clearTimeout(timeout);
     }
+  }
     fetchInstitutions(page, size, search, controller.signal)
       .then((res) => {
         if (res) {

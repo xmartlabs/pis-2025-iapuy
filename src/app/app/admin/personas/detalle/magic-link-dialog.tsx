@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"; // Assuming ShadCN Button compo
 import { Card, CardContent } from "@/components/ui/card"; // Assuming ShadCN Card components
 import { LoginContext } from "@/app/context/login-context";
 import { toast } from "sonner";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 // Define the component props
 interface MagicLinkDialogProps {
@@ -71,79 +72,41 @@ export const MagicLinkDialog: React.FC<MagicLinkDialogProps> = ({
     return true;
   };
 
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   const handleMagicLinkGeneration = async () => {
-    const baseHeaders: Record<string, string> = {
-      Accept: "application/json",
-      ...(context?.tokenJwt
-        ? { Authorization: `Bearer ${context.tokenJwt}` }
-        : {}),
-    };
-
-    const resp = await fetch(`/api/magic-link`, {
-      method: "POST",
-      headers: baseHeaders,
-      body: JSON.stringify({
-        ci,
-        nombre: username,
-      }),
-    });
-
-    if (resp.ok) {
-      await copyToClipboard(
-        ((await resp.json()) as { magicLink: string }).magicLink
+    try {
+      const resp = await fetchWithAuth(
+        context,
+        "/api/magic-link",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ci,
+            nombre: username,
+          }),
+        }
       );
 
-      return;
-    }
-    const throwApiError = async (r: Response, prefix = "API") => {
-      const txt = await r.text().catch(() => "");
-      const suffix = txt ? ` - ${txt}` : "";
-      throw new Error(`${prefix} ${r.status}: ${r.statusText}${suffix}`);
-    };
-
-    if (resp.status === 401) {
-      const refreshResp = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-      });
-
-      if (refreshResp.ok) {
-        const refreshBody = (await refreshResp.json().catch(() => null)) as {
-          accessToken?: string;
-        } | null;
-        const newToken = refreshBody?.accessToken ?? null;
-        if (newToken) {
-          context?.setToken(newToken);
-
-          const retryResp = await fetch(`/api/magic-link`, {
-            method: "POST",
-            headers: baseHeaders,
-            body: JSON.stringify({
-              ci,
-              nombre: username,
-            }),
-          });
-
-          if (retryResp.ok) {
-            await copyToClipboard(
-              ((await retryResp.json()) as { magicLink: string }).magicLink
-            );
-            return;
-          }
-          await throwApiError(retryResp);
-        }
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error(
+          `API ${resp.status}: ${resp.statusText}${txt ? ` - ${txt}` : ""}`
+        );
       }
 
-      const txt = await refreshResp.text().catch(() => "");
-      const suffix = txt ? ` - ${txt}` : "";
-      throw new Error(
-        `Refresh failed: ${refreshResp.status} ${refreshResp.statusText}${suffix}`
-      );
+      const data = (await resp.json()) as { magicLink: string };
+      await copyToClipboard(data.magicLink);
+    } catch (err) {
+      toast("No se pudo generar el magic link", {
+        description:
+          err instanceof Error ? err.message : "Error desconocido al copiar link",
+      });
     }
-
-    await throwApiError(resp);
   };
 
   const baseCardClasses = "w-[512px] h-[160px]";

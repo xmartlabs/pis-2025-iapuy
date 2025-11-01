@@ -137,6 +137,10 @@ export class InterventionController {
     }
   }
 
+  async suspendIntervention(id: string) {
+    return await this.interventionService.suspend(id);
+  }
+
   async deleteIntervention(id: string) {
     await this.interventionService.delete(id);
   }

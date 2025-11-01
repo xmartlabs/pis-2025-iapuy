@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { toast } from "sonner";
 import ConfirmDelete from "../../confirm-delete";
+import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
 type ApiResponse = {
   message?: string;
@@ -18,48 +19,23 @@ export default function DeleteIntervention({
   interventionId: string;
 }) {
   const router = useRouter();
-  const context = useContext(LoginContext);
+  const context = useContext(LoginContext)!;
 
   async function handleDelete(): Promise<void> {
     try {
-      const makeDelete = async (bearer?: string) => {
-        const headers: Record<string, string> = {
-          Accept: "application/json",
-          ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-        };
-        const res = await fetch(
-          `/api/intervention?id=${encodeURIComponent(interventionId)}`,
-          {
-            method: "DELETE",
-            headers,
-          }
-        );
-        return res;
-      };
-
-      const token = context?.tokenJwt ?? undefined;
-      let res = await makeDelete(token);
-
-      if (res.status === 401) {
-        const refreshResp = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-
-        if (refreshResp.ok) {
-          const body = (await refreshResp.json().catch(() => null)) as {
-            accessToken?: string;
-          } | null;
-          const newToken = body?.accessToken ?? null;
-          if (newToken) {
-            context?.setToken(newToken);
-            res = await makeDelete(newToken);
-          }
+      const res = await fetchWithAuth(
+        context,
+        `/api/intervention?id=${encodeURIComponent(interventionId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
         }
-      }
+      );
 
       const data = (await res.json().catch(() => null)) as ApiResponse | null;
+
       if (res.ok && !data?.error) {
         toast.success(`Intervención eliminada correctamente.`, {
           duration: 5000,

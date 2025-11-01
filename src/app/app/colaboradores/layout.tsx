@@ -1,7 +1,7 @@
 "use client";
 import { useContext, useEffect } from "react";
 import { LoginContext } from "@/app/context/login-context";
-import {UserType} from "@/app/page"
+import {UserType} from "@/app/types/user.types"
 import { forbidden } from 'next/navigation'
 interface Props {
   children: React.ReactNode;

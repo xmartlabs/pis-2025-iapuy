@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { UserType } from "@/app/types/user.types";
 
 const FormSchema = z.object({
   ci: z
@@ -27,10 +28,7 @@ const FormSchema = z.object({
     .max(8, { message: "El largo de la cédula no es válido." }),
   password: z.string().min(1, { message: "Debe ingresar la contraseña" }),
 });
-export enum UserType {
-  Collaborator = "Colaborador",
-  Administrator = "Administrador",
-}
+
 export interface LoginResponse {
   accessToken: string;
 }

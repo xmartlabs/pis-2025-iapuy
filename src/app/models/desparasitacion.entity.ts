@@ -11,6 +11,7 @@ import {
 } from "sequelize-typescript";
 import { RegistroSanidad } from "./registro-sanidad.entity";
 import type { CreationOptional } from "sequelize";
+import { Expense } from "./expense.entity";
 
 @Table({ tableName: "desparasitaciones" })
 export class Desparasitacion extends Model {
@@ -38,9 +39,12 @@ export class Desparasitacion extends Model {
   declare deletedAt: CreationOptional<Date>;
 
   @Column({
-  type: DataType.ENUM('Externa', 'Interna'),
-  allowNull: false,
-  defaultValue: 'Externa'
+    type: DataType.ENUM("Externa", "Interna"),
+    allowNull: false,
+    defaultValue: "Externa",
   })
-  declare tipoDesparasitacion: 'Externa' | 'Interna';
+  declare tipoDesparasitacion: "Externa" | "Interna";
+
+  declare RegistroSanidad?: RegistroSanidad;
+  declare DesparasitacionExpense?: Expense;
 }

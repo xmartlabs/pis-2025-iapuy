@@ -18,7 +18,7 @@ export default function PantallaPerros() {
           <HistorialIntervenciones />
         </Suspense>
         <Suspense fallback={<div>Cargando historial de sanidad...</div>}>
-          <HistorialSanidad />
+          <HistorialSanidad isColab={false} />
         </Suspense>
         <Suspense fallback={<div>Cargando opciones...</div>}>
           <EliminarPerro />
