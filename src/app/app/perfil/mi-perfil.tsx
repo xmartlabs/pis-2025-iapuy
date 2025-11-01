@@ -21,7 +21,7 @@ import {
 import type { CreateUserDto } from "@/app/api/users/dtos/create-user.dto";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {UserType} from "@/app/page"
+import {UserType} from "@/app/types/user.types"
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 type UserData = CreateUserDto & {
   perros?: Array<{ nombre: string }>;

@@ -10,6 +10,7 @@ import { type PaginationDto } from "@/lib/pagination/pagination.dto";
 import { getPaginationResultFromModel } from "@/lib/pagination/transform";
 import { Op } from "sequelize";
 import { type CreateInstitutionDTO } from "../dtos/create-institucion.dto";
+import { type UpdateInstitutionDTO } from "../dtos/update-institucion.dto";
 import { InstitutionContact } from "@/app/models/institution-contact.entity";
 import sequelize from "@/lib/database";
 import { InstitucionPatologias } from "@/app/models/intitucion-patalogia.entity";
@@ -167,35 +168,77 @@ export class InstitucionesService {
         },
         { transaction: t }
       );
-      await Promise.all(
-        institutionDTO.institutionContacts.map((contact) =>
-          InstitutionContact.create(
-            {
-              name: contact.name,
-              contact: contact.contact,
-              institutionId: institution.id,
-            },
+
+      if (institutionDTO.institutionContacts.length > 0) {
+        await InstitutionContact.bulkCreate(
+          institutionDTO.institutionContacts.map((contact) => ({
+            name: contact.name,
+            contact: contact.contact,
+            institutionId: institution.id,
+          })),
+          { transaction: t }
+        );
+      }
+
+      if (institutionDTO.pathologies.length > 0) {
+        const uniquePathologies = Array.from(new Set(institutionDTO.pathologies));
+        
+        const existingPathologies = await Patologia.findAll({
+          where: { nombre: uniquePathologies },
+          attributes: ["id", "nombre"],
+          transaction: t,
+        });
+
+        const existingNames = new Set(existingPathologies.map(p => p.nombre));
+        const newPathologyNames = uniquePathologies.filter(name => !existingNames.has(name));
+
+        if (newPathologyNames.length > 0) {
+          await Patologia.bulkCreate(
+            newPathologyNames.map((name) => ({ nombre: name })),
             { transaction: t }
-          )
-        )
-      );
-      await Promise.all(
-        institutionDTO.pathologies.map(async (name) => {
-          const [pathology] = await Patologia.findOrCreate({
-            where: { nombre: name },
-            defaults: { nombre: name },
+          );
+        }
+
+        const allPathologies = await Patologia.findAll({
+          where: { nombre: uniquePathologies },
+          attributes: ["id", "nombre"],
+          transaction: t,
+        });
+
+        const pathologyMap = new Map<string, string>();
+        for (const pathology of allPathologies) {
+          if (!pathologyMap.has(pathology.nombre)) {
+            pathologyMap.set(pathology.nombre, pathology.id);
+          }
+        }
+
+        const existingAssociations = await InstitucionPatologias.findAll({
+          where: { 
+            institucionId: institution.id,
+            patologiaId: Array.from(pathologyMap.values())
+          },
+          attributes: ["patologiaId"],
+          transaction: t,
+        });
+
+        const existingPatologiaIds = new Set(
+          existingAssociations.map(a => a.patologiaId)
+        );
+
+        const newAssociations = Array.from(pathologyMap.values())
+          .filter(patologiaId => !existingPatologiaIds.has(patologiaId))
+          .map((patologiaId) => ({
+            institucionId: institution.id,
+            patologiaId,
+          }));
+
+        if (newAssociations.length > 0) {
+          await InstitucionPatologias.bulkCreate(newAssociations, {
             transaction: t,
           });
-          await InstitucionPatologias.findOrCreate({
-            where: { institucionId: institution.id, patologiaId: pathology.id },
-            defaults: {
-              institucionId: institution.id,
-              patologiaId: pathology.id,
-            },
-            transaction: t,
-          });
-        })
-      );
+        }
+      }
+
       return institution;
     });
   }
@@ -216,6 +259,96 @@ export class InstitucionesService {
     if (res === 0) {
       throw new Error(`Institution not found with id: ${id}`);
     }
+  }
+
+  async update(
+    id: string,
+    institutionDTO: UpdateInstitutionDTO
+  ): Promise<Institucion> {
+    return await sequelize.transaction(async (t) => {
+      const institution = await Institucion.findByPk(id, { transaction: t });
+      if (!institution) {
+        throw new Error(`Institution not found with id: ${id}`);
+      }
+
+      const existingWithName = await Institucion.findOne({
+        where: {
+          nombre: institutionDTO.name,
+          id: { [Op.ne]: id },
+        },
+        transaction: t,
+      });
+
+      if (existingWithName) {
+        throw new Error("Ya existe una institucion con el nombre elegido.");
+      }
+
+      const updatedInstitution = await institution.update({ nombre: institutionDTO.name }, { transaction: t });
+
+      await InstitutionContact.destroy({
+        where: { institutionId: id },
+        transaction: t,
+      });
+
+      if (institutionDTO.institutionContacts.length > 0) {
+        await InstitutionContact.bulkCreate(
+          institutionDTO.institutionContacts.map((contact) => ({
+            name: contact.name,
+            contact: contact.contact,
+            institutionId: id,
+          })),
+          { transaction: t }
+        );
+      }
+
+      await InstitucionPatologias.destroy({
+        where: { institucionId: id },
+        transaction: t,
+      });
+
+      if (institutionDTO.pathologies.length > 0) {
+        const uniquePathologies = Array.from(new Set(institutionDTO.pathologies));
+        
+        const existingPathologies = await Patologia.findAll({
+          where: { nombre: uniquePathologies },
+          attributes: ["id", "nombre"],
+          transaction: t,
+        });
+
+        const existingNames = new Set(existingPathologies.map(p => p.nombre));
+        const newPathologyNames = uniquePathologies.filter(name => !existingNames.has(name));
+
+        if (newPathologyNames.length > 0) {
+          await Patologia.bulkCreate(
+            newPathologyNames.map((name) => ({ nombre: name })),
+            { transaction: t }
+          );
+        }
+
+        const allPathologies = await Patologia.findAll({
+          where: { nombre: uniquePathologies },
+          attributes: ["id", "nombre"],
+          transaction: t,
+        });
+
+        const pathologyMap = new Map<string, string>();
+        for (const pathology of allPathologies) {
+          if (!pathologyMap.has(pathology.nombre)) {
+            pathologyMap.set(pathology.nombre, pathology.id);
+          }
+        }
+
+        await InstitucionPatologias.bulkCreate(
+          Array.from(pathologyMap.values()).map((patologiaId) => ({
+            institucionId: id,
+            patologiaId,
+          })),
+          { transaction: t }
+        );
+      }
+
+      return updatedInstitution;
+    });
   }
 
   async interventionsPDF(id: string, dates: Date[]): Promise<Uint8Array> {

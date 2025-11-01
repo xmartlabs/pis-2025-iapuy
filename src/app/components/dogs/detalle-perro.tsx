@@ -7,7 +7,7 @@ import { DetallesPerroDto } from "@/app/api/perros/dtos/detalles-perro.dto";
 import { LoginContext } from "@/app/context/login-context";
 import RegistroSanidad from "../../app/admin/perros/registrar-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
-import { UserType } from "@/app/page";
+import { UserType } from "@/app/types/user.types";
 import { forbidden } from "next/navigation";
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 function Dato({ titulo, valor }: { titulo: string; valor: string }) {

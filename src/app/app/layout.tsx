@@ -10,7 +10,7 @@ import { DropDownMenu } from "@/app/components/sidebar/user-dropdown";
 import { LoginContext } from "@/app/context/login-context";
 import { Toaster } from "@/components/ui/sonner";
 import { useContext, useEffect } from "react";
-import type { UserType } from "@/app/page";
+import type { UserType } from "@/app/types/user.types";
 import { usePathname, useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 

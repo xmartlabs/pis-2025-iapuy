@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import { useState, useMemo, useCallback } from "react";
 import { LoginContext, type Dog } from "./login-context";
-import type { UserType } from "@/app/api/auth/service/auth.service";
+import type { UserType } from "@/app/types/user.types";
 
 interface LoginProviderProps {
   children: ReactNode;

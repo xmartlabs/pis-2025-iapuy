@@ -10,7 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContext } from "react";
 import { LoginContext } from "@/app/context/login-context";
-import { UserType } from "@/app/page";
+import { UserType } from "@/app/types/user.types";
 import {
   Sidebar,
   SidebarContent,
