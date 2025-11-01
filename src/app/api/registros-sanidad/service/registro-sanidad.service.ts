@@ -325,15 +325,8 @@ export class RegistrosSanidadService {
               {
                 model: Perro,
                 as: "Perro",
+                where: { duenioId: payload.ci },
                 required: true,
-                include: [
-                  {
-                    model: User,
-                    as: "User",
-                    where: { ci: payload.ci },
-                    required: true,
-                  },
-                ],
               },
             ],
           },
@@ -436,7 +429,11 @@ export class RegistrosSanidadService {
       vac?: string;
       carneVacunas?: Buffer | ArrayBuffer | null;
     },
-    options?: { transaction?: Transaction; perroId?: string }
+    options?: {
+      transaction?: Transaction;
+      perroId?: string;
+      payload?: PayloadForUser;
+    }
   ): Promise<Banio | Desparasitacion | Vacuna | null> {
     const updatePayload: {
       fecha?: Date;
@@ -448,6 +445,43 @@ export class RegistrosSanidadService {
     if (data.fecha)
       updatePayload.fecha =
         parseDateToNoon(data.fecha) ?? new Date(String(data.fecha));
+
+    if (options?.payload && options.payload.type !== "Administrador") {
+      const accessOptions: FindOptions = {
+        where: { id: eventoId },
+        include: [
+          {
+            model: RegistroSanidad,
+            as: "RegistroSanidad",
+            required: true,
+            include: [
+              {
+                model: Perro,
+                as: "Perro",
+                required: true,
+                where: { duenioId: options.payload.ci },
+              },
+            ],
+          },
+        ],
+      };
+
+      let record = null;
+      if (tipoSanidad === "banio") {
+        record = await Banio.findOne(accessOptions);
+      } else if (tipoSanidad === "desparasitacion") {
+        record = await Desparasitacion.findOne(accessOptions);
+      } else {
+        record = await Vacuna.findOne(accessOptions);
+      }
+
+      if (!record) {
+        throw new Error(
+          `Access denied: You don't have permission to update this sanity event.`
+        );
+      }
+    }
+
     const doUpdate = async (t?: Transaction) => {
       if (options?.perroId) {
         const newPerroId = options.perroId;
