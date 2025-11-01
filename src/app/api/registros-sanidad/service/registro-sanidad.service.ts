@@ -407,8 +407,23 @@ export class RegistrosSanidadService {
       return true;
     });
   }
-  async findOne(id: string): Promise<RegistroSanidad | null> {
-    return await RegistroSanidad.findByPk(id);
+  async findOne(
+    id: string,
+    type: string
+  ): Promise<Vacuna | Desparasitacion | Banio | null> {
+    switch (type) {
+      case "Baño":
+        return await Banio.findOne({ where: { id } });
+
+      case "Vacuna":
+        return await Vacuna.findOne({ where: { id } });
+
+      case "Desparasitación":
+        return await Desparasitacion.findOne({ where: { id } });
+
+      default:
+        return null;
+    }
   }
 
   async updateEventoSanidad(

@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Pencil } from "lucide-react";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import {
@@ -16,6 +15,7 @@ import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import CustomPagination from "@/app/components/pagination";
 import EliminarEventoSanidad from "@/app/components/dogs/eliminar-evento-sanidad";
+import EditarEventoSanidad from "@/app/components/dogs/editar-evento-sanidad";
 import CustomBreadCrumb from "@/app/components/bread-crumb/bread-crumb";
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
@@ -24,7 +24,6 @@ export default function HistorialSanidad() {
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(12);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [isOpenError, setIsOpenError] = useState(false);
   const [dogName, setDogName] = useState<string>("");
   const context = useContext(LoginContext)!;
@@ -72,7 +71,9 @@ export default function HistorialSanidad() {
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
       const resp = await fetchWithAuth(
         context,
-        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+        `/api/registros-sanidad?id=${encodeURIComponent(
+          id
+        )}&page=${page}&size=${size}`,
         {
           method: "GET",
           headers: { Accept: "application/json" },
@@ -167,8 +168,8 @@ export default function HistorialSanidad() {
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
               {registros && registros.length > 0 ? (
-                registros.map((registro, i) => (
-                  <TableRow key={i}>
+                registros.map((registro) => (
+                  <TableRow key={registro.id}>
                     <TableCell className="h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal">
                       {`${new Date(registro.date).toLocaleDateString("pt-BR", {
                         day: "2-digit",
@@ -181,39 +182,16 @@ export default function HistorialSanidad() {
                     </TableCell>
                     <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          className="shrink-0 p-1 hidden"
-                          onClick={() => {
-                            setIsOpenEdit(true);
-                          }}
-                        >
-                          <Pencil />
-                        </button>
+                        <EditarEventoSanidad
+                          id={registro.id}
+                          type={registro.activity}
+                          disabled={registro.hasPaidExpense}
+                        />
                         <EliminarEventoSanidad
                           id={registro.id}
                           activity={registro.activity}
                           disabled={registro.hasPaidExpense}
                         />
-                        {/* <button
-                          onClick={() => {
-                            handleDelete(registro.id, registro.activity).catch(
-                              console.error
-                            );
-                          }}
-                          disabled={registro.hasPaidExpense}
-                          title={
-                            registro.hasPaidExpense
-                              ? "No se puede eliminar porque ya se pagó"
-                              : ""
-                          }
-                          className={`shrink-0 p-1 ${
-                            registro.hasPaidExpense
-                              ? "disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100"
-                              : ""
-                          }`}
-                        >
-                          <Trash2 />
-                        </button> */}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -238,25 +216,6 @@ export default function HistorialSanidad() {
           totalPages={totalPages}
           setPage={setPage}
         />
-      )}
-
-      {isOpenEdit && (
-        <div className="fixed inset-0 bg-gray-500/50 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">Editar X</h2>
-            <p>Este es el contenido del modal.</p>
-            <div className="mt-6 flex justify-end">
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={() => {
-                  setIsOpenEdit(false);
-                }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {isOpenError && (

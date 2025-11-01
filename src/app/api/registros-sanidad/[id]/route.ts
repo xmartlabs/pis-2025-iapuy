@@ -12,7 +12,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const data = await registrosSanidadController.findOne(id);
+    const type = request.nextUrl.searchParams.get("type") as string;
+    const data = await registrosSanidadController.findOne(id, type);
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Registro no encontrado") {

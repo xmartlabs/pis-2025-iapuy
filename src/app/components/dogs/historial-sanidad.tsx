@@ -1,8 +1,6 @@
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import type { PaginationResultDto } from "@/lib/pagination/pagination-result.dto";
 import type { EventoSanidadDto } from "@/app/api/registros-sanidad/dtos/evento-sanidad.dto";
 import {
@@ -16,9 +14,14 @@ import {
 import { LoginContext } from "@/app/context/login-context";
 import { SanidadContext } from "@/app/context/sanidad-context";
 import EliminarEventoSanidad from "./eliminar-evento-sanidad";
+import EditarEventoSanidad from "./editar-evento-sanidad";
 import { fetchWithAuth } from "@/app/utils/fetch-with-auth";
 
-export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
+export default function HistorialSanidad({
+  isColab,
+}: {
+  readonly isColab: boolean;
+}) {
   const [registros, setRegistros] = useState<EventoSanidadDto[]>([]);
   const [page] = useState<number>(1);
   const [size] = useState<number>(8);
@@ -33,7 +36,9 @@ export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
     async (id: string): Promise<PaginationResultDto<EventoSanidadDto>> => {
       const resp = await fetchWithAuth(
         context,
-        `/api/registros-sanidad?id=${encodeURIComponent(id)}&page=${page}&size=${size}`,
+        `/api/registros-sanidad?id=${encodeURIComponent(
+          id
+        )}&page=${page}&size=${size}`,
         {
           method: "GET",
           headers: {
@@ -122,8 +127,8 @@ export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
               {registros && registros.length > 0 ? (
-                registros.map((registro, i) => (
-                  <TableRow key={i}>
+                registros.map((registro) => (
+                  <TableRow key={registro.id}>
                     <TableCell className="h-[56px] min-w-[120px] px-4 sm:px-4 text-sm font-normal">
                       {`${new Date(registro.date).toLocaleDateString("pt-BR", {
                         day: "2-digit",
@@ -136,14 +141,11 @@ export default function HistorialSanidad({ isColab }: { isColab: boolean }) {
                     </TableCell>
                     <TableCell className="min-w-[96px] px-2 text-green-500 hover:text-green-700">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          className="shrink-0 p-1 hidden"
-                          onClick={() => {
-                            setIsOpenEdit(true);
-                          }}
-                        >
-                          <Pencil />
-                        </button>
+                        <EditarEventoSanidad
+                          id={registro.id}
+                          type={registro.activity}
+                          disabled={registro.hasPaidExpense}
+                        />
                         <EliminarEventoSanidad
                           id={registro.id}
                           activity={registro.activity}

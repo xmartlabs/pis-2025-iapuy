@@ -97,8 +97,8 @@ export class RegistrosSanidadController {
     );
     return ret;
   }
-  async findOne(id: string) {
-    return await this.registrosSanidadService.findOne(id);
+  async findOne(id: string, type: string) {
+    return await this.registrosSanidadService.findOne(id, type);
   }
 
   async updateEventoSanidad(request: NextRequest) {
