@@ -60,8 +60,18 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization") ?? "";
+    const accessToken = authHeader.split(" ")[1];
+
+    if (!accessToken) {
+      throw new Error("No se encontro un token de acceso en la solicitud.");
+    }
+
+    const payload = jwt.decode(accessToken) as PayloadForUser;
+
     const regSanidad = await registrosSanidadController.updateEventoSanidad(
-      request
+      request,
+      payload
     );
     return NextResponse.json(regSanidad, { status: 200 });
   } catch (error) {

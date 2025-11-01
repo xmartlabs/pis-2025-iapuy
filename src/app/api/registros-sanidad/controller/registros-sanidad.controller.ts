@@ -97,11 +97,11 @@ export class RegistrosSanidadController {
     );
     return ret;
   }
-  async findOne(id: string) {
-    return await this.registrosSanidadService.findOne(id);
+  async findOne(id: string, type: string) {
+    return await this.registrosSanidadService.findOne(id, type);
   }
 
-  async updateEventoSanidad(request: NextRequest) {
+  async updateEventoSanidad(request: NextRequest, payload: PayloadForUser) {
     // Support JSON or multipart/form-data for updates.
     const contentType = request.headers.get("content-type") || "";
 
@@ -179,7 +179,7 @@ export class RegistrosSanidadController {
       tipoSanidad,
       eventoId,
       data,
-      { perroId: perroIdStr }
+      { perroId: perroIdStr, payload }
     );
     if (!updated) throw new Error("Evento de sanidad no encontrado");
     return updated;
