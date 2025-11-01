@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useContext, useState } from "react";
@@ -27,12 +26,16 @@ export default function DeleteInstitutionButton({
 
   async function handleDelete(): Promise<void> {
     try {
-      const res = await fetchWithAuth(context, `/api/instituciones?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        headers: {
-          Accept: "application/json",
-        },
-      });
+      const res = await fetchWithAuth(
+        context,
+        `/api/instituciones?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
 
       if (res.ok) {
         toast.success(`Institución eliminada correctamente.`, {
