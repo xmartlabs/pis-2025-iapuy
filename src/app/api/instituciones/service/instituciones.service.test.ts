@@ -1,9 +1,12 @@
+/* eslint-disable */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InstitucionesService } from "./instituciones.service";
 
 vi.mock("@/app/models/institucion.entity", () => ({
   Institucion: {
     findOne: vi.fn(),
+    findByPk: vi.fn(),
     create: vi.fn(),
     findAndCountAll: vi.fn(),
     destroy: vi.fn(),
@@ -40,6 +43,7 @@ vi.mock("@/app/models/institution-contact.entity", () => ({
   InstitutionContact: {
     create: vi.fn(),
     bulkCreate: vi.fn(),
+    destroy: vi.fn(),
   },
 }));
 
@@ -57,6 +61,7 @@ vi.mock("@/app/models/intitucion-patalogia.entity", () => ({
     create: vi.fn(),
     findAll: vi.fn(),
     bulkCreate: vi.fn(),
+    destroy: vi.fn(),
   },
 }));
 
@@ -79,6 +84,37 @@ vi.mock("@/lib/database", () => ({
       return await callback({});
     }),
   },
+}));
+
+// Mock pdf-lib to avoid heavy PDF operations in tests
+vi.mock("pdf-lib", () => ({
+  PDFDocument: {
+    create: vi.fn(() => {
+      const page = {
+        getSize: () => ({ width: 612, height: 792 }),
+        drawText: vi.fn(),
+        drawImage: vi.fn(),
+        drawSvgPath: vi.fn(),
+      };
+      const pdf = {
+        addPage: vi.fn().mockReturnValue(page),
+        embedFont: vi.fn().mockResolvedValue({ widthOfTextAtSize: () => 10 }),
+        embedPng: vi.fn().mockResolvedValue({ scale: () => ({ width: 10, height: 10 }) }),
+        save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+      };
+      return pdf;
+    }),
+  },
+  StandardFonts: { Helvetica: "Helvetica" },
+  rgb: (_r: number, _g: number, _b: number) => ({ r: _r, g: _g, b: _b }),
+}));
+
+// Stub fs.existsSync to false so interventionsPDF falls back to title path
+vi.mock("fs", () => ({
+  existsSync: vi.fn(() => false),
+  readFileSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  mkdirSync: vi.fn(),
 }));
 
 import { Institucion } from "@/app/models/institucion.entity";
@@ -266,5 +302,66 @@ describe("InstitucionesService", () => {
     );
 
     await expect(service.create(mockDTO)).rejects.toThrowError("DB failure");
+  });
+
+  it("findAllSimple maps id and name correctly", async () => {
+    (Institucion.findAll as any).mockResolvedValue([{ id: "i1", nombre: "InstX" }]);
+    const res = await service.findAllSimple();
+    expect(res).toEqual([{ id: "i1", name: "InstX" }]);
+  });
+
+  describe("delete", () => {
+    it("deletes successfully when found", async () => {
+      (Institucion.destroy as any).mockResolvedValue(1);
+      await expect(service.delete("i1")).resolves.toBeUndefined();
+      expect(Institucion.destroy).toHaveBeenCalledWith({ where: { id: "i1" } });
+    });
+
+    it("throws when not found", async () => {
+      (Institucion.destroy as any).mockResolvedValue(0);
+      await expect(service.delete("i2")).rejects.toThrow(/Institution not found/);
+    });
+  });
+
+  describe("update", () => {
+    it("throws when institution not found", async () => {
+      vi.mocked(Institucion.findByPk).mockResolvedValue(null as never);
+      await expect(service.update("nope", { name: "X", institutionContacts: [], pathologies: [] } as any)).rejects.toThrow(/Institution not found/);
+    });
+
+    it("updates institution and replaces contacts and pathologies", async () => {
+      const fakeInstitution: any = { id: "inst-1", nombre: "Old", update: vi.fn().mockResolvedValue({ id: "inst-1", nombre: "New" }) };
+        vi.mocked(Institucion.findByPk).mockResolvedValue(fakeInstitution as never);
+        vi.mocked(Institucion.findOne).mockResolvedValue(null as never);
+        vi.mocked(InstitutionContact.destroy).mockResolvedValue(1 as never);
+        vi.mocked(InstitutionContact.bulkCreate).mockResolvedValue([] as never);
+        vi.mocked(InstitucionPatologias.destroy).mockResolvedValue(1 as never);
+        vi.mocked(InstitucionPatologias.bulkCreate).mockResolvedValue([] as never);
+        // Patologia lookups: first call returns empty (no existing), second returns created pathologies
+        // Ensure Patologia.findAll returns a usable array for update flow
+        vi.mocked(Patologia.findAll).mockResolvedValue([{ id: "pat-1", nombre: "P1" }] as never);
+        vi.mocked(Patologia.bulkCreate).mockResolvedValue([] as never);
+
+      const res = await service.update("inst-1", { name: "New", institutionContacts: [{ name: "A", contact: "1" }], pathologies: ["P1"] } as any);
+      expect(fakeInstitution.update).toHaveBeenCalledWith({ nombre: "New" }, expect.anything());
+      expect(InstitutionContact.destroy).toHaveBeenCalledWith({ where: { institutionId: "inst-1" }, transaction: expect.anything() });
+      expect(InstitucionPatologias.destroy).toHaveBeenCalledWith({ where: { institucionId: "inst-1" }, transaction: expect.anything() });
+      expect(res).toEqual({ id: "inst-1", nombre: "New" });
+    });
+  });
+
+  it("interventionsPDF returns bytes even when logo missing", async () => {
+    // return a minimal intervention entry
+    vi.mocked(Intervention.findAll).mockResolvedValueOnce([
+      {
+        timeStamp: new Date(),
+        UsrPerroIntervention: [],
+        Pacientes: [],
+      },
+    ] as never);
+
+    const bytes = await service.interventionsPDF("inst-1", []);
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    expect(bytes.length).toBeGreaterThan(0);
   });
 });

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RegistrosSanidadService } from "./registro-sanidad.service";
 import sequelize from "@/lib/database";
@@ -31,7 +33,7 @@ vi.mock("@/app/models/perro.entity", () => ({
   Perro: { findByPk: vi.fn(), findAll: vi.fn(), findAndCountAll: vi.fn() },
 }));
 vi.mock("@/app/models/expense.entity", () => ({
-  Expense: { update: vi.fn() },
+  Expense: { findOne: vi.fn(), destroy: vi.fn(), update: vi.fn() },
 }));
 vi.mock("../../expenses/service/expenses.service", () => ({
   ExpensesService: class {
@@ -359,5 +361,112 @@ describe("RegistrosSanidadService", () => {
     Vacuna.findByPk = vi.fn().mockResolvedValue(null);
     const res = await service.updateEventoSanidad("vacuna", "missing", {});
     expect(res).toBeNull();
+  });
+
+  // ---------------------- delete ----------------------
+  it("delete should throw when admin and activity not found", async () => {
+    // ensure transaction executes
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    // Banio not found
+    Banio.findByPk = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      service.delete("b-missing", "Baño", adminPayload)
+    ).rejects.toThrow("Baño not found with id: b-missing.");
+  });
+
+  it("delete should throw when expense is pagado for admin", async () => {
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    // Banio exists
+    Banio.findByPk = vi.fn().mockResolvedValue({ id: "b1" });
+    Banio.destroy = vi.fn().mockResolvedValue(1);
+    // Expense found and paid
+    const { Expense } = (await vi.importMock("@/app/models/expense.entity")) as any;
+    Expense.findOne.mockResolvedValue({ id: "e1", state: "pagado" });
+
+    await expect(
+      service.delete("b1", "Baño", adminPayload)
+    ).rejects.toThrow("Baño cannot be destroyed. There's an expense already paid asociated to it.");
+  });
+
+  it("delete should succeed for admin when no paid expense", async () => {
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    Banio.findByPk = vi.fn().mockResolvedValue({ id: "b2" });
+    // Expense not found
+    const { Expense } = (await vi.importMock("@/app/models/expense.entity")) as any;
+    Expense.findOne.mockResolvedValue(null);
+    // spy destroy
+    Banio.destroy = vi.fn().mockResolvedValue(1);
+    Expense.destroy = vi.fn().mockResolvedValue(1);
+
+    const res = await service.delete("b2", "Baño", adminPayload);
+    expect(Banio.destroy).toHaveBeenCalled();
+    expect(res).toBe(true);
+  });
+
+  it("delete should throw when non-admin and not found or unauthorized", async () => {
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    const userPayload = { ci: "owner1", type: "Usuario" } as any;
+    // Banio.findOne returns null for options including owner -> not found
+    Banio.findOne = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      service.delete("b3", "Baño", userPayload)
+    ).rejects.toThrow("Baño not found with id: b3.");
+  });
+
+  it("delete should succeed for non-admin when owner and no paid expense", async () => {
+    sequelize.transaction = vi.fn().mockImplementation(async (cb) => cb({}));
+    const userPayload = { ci: "owner1", type: "Usuario" } as any;
+    // Banio found with the include options
+    Banio.findOne = vi.fn().mockResolvedValue({ id: "b4" });
+    const { Expense } = (await vi.importMock("@/app/models/expense.entity")) as any;
+    Expense.findOne.mockResolvedValue(null);
+    Banio.destroy = vi.fn().mockResolvedValue(1);
+
+    const res = await service.delete("b4", "Baño", userPayload);
+    expect(Banio.destroy).toHaveBeenCalled();
+    expect(res).toBe(true);
+  });
+
+  // ---------------------- findOne ----------------------
+  it("findOne returns the right model by type", async () => {
+    Banio.findOne = vi.fn().mockResolvedValue({ id: "b10" });
+    const r = await service.findOne("b10", "Baño");
+    expect(r).toEqual({ id: "b10" });
+    Vacuna.findOne = vi.fn().mockResolvedValue({ id: "v10" });
+    const v = await service.findOne("v10", "Vacuna");
+    expect(v).toEqual({ id: "v10" });
+    Desparasitacion.findOne = vi.fn().mockResolvedValue({ id: "d10" });
+    const d = await service.findOne("d10", "Desparasitación");
+    expect(d).toEqual({ id: "d10" });
+  });
+
+  // ---------------------- updateEventoSanidad transfer perroId ----------------------
+  it("updateEventoSanidad should transfer banio to new registro and update expenses userId when perroId changes", async () => {
+    const trx = {} as any;
+    // Provide the transaction directly via options so we don't need to mock sequelize.transaction
+    const banioUpdate = vi.fn().mockResolvedValue(true);
+    Banio.findByPk = vi.fn().mockResolvedValue({ id: "bX", registroSanidadId: "oldReg", update: banioUpdate });
+    RegistroSanidad.findByPk = vi.fn().mockResolvedValue({ id: "oldReg", perroId: "oldP" });
+    // New registro exists for new perro
+    RegistroSanidad.findOne = vi.fn().mockResolvedValue({ id: "newReg" });
+    Perro.findByPk = vi.fn().mockResolvedValue({ id: "newP", duenioId: "newOwner" });
+  const { Expense } = (await vi.importMock("@/app/models/expense.entity")) as any;
+  Expense.update = vi.fn().mockResolvedValue([1]);
+
+    const res = await service.updateEventoSanidad(
+      "banio",
+      "bX",
+      {},
+      { transaction: trx, perroId: "newP" }
+    );
+
+    expect(banioUpdate).toHaveBeenCalledWith({ registroSanidadId: "newReg" }, { transaction: trx });
+    expect(Expense.update).toHaveBeenCalledWith(
+      { userId: "newOwner" },
+      { where: { sanidadId: "bX" }, transaction: trx }
+    );
+    expect(res).not.toBeNull();
   });
 });

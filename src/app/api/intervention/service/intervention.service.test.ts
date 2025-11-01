@@ -1,8 +1,9 @@
-/* eslint-disable init-declarations */
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+/* eslint-disable */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { InterventionService } from "./intervention.service";
 import { Intervention } from "@/app/models/intervention.entity";
+import { Op } from "sequelize";
 
 vi.mock("@/lib/database", () => ({
   sequelize: { define: vi.fn(), sync: vi.fn(), authenticate: vi.fn() },
@@ -158,5 +159,78 @@ describe("IntervencionService", () => {
     const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
 
     await expect(service.findInterventionByDogId(pagination as any, "1", mockPayload)).rejects.toThrow("DB error");
+  });
+
+  it("findAll should parse months ISO label and include timeStamp between", async () => {
+    const mockFindAll = vi.fn().mockResolvedValue([]);
+    const mockCount = vi.fn().mockResolvedValue(0);
+    (Intervention.findAll as any) = mockFindAll;
+    (Intervention.count as any) = mockCount;
+
+    const pagination = { query: "", size: 10, getOffset: () => 0, getOrder: () => [] };
+    await service.findAll(pagination as any, mockPayload, "2025-11", null);
+
+    const calledWith = mockFindAll.mock.calls[0][0];
+    expect(calledWith.where).toHaveProperty("timeStamp");
+    // timeStamp should use Op.between
+    expect(calledWith.where.timeStamp[Op.between]).toBeInstanceOf(Array);
+    expect(calledWith.where.timeStamp[Op.between][0]).toBeInstanceOf(Date);
+  });
+
+  it("findAllSimple returns mapped interventions for admin", async () => {
+    const sample = [{ id: "i1", tipo: "T", timeStamp: new Date(), Institucions: [{ id: "inst1", nombre: "X" }] }];
+    (Intervention.findAll as any).mockResolvedValue(sample);
+
+    const res = await service.findAllSimple({ type: "Administrador" } as any, null);
+    expect(res).toHaveLength(1);
+    expect(res[0]).toHaveProperty("intervensionId", "i1");
+  });
+
+  it("findAllSimple merges viaUsers and viaUsrPerro for collaborator", async () => {
+    const viaUsers = [{ id: "a1", tipo: "T", timeStamp: new Date(), Institucions: [{ id: "inst1", nombre: "X" }] }];
+    const viaUsrPerro = [{ id: "a2", tipo: "T", timeStamp: new Date(), Institucions: [{ id: "inst2", nombre: "Y" }] }];
+    const mockFindAll = vi.fn()
+      .mockResolvedValueOnce(viaUsers)
+      .mockResolvedValueOnce(viaUsrPerro);
+    (Intervention.findAll as any) = mockFindAll;
+
+    const res = await service.findAllSimple({ type: "Colaborador", ci: "123" } as any, null);
+    expect(res.length).toBe(2);
+    expect(res.map((r: { intervensionId: any; }) => r.intervensionId)).toEqual(expect.arrayContaining(["a1","a2"]));
+  });
+
+  describe("findUsersInvolvedInIntervention", () => {
+    it("throws when intervention not found", async () => {
+      // stub internal findIntervention to return null
+      vi.spyOn(service as any, "findIntervention").mockResolvedValue(null);
+      await expect(service.findUsersInvolvedInIntervention({ type: "Administrador" } as any, "nope")).rejects.toThrow(/not found/);
+    });
+
+    it("returns [] when Intervention.findByPk returns null", async () => {
+      vi.spyOn(service as any, "findIntervention").mockResolvedValue({ id: "i1" });
+      (Intervention.findByPk as any) = vi.fn().mockResolvedValue(null);
+      const res = await service.findUsersInvolvedInIntervention({ type: "Administrador" } as any, "i1");
+      expect(res).toEqual([]);
+    });
+
+    it("throws for collaborator when not involved", async () => {
+      vi.spyOn(service as any, "findIntervention").mockResolvedValue({ id: "i1" });
+      (Intervention.findByPk as any) = vi.fn().mockResolvedValue({ Users: [], UsrPerroIntervention: [{ User: { ci: "999", nombre: "Other" } }] });
+      await expect(service.findUsersInvolvedInIntervention({ type: "Colaborador", ci: "123", name: "Me" } as any, "i1")).rejects.toThrow(/colaborador no participa/);
+    });
+
+    it("returns only collaborator data when involved", async () => {
+      vi.spyOn(service as any, "findIntervention").mockResolvedValue({ id: "i1" });
+      (Intervention.findByPk as any) = vi.fn().mockResolvedValue({ Users: [], UsrPerroIntervention: [{ User: { ci: "123", nombre: "Me" } }] });
+      const res = await service.findUsersInvolvedInIntervention({ type: "Colaborador", ci: "123", name: "Me" } as any, "i1");
+      expect(res).toEqual([{ userCi: "123", userName: "Me" }]);
+    });
+
+    it("returns merged users for admin", async () => {
+      vi.spyOn(service as any, "findIntervention").mockResolvedValue({ id: "i1" });
+      (Intervention.findByPk as any) = vi.fn().mockResolvedValue({ Users: [{ ci: "1", nombre: "A" }], UsrPerroIntervention: [{ User: { ci: "2", nombre: "B" } }] });
+      const res = await service.findUsersInvolvedInIntervention({ type: "Administrador" } as any, "i1");
+      expect(res).toEqual(expect.arrayContaining([{ userCi: "1", userName: "A" }, { userCi: "2", userName: "B" }]));
+    });
   });
 });
